@@ -327,7 +327,7 @@ button, input, textarea { font: inherit; }
   height: 112%;
   object-fit: cover;
   transform: scale(1);
-  filter: brightness(.38) saturate(.85);
+  filter: brightness(.38);
   will-change: transform;
 }
 .hero-overlay {
@@ -1606,7 +1606,7 @@ button, input, textarea { font: inherit; }
   color: var(--cream);
 }
 
-.footer-block h4 {
+.footer-block h3 {
   font-family: var(--font-display);
   font-size: 16px;
   letter-spacing: 3px;
@@ -1642,7 +1642,7 @@ button, input, textarea { font: inherit; }
   padding: 6px 0;
   border-bottom: 1px solid rgba(255,255,255,.06);
 }
-.footer-hours li span:first-child { color: rgba(255,255,255,.45); letter-spacing: 1px; }
+.footer-hours li span:first-child { color: rgba(255,255,255,.6); letter-spacing: 1px; }
 
 .link-underline {
   font-size: 14px;
@@ -1663,7 +1663,7 @@ button, input, textarea { font: inherit; }
   gap: 12px;
   font-size: 12px;
   letter-spacing: 1px;
-  color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.6);
 }
 .footer-spacer { color: var(--violet-glow); }
 
