@@ -28,7 +28,8 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" /></noscript>
 
   <link rel="stylesheet" href="css/style.css" />
   <style>
@@ -365,8 +366,8 @@
   <!-- ===== HEADER ===== -->
   <header class="site-header scrolled" id="header">
     <a href="/" class="brand" aria-label="Javari StrEat Park">
-      <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="brand-logo brand-logo--white" />
-      <img src="assets/images/logo-horizontal-black.png" alt="Javari StrEat Park" class="brand-logo brand-logo--black" />
+      <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--white" width="800" height="430" />
+      <img src="assets/images/logo-horizontal-black.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--black" width="800" height="430" />
     </a>
     <nav class="site-nav" aria-label="Navegação principal">
       <a href="/">Início</a>
@@ -395,7 +396,7 @@
     <!-- ===== HERO ===== -->
     <section class="fotos-hero">
       <div class="fotos-hero-photo">
-        <img src="assets/images/fotos-hero.webp" alt="" />
+        <img src="assets/images/fotos-hero.webp" alt="" width="1600" height="1066" />
       </div>
       <div class="fotos-hero-overlay"></div>
       <div class="container">
@@ -414,13 +415,13 @@
     <section class="fotos-galeria">
       <div class="container">
         <div class="galeria-mosaic">
-          <div class="mosaic-item"><img src="assets/images/clientes/fotos-01.webp" alt="Aniversário no Javari StrEat Park" loading="lazy" /></div>
-          <div class="mosaic-item"><img src="assets/images/clientes/fotos-02.webp" alt="Amigos curtindo no Javari" loading="lazy" /></div>
-          <div class="mosaic-item"><img src="assets/images/clientes/fotos-03.webp" alt="Galera reunida no quintal" loading="lazy" /></div>
-          <div class="mosaic-item"><img src="assets/images/clientes/fotos-04.webp" alt="Comemoração no Javari StrEat Park" loading="lazy" /></div>
-          <div class="mosaic-item"><img src="assets/images/clientes/fotos-05.webp" alt="Momentos espontâneos no Javari" loading="lazy" /></div>
-          <div class="mosaic-item"><img src="assets/images/clientes/fotos-06.webp" alt="Grupo celebrando no Javari" loading="lazy" /></div>
-          <div class="mosaic-item"><img src="assets/images/clientes/fotos-07.webp" alt="Evento no Javari StrEat Park" loading="lazy" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-01.webp" alt="Aniversário no Javari StrEat Park" loading="lazy" width="1600" height="2844" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-02.webp" alt="Amigos curtindo no Javari" loading="lazy" width="1600" height="2400" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-03.webp" alt="Galera reunida no quintal" loading="lazy" width="1600" height="1066" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-04.webp" alt="Comemoração no Javari StrEat Park" loading="lazy" width="1600" height="1066" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-05.webp" alt="Momentos espontâneos no Javari" loading="lazy" width="1600" height="1066" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-06.webp" alt="Grupo celebrando no Javari" loading="lazy" width="1600" height="1066" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-07.webp" alt="Evento no Javari StrEat Park" loading="lazy" width="1600" height="2400" /></div>
         </div>
       </div>
     </section>
@@ -497,7 +498,7 @@
       <div class="container">
         <div class="fotos-fotografo-grid">
           <div class="fotos-fotografo-avatar">
-            <img src="assets/images/clientes/thiago-fotografo.webp" alt="Thiago Monteiro" />
+            <img src="assets/images/clientes/thiago-fotografo.webp" alt="Thiago Monteiro" width="194" height="259" />
           </div>
           <div>
             <h2 class="fotos-fotografo-name">Thiago Monteiro</h2>
@@ -531,7 +532,7 @@
   <footer class="site-footer" id="contato">
     <div class="container footer-grid">
       <div class="footer-brand">
-        <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="footer-logo" />
+        <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="footer-logo" width="800" height="430" loading="lazy" />
         <p class="footer-tagline">SÓ VEM!</p>
       </div>
       <div class="footer-block">
@@ -560,7 +561,7 @@
     <img src="" alt="" id="lightbox-img" />
   </div>
 
-  <script src="js/main.js"></script>
+  <script src="js/main.js" defer></script>
   <script>
     document.querySelectorAll('.fotos-galeria .mosaic-item img').forEach(img => {
       img.addEventListener('click', () => {

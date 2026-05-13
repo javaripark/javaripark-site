@@ -68,17 +68,26 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preload" as="image" href="assets/images/quintal/quintal-hero-800.webp" imagesrcset="assets/images/quintal/quintal-hero-800.webp 800w, assets/images/quintal/quintal-hero.webp 1200w" imagesizes="100vw" fetchpriority="high" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" /></noscript>
+
+  <style>
+:root{--black:#000;--black-soft:#1a1a1a;--white:#fff;--cream:#F5EDDC;--cream-light:#FAF7F0;--cream-dim:#E8DCC8;--violet:#4f1964;--violet-deep:#2d0d3a;--violet-soft:#8a3ea9;--violet-glow:#c89dd8;--text-dark:#1a1a1a;--text-muted:#555;--font-display:'Bebas Neue','Impact',sans-serif;--font-body:'Poppins',system-ui,-apple-system,sans-serif;--font-script:'Sedgwick Ave',cursive;--container:1280px;--gap:clamp(16px,2vw,24px);--radius:8px;--radius-lg:16px;--transition:280ms cubic-bezier(.2,.8,.2,1);--bottom-nav-h:64px}*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}html{scroll-behavior:auto;-webkit-font-smoothing:antialiased}body{font-family:var(--font-body);background:var(--cream-light);color:var(--text-dark);line-height:1.6;overflow-x:hidden;min-height:100dvh;padding-bottom:calc(var(--bottom-nav-h) + env(safe-area-inset-bottom,0px))}img{display:block;max-width:100%;height:auto}a{color:inherit;text-decoration:none}.container{width:100%;max-width:var(--container);margin:0 auto;padding:0 20px}.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-around;height:var(--bottom-nav-h);background:#000;border-top:1px solid rgba(245,237,220,.1);padding-bottom:env(safe-area-inset-bottom,0);box-sizing:content-box}.bottom-nav-link{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:1;color:rgba(255,255,255,.5);font-size:10px;font-weight:500;letter-spacing:.3px;-webkit-tap-highlight-color:transparent}.bottom-nav-link.active{color:var(--violet-glow)}.bottom-nav-link--cta{color:var(--violet-glow)}.site-header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 20px}.site-header.scrolled{background:rgba(0,0,0,.92);padding:10px 20px;border-bottom:1px solid rgba(245,237,220,.1)}.brand{display:flex;align-items:center}.brand-logo{height:36px;width:auto;object-fit:contain}.brand-logo--black{display:none}.nav-toggle{display:flex;flex-direction:column;gap:5px;background:none;border:none;padding:8px;cursor:pointer;z-index:101}.nav-toggle span{display:block;width:24px;height:2px;background:var(--white)}.site-nav{display:none}.hero{position:relative;min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--black)}.hero-photo{position:absolute;inset:0;z-index:1;overflow:hidden;transform-origin:center 55%}.hero-photo img{position:absolute;inset:-6% -6%;width:112%;height:112%;object-fit:cover;filter:brightness(.38) saturate(.85)}.hero-overlay{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at center 60%,rgba(0,0,0,.15) 0%,rgba(0,0,0,.85) 100%),linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.1) 35%,rgba(0,0,0,.7) 100%)}.hero-flame{position:absolute;inset:0;width:100%;height:100%;z-index:3;opacity:.6;mix-blend-mode:screen;pointer-events:none}.hero-content{position:relative;z-index:6;text-align:center;padding:0 20px;max-width:1100px}.hero-eyebrow{display:inline-flex;align-items:center;gap:12px;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--cream-dim);margin:0 0 20px;font-weight:500}.hero-eyebrow .line{width:24px;height:1px;background:var(--violet-glow);display:inline-block}.hero-title{font-family:var(--font-display);font-size:clamp(40px,9vw,130px);line-height:.92;letter-spacing:-.5px;margin:0 0 24px;font-weight:400;color:var(--white);text-shadow:0 4px 28px rgba(0,0,0,.7)}.hero-title .word{display:inline-block;margin:0 .12em}.hero-title .word--accent{font-family:var(--font-script);font-weight:700;color:var(--violet-glow);letter-spacing:-1px;font-size:1em;font-style:italic}.hero-sub{font-size:clamp(14px,2.5vw,18px);color:rgba(255,255,255,.82);max-width:520px;margin:0 auto 32px;font-weight:300;line-height:1.6}.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 24px;border-radius:999px;font-weight:600;font-size:14px;letter-spacing:.3px;border:1px solid transparent;cursor:pointer;position:relative;overflow:hidden}.btn-lg{padding:16px 32px;font-size:15px}.btn-primary{background:var(--violet);color:var(--white)}
+  </style>
+
+  <link rel="stylesheet" href="css/style.css" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="css/style.css" /></noscript>
 </head>
 <body>
 
   <!-- ===== HEADER ===== -->
   <header class="site-header" id="header">
     <a href="#top" class="brand" aria-label="Javari StrEat Park">
-      <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--white" />
-      <img src="assets/images/logo-horizontal-black.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--black" />
+      <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--white" width="800" height="430" />
+      <img src="assets/images/logo-horizontal-black.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--black" width="800" height="430" />
     </a>
     <nav class="site-nav" aria-label="Navegação principal">
       <a href="#copa" class="nav-copa">Copa 2026</a>
@@ -135,7 +144,7 @@
     <!-- ===== HERO ===== -->
     <section class="hero" id="hero">
       <div class="hero-photo" id="hero-photo">
-        <img src="assets/images/quintal/quintal-hero.webp" alt="O quintal Javari StrEat Park na Mooca" />
+        <img src="assets/images/quintal/quintal-hero.webp" srcset="assets/images/quintal/quintal-hero-800.webp 800w, assets/images/quintal/quintal-hero.webp 1200w" sizes="100vw" alt="O quintal Javari StrEat Park na Mooca" width="1200" height="800" fetchpriority="high" />
       </div>
       <div class="hero-overlay" id="hero-overlay" aria-hidden="true"></div>
       <canvas class="hero-flame" id="flame-canvas" aria-hidden="true"></canvas>
@@ -200,12 +209,12 @@
             </div>
             <div class="copa-match-teams">
               <div class="copa-team">
-                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" />
+                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" width="40" height="27" loading="lazy" />
                 <span>Brasil</span>
               </div>
               <span class="copa-vs">vs</span>
               <div class="copa-team">
-                <img src="https://flagcdn.com/w40/ma.png" alt="Marrocos" class="copa-flag" />
+                <img src="https://flagcdn.com/w40/ma.png" alt="Marrocos" class="copa-flag" width="40" height="27" loading="lazy" />
                 <span>Marrocos</span>
               </div>
             </div>
@@ -223,12 +232,12 @@
             </div>
             <div class="copa-match-teams">
               <div class="copa-team">
-                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" />
+                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" width="40" height="27" loading="lazy" />
                 <span>Brasil</span>
               </div>
               <span class="copa-vs">vs</span>
               <div class="copa-team">
-                <img src="https://flagcdn.com/w40/ht.png" alt="Haiti" class="copa-flag" />
+                <img src="https://flagcdn.com/w40/ht.png" alt="Haiti" class="copa-flag" width="40" height="27" loading="lazy" />
                 <span>Haiti</span>
               </div>
             </div>
@@ -246,12 +255,12 @@
             </div>
             <div class="copa-match-teams">
               <div class="copa-team">
-                <img src="https://flagcdn.com/w40/gb-sct.png" alt="Escócia" class="copa-flag" />
+                <img src="https://flagcdn.com/w40/gb-sct.png" alt="Escócia" class="copa-flag" width="40" height="27" loading="lazy" />
                 <span>Escócia</span>
               </div>
               <span class="copa-vs">vs</span>
               <div class="copa-team">
-                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" />
+                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" width="40" height="27" loading="lazy" />
                 <span>Brasil</span>
               </div>
             </div>
@@ -314,7 +323,7 @@
         <div class="pillars">
           <article class="pillar" data-reveal>
             <div class="pillar-img">
-              <img src="assets/images/quintal/quintal-oasis.webp" alt="Vista do quintal Javari ao ar livre" loading="lazy" />
+              <img src="assets/images/quintal/quintal-oasis.webp" alt="Vista do quintal Javari ao ar livre" width="800" height="1000" loading="lazy" />
             </div>
             <h3>850 m² de oásis urbano</h3>
             <p>Quintal instagramável com área kids, palco, Bus Lounge e copo americano. Aqui cabe todo mundo sem complicação.</p>
@@ -322,7 +331,7 @@
 
           <article class="pillar" data-reveal>
             <div class="pillar-img">
-              <img src="assets/images/quintal/quintal-pets-kids.webp" alt="Área kids do Javari StrEat Park" loading="lazy" />
+              <img src="assets/images/quintal/quintal-pets-kids.webp" alt="Área kids do Javari StrEat Park" width="800" height="1000" loading="lazy" />
             </div>
             <h3>Pet &amp; kids friendly</h3>
             <p>Traz os pequenos e os cachorros. Aqui é casa de família — sem julgamento, com respeito.</p>
@@ -330,7 +339,7 @@
 
           <article class="pillar" data-reveal>
             <div class="pillar-img">
-              <img src="assets/images/quintal/quintal-tribos.webp" alt="Clientes curtindo o Javari StrEat Park" loading="lazy" />
+              <img src="assets/images/quintal/quintal-tribos.webp" alt="Clientes curtindo o Javari StrEat Park" width="800" height="1000" loading="lazy" />
             </div>
             <h3>Pra todas as tribos</h3>
             <p>Ambiente democrático, no coração da Mooca. Aqui você pode tirar gravata e salto alto.</p>
@@ -342,7 +351,7 @@
     <!-- ===== BUS LOUNGE ===== -->
     <section class="bus-lounge" id="bus-lounge">
       <div class="bus-bg" id="bus-bg" aria-hidden="true">
-        <img src="assets/images/quintal/bus-bg.webp" alt="" loading="lazy" />
+        <img src="assets/images/quintal/bus-bg.webp" alt="" width="800" height="533" loading="lazy" />
         <div class="bus-bg-overlay"></div>
       </div>
 
@@ -361,15 +370,15 @@
       <div class="bus-gallery" id="bus-gallery">
         <div class="bus-track">
           <figure class="bus-slide">
-            <img src="assets/images/bus-lounge/bus-01.webp" alt="Interior do Bus Lounge decorado" loading="lazy" />
+            <img src="assets/images/bus-lounge/bus-01.webp" alt="Interior do Bus Lounge decorado" width="800" height="533" loading="lazy" />
             <figcaption>20m de festa<br><em>em forma de ônibus</em></figcaption>
           </figure>
           <figure class="bus-slide">
-            <img src="assets/images/bus-lounge/bus-02.webp" alt="Bus Lounge ao entardecer" loading="lazy" />
+            <img src="assets/images/bus-lounge/bus-02.webp" alt="Bus Lounge ao entardecer" width="800" height="533" loading="lazy" />
             <figcaption>Karaokê,<br><em>noite garantida</em></figcaption>
           </figure>
           <figure class="bus-slide">
-            <img src="assets/images/bus-lounge/bus-03.webp" alt="Detalhes do Bus Lounge" loading="lazy" />
+            <img src="assets/images/bus-lounge/bus-03.webp" alt="Detalhes do Bus Lounge" width="800" height="533" loading="lazy" />
             <figcaption>O camarote<br><em>mais disputado</em></figcaption>
           </figure>
         </div>
@@ -396,7 +405,7 @@
         <div class="cardapio-grid">
           <article class="card-item" data-reveal>
             <div class="card-img-wrap">
-              <img src="assets/images/drinks/drink-01.webp" alt="Drinks autorais" loading="lazy" />
+              <img src="assets/images/drinks/drink-01.webp" alt="Drinks autorais" width="1066" height="1600" loading="lazy" />
             </div>
             <div class="card-body">
               <h3>Drinks autorais</h3>
@@ -405,7 +414,7 @@
           </article>
           <article class="card-item" data-reveal>
             <div class="card-img-wrap">
-              <img src="assets/images/drinks/cerveja-trincando.webp" alt="Cerveja trincando" loading="lazy" />
+              <img src="assets/images/drinks/cerveja-trincando.webp" alt="Cerveja trincando" width="1066" height="1600" loading="lazy" />
             </div>
             <div class="card-body">
               <h3>Cerveja trincando</h3>
@@ -414,7 +423,7 @@
           </article>
           <article class="card-item" data-reveal>
             <div class="card-img-wrap">
-              <img src="assets/images/lanches/lanche-01.webp" alt="Comidinhas de boteco" loading="lazy" />
+              <img src="assets/images/lanches/lanche-01.webp" alt="Comidinhas de boteco" width="800" height="1200" loading="lazy" />
             </div>
             <div class="card-body">
               <h3>Comidinhas de boteco</h3>
@@ -423,7 +432,7 @@
           </article>
           <article class="card-item" data-reveal>
             <div class="card-img-wrap">
-              <img src="assets/images/lanches/feijoada.webp" alt="Feijoada de domingo" loading="lazy" />
+              <img src="assets/images/lanches/feijoada.webp" alt="Feijoada de domingo" width="800" height="733" loading="lazy" />
             </div>
             <div class="card-body">
               <h3>Feijoada de domingo</h3>
@@ -432,7 +441,7 @@
           </article>
           <article class="card-item" data-reveal>
             <div class="card-img-wrap">
-              <img src="assets/images/lanches/cannoli.webp" alt="Cannoli artesanal" loading="lazy" />
+              <img src="assets/images/lanches/cannoli.webp" alt="Cannoli artesanal" width="1066" height="1600" loading="lazy" />
             </div>
             <div class="card-body">
               <h3>Tradicional cannoli</h3>
@@ -441,7 +450,7 @@
           </article>
           <article class="card-item" data-reveal>
             <div class="card-img-wrap">
-              <img src="assets/images/drinks/bebidas-infantis.webp" alt="Bebidas infantis coloridas" loading="lazy" />
+              <img src="assets/images/drinks/bebidas-infantis.webp" alt="Bebidas infantis coloridas" width="800" height="1201" loading="lazy" />
             </div>
             <div class="card-body">
               <h3>Bebidas infantis</h3>
@@ -507,13 +516,13 @@
         <h2 class="galeria-title">Quem vem, <em>volta</em>.</h2>
       </div>
       <div class="galeria-mosaic">
-        <div class="mosaic-item"><img src="assets/images/clientes/galeria-01.webp" alt="Clientes curtindo o Javari" loading="lazy" /></div>
-        <div class="mosaic-item"><img src="assets/images/clientes/galeria-02.webp" alt="Galera no quintal" loading="lazy" /></div>
-        <div class="mosaic-item"><img src="assets/images/clientes/galeria-03.webp" alt="Noite no Javari" loading="lazy" /></div>
-        <div class="mosaic-item"><img src="assets/images/clientes/galeria-04.webp" alt="Energia boa no quintal" loading="lazy" /></div>
-        <div class="mosaic-item"><img src="assets/images/clientes/galeria-05.webp" alt="Amigos no Javari" loading="lazy" /></div>
-        <div class="mosaic-item"><img src="assets/images/clientes/galeria-06.webp" alt="Diversão no quintal" loading="lazy" /></div>
-        <div class="mosaic-item"><img src="assets/images/clientes/galeria-07.webp" alt="A galera do Javari" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-01.webp" alt="Clientes curtindo o Javari" width="640" height="427" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-02.webp" alt="Galera no quintal" width="640" height="961" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-03.webp" alt="Noite no Javari" width="1066" height="1600" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-04.webp" alt="Energia boa no quintal" width="640" height="427" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-05.webp" alt="Amigos no Javari" width="640" height="961" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-06.webp" alt="Diversão no quintal" width="640" height="427" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-07.webp" alt="A galera do Javari" width="640" height="427" loading="lazy" /></div>
       </div>
       <div class="container galeria-foot">
         <a class="btn btn-dark btn-lg magnetic" href="https://instagram.com/javaripark" target="_blank" rel="noopener">
@@ -608,7 +617,7 @@
           allowfullscreen></iframe>
         <div class="map-overlay" id="map-overlay"></div>
         <a class="map-pin" href="https://www.openstreetmap.org/?mlat=-23.5539815&mlon=-46.6050521#map=18/-23.5539815/-46.6050521" target="_blank" rel="noopener" aria-label="Ver no OpenStreetMap">
-          <img src="assets/images/icon-flame-white.webp" alt="" />
+          <img src="assets/images/icon-flame-white.webp" alt="" width="400" height="585" loading="lazy" />
           <span>Javari Park · Rua Javari, 112</span>
         </a>
       </div>
@@ -710,7 +719,7 @@
           </a>
         </div>
         <div class="aniversarios-img">
-          <img src="assets/images/quintal/quintal-aniversario.webp" alt="Aniversário no Javari StrEat Park" loading="lazy" />
+          <img src="assets/images/quintal/quintal-aniversario.webp" alt="Aniversário no Javari StrEat Park" width="800" height="533" loading="lazy" />
         </div>
       </div>
     </section>
@@ -719,7 +728,7 @@
     <section class="corporativo" id="corporativo">
       <div class="container corporativo-grid">
         <div class="corporativo-img">
-          <img src="assets/images/quintal/quintal-happyhour.webp" alt="Happy hour corporativo no Javari StrEat Park" loading="lazy" />
+          <img src="assets/images/quintal/quintal-happyhour.webp" alt="Happy hour corporativo no Javari StrEat Park" width="800" height="533" loading="lazy" />
         </div>
         <div class="corporativo-content">
           <p class="section-eyebrow">Para empresas</p>
@@ -762,7 +771,7 @@
     <!-- ===== RESERVAS ===== -->
     <section class="reservas" id="reservas">
       <div class="reservas-photo" id="reservas-photo" aria-hidden="true">
-        <img src="assets/images/quintal/quintal-reservas.webp" alt="" />
+        <img src="assets/images/quintal/quintal-reservas.webp" alt="" width="800" height="533" loading="lazy" />
       </div>
       <div class="reservas-overlay" id="reservas-overlay" aria-hidden="true"></div>
 
@@ -783,7 +792,7 @@
     <footer class="site-footer" id="contato">
       <div class="container footer-grid">
         <div class="footer-brand">
-          <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="footer-logo" />
+          <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="footer-logo" width="800" height="430" loading="lazy" />
           <p class="footer-tagline">SÓ VEM!</p>
         </div>
 
@@ -811,11 +820,11 @@
 
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
 
-  <script src="js/flame.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/flame.js" defer></script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>
