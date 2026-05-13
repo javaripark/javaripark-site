@@ -176,7 +176,8 @@ def query_sales_data(db_path):
     con = fdb.connect(
         database=db_path,
         user="SYSDBA",
-        password="masterkey"
+        password="masterkey",
+        charset="WIN1252"
     )
     cur = con.cursor()
 
@@ -288,12 +289,12 @@ def query_sales_data(db_path):
         pay_cols = get_columns(cur, payment_table)
         print(f"Payment columns: {pay_cols}")
         pay_value_col = find_column(pay_cols, ["VALOR", "VALORPAGO", "VLR", "TOTAL", "VALOR_PAGO"])
-        pay_form_fk = find_column(pay_cols, ["IDFORMAPAGAMENTO"])
+        pay_form_fk = find_column(pay_cols, ["CODIGOFORMAPAGAMENTO", "IDFORMAPAGAMENTO"])
         pay_form_col = find_column(pay_cols, ["FORMA", "DESCRICAO", "NOME", "TIPO",
                                                "FORMA_PGTO", "BANDEIRA", "FORMA_PAGAMENTO"])
-        pay_sale_col = find_column(pay_cols, ["IDPEDIDO", "VENDA_ID", "ID_VENDA", "COD_VENDA",
-                                               "MOVIMENTO_ID"])
-        pay_date_col = find_column(pay_cols, ["DATA", "DATAPAGAMENTO", "DATA_VENDA", "DT_VENDA"])
+        pay_sale_col = find_column(pay_cols, ["CODIGOPEDIDO", "IDPEDIDO", "VENDA_ID", "ID_VENDA",
+                                               "COD_VENDA", "MOVIMENTO_ID"])
+        pay_date_col = find_column(pay_cols, ["DATAPAGAMENTO", "DATA", "DATA_VENDA", "DT_VENDA"])
 
         # Build payment method name lookup if FORMASPAGAMENTO table exists
         formas_map = {}
@@ -301,7 +302,7 @@ def query_sales_data(db_path):
         if formas_table and pay_form_fk:
             f_cols = get_columns(cur, formas_table)
             f_name = find_column(f_cols, ["DESCRICAO", "NOME", "FORMA", "TIPO"])
-            f_id = find_column(f_cols, ["ID", "IDFORMAPAGAMENTO", "CODIGO"])
+            f_id = find_column(f_cols, ["CODIGO", "ID", "IDFORMAPAGAMENTO"])
             if f_name and f_id:
                 try:
                     cur.execute(f"SELECT {f_id}, {f_name} FROM {formas_table}")
@@ -386,32 +387,17 @@ def query_sales_data(db_path):
         item_qty_col = find_column(item_cols, ["QUANTIDADE", "QTD", "QTDE"])
         item_total_col = find_column(item_cols, ["VALORTOTAL", "VALOR_TOTAL", "VLR_TOTAL", "TOTAL",
                                                    "SUBTOTAL", "VALORFINAL"])
-        item_prod_col = find_column(item_cols, ["IDPRODUTODETALHE", "IDPRODUTO", "PRODUTO_ID",
+        item_prod_col = find_column(item_cols, ["CODIGOPRODUTODETALHE", "CODIGOPRODUTO",
+                                                  "IDPRODUTODETALHE", "IDPRODUTO", "PRODUTO_ID",
                                                   "ID_PRODUTO", "COD_PRODUTO"])
-        item_sale_col = find_column(item_cols, ["IDPEDIDO", "VENDA_ID", "ID_VENDA", "COD_VENDA",
-                                                  "MOVIMENTO_ID"])
+        item_sale_col = find_column(item_cols, ["CODIGOPEDIDO", "IDPEDIDO", "VENDA_ID",
+                                                  "ID_VENDA", "COD_VENDA", "MOVIMENTO_ID"])
+        item_name_col = find_column(item_cols, ["NOMEPRODUTO", "NOME_PRODUTO"])
 
-        prod_cols = get_columns(cur, products_table)
-        print(f"Product columns: {prod_cols}")
-        prod_name_col = find_column(prod_cols, ["NOME", "DESCRICAO", "NOME_PRODUTO", "PRODUTO",
-                                                  "NOMEPRODUTO"])
-        prod_id_col = find_column(prod_cols, ["ID", "IDPRODUTODETALHE", "IDPRODUTO", "CODIGO"])
-        prod_group_col = find_column(prod_cols, ["IDPRODUTOTIPO", "GRUPO_ID", "ID_GRUPO",
-                                                   "COD_GRUPO", "CATEGORIA_ID"])
+        # ITENSPEDIDO has NOMEPRODUTO directly — use it if available
+        if item_qty_col and item_total_col and item_sale_col and item_name_col:
+            print("Querying product sales (using item names)...")
 
-        if item_qty_col and item_total_col and item_prod_col and prod_name_col and prod_id_col:
-            print("Querying product sales...")
-            group_join = ""
-            group_select = "'Sem categoria'"
-            if groups_table and prod_group_col:
-                grp_cols = get_columns(cur, groups_table)
-                grp_name_col = find_column(grp_cols, ["NOME", "DESCRICAO", "GRUPO", "TIPO"])
-                grp_id_col = find_column(grp_cols, ["ID", "IDPRODUTOTIPO", "CODIGO"])
-                if grp_name_col and grp_id_col:
-                    group_join = f"LEFT JOIN {groups_table} g ON g.{grp_id_col} = p.{prod_group_col}"
-                    group_select = f"g.{grp_name_col}"
-
-            # Build status filter for joined queries
             joined_status = ""
             if delete_col:
                 joined_status = f"AND v.{delete_col} IS NULL"
@@ -419,14 +405,12 @@ def query_sales_data(db_path):
                 joined_status = f"AND v.{status_col} NOT IN ('C', 'CANCELADA', 'CANCELADO')"
 
             sql = f"""
-                SELECT CAST(v.{date_col} AS DATE), p.{prod_name_col}, {group_select},
+                SELECT CAST(v.{date_col} AS DATE), i.{item_name_col}, 'Sem categoria',
                        SUM(i.{item_qty_col}), SUM(i.{item_total_col})
                 FROM {items_table} i
                 JOIN {sales_table} v ON v.{sales_pk or 'CODIGO'} = i.{item_sale_col}
-                JOIN {products_table} p ON p.{prod_id_col} = i.{item_prod_col}
-                {group_join}
-                WHERE i.{item_total_col} > 0 {joined_status}
-                GROUP BY CAST(v.{date_col} AS DATE), p.{prod_name_col}, {group_select}
+                WHERE i.{item_total_col} > 0 AND i.{item_name_col} IS NOT NULL {joined_status}
+                GROUP BY CAST(v.{date_col} AS DATE), i.{item_name_col}
                 ORDER BY CAST(v.{date_col} AS DATE), SUM(i.{item_total_col}) DESC
             """
             try:
@@ -478,7 +462,7 @@ def query_financial_data(db_path):
     """
     import firebird.driver as fdb
 
-    con = fdb.connect(database=db_path, user="SYSDBA", password="masterkey")
+    con = fdb.connect(database=db_path, user="SYSDBA", password="masterkey", charset="WIN1252")
     cur = con.cursor()
 
     cur.execute("""
@@ -500,10 +484,12 @@ def query_financial_data(db_path):
         print(f"Fornecedores columns: {cols}")
         name_col = find_column(cols, ["NOME", "RAZAOSOCIAL", "RAZAO_SOCIAL", "RAZAO",
                                        "NOMEFANTASIA", "NOME_FANTASIA", "FANTASIA", "DESCRICAO"])
-        cnpj_col = find_column(cols, ["CNPJ", "CNPJCPF", "CNPJ_CPF", "CPF_CNPJ", "CGC", "DOCUMENTO"])
-        tel_col = find_column(cols, ["TELEFONE", "FONE", "TEL", "TELEFONE1", "CELULAR"])
+        cnpj_col = find_column(cols, ["CNPJOUCPF", "CNPJ", "CNPJCPF", "CNPJ_CPF", "CPF_CNPJ",
+                                       "CGC", "DOCUMENTO"])
+        tel_col = find_column(cols, ["FONEPRINCIPAL", "TELEFONE", "FONE", "TEL", "TELEFONE1",
+                                      "CELULAR", "FONESECUNDARIO"])
         email_col = find_column(cols, ["EMAIL", "E_MAIL", "CORREIO"])
-        id_col = find_column(cols, ["ID", "IDCONTATO", "IDFORNECEDOR", "CODIGO", "COD",
+        id_col = find_column(cols, ["CODIGO", "ID", "IDCONTATO", "IDFORNECEDOR", "COD",
                                      "ID_FORNECEDOR"])
 
         if name_col and id_col:
@@ -548,23 +534,29 @@ def query_financial_data(db_path):
         desc_col = find_column(cols, ["DESCRICAO", "HISTORICO", "OBSERVACAO", "OBS", "COMPLEMENTO",
                                        "DOCUMENTO", "NOMEFORNECEDOR"])
         valor_col = find_column(cols, ["VALOR", "VALORTOTAL", "VLR", "VALOR_TITULO", "VALOR_ORIGINAL"])
-        venc_col = find_column(cols, ["VENCIMENTO", "DATAVENCIMENTO", "DT_VENCIMENTO",
+        venc_col = find_column(cols, ["DATAVENCIMENTO", "VENCIMENTO", "DT_VENCIMENTO",
                                        "DATA_VENCIMENTO", "VENCTO"])
-        status_col = find_column(cols, ["STATUS", "SITUACAO", "SIT", "PAGO", "QUITADO"])
-        forn_col = find_column(cols, ["IDFORNECEDOR", "IDCONTATO", "FORNECEDOR_ID", "ID_FORNECEDOR",
-                                       "COD_FORNECEDOR", "PESSOA_ID", "CLIENTE_ID", "CREDOR_ID"])
-        data_col = find_column(cols, ["DATA", "DATAEMISSAO", "DATA_EMISSAO", "DT_EMISSAO",
-                                       "DATA_LANCAMENTO", "DATALANCAMENTO"])
+        cp_status_col = find_column(cols, ["STATUS", "SITUACAO", "SIT", "PAGO", "QUITADO"])
+        forn_col = find_column(cols, ["CODIGOFORNECEDOR", "IDFORNECEDOR", "IDCONTATO",
+                                       "FORNECEDOR_ID", "ID_FORNECEDOR", "COD_FORNECEDOR",
+                                       "PESSOA_ID", "CLIENTE_ID", "CREDOR_ID"])
+        data_col = find_column(cols, ["DATACADASTRO", "DATA", "DATAEMISSAO", "DATA_EMISSAO",
+                                       "DT_EMISSAO", "DATA_LANCAMENTO", "DATALANCAMENTO"])
         valor_pago_col = find_column(cols, ["VALORPAGO", "VALOR_PAGO", "VLR_PAGO", "VALOR_QUITADO"])
+        cp_delete_col = find_column(cols, ["DATADELETE"])
 
         if valor_col and venc_col:
             select = [desc_col or f"'{cp_table}'"]
             if forn_col: select.append(forn_col)
             select.extend([valor_col, venc_col])
-            if status_col: select.append(status_col)
+            if cp_status_col: select.append(cp_status_col)
             if valor_pago_col: select.append(valor_pago_col)
 
-            sql = f"SELECT {', '.join(select)} FROM {cp_table} ORDER BY {venc_col} DESC"
+            where = ""
+            if cp_delete_col:
+                where = f"WHERE {cp_delete_col} IS NULL"
+
+            sql = f"SELECT {', '.join(select)} FROM {cp_table} {where} ORDER BY {venc_col} DESC"
             try:
                 cur.execute(sql)
                 items = []
@@ -584,12 +576,14 @@ def query_financial_data(db_path):
                     vencimento = venc_raw.strftime("%Y-%m-%d") if isinstance(venc_raw, datetime) else str(venc_raw or "")[:10]
 
                     status = ""
-                    if status_col:
+                    if cp_status_col:
                         s = str(row[idx] or "").strip().upper(); idx += 1
                         if s in ("P", "PAGO", "S", "SIM", "1", "Q", "QUITADO"):
                             status = "pago"
                         else:
                             status = "pendente"
+                    elif valor_pago_col:
+                        status = "pendente"
                     else:
                         status = "pendente"
 
