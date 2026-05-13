@@ -12,7 +12,10 @@ const OUT = path.join(__dirname, '..', 'public', 'data', 'cardapio.json');
 
 (async () => {
   console.log('Launching browser…');
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+  });
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 900 });
 
