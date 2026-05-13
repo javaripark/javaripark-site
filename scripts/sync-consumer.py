@@ -114,13 +114,19 @@ def restore_firebird_backup(backup_path, dest_dir):
         except (FileNotFoundError, subprocess.TimeoutExpired):
             continue
 
+    # Firebird env vars for embedded mode
+    fb_env = os.environ.copy()
+    fb_env["FIREBIRD_TMP"] = dest_dir
+    fb_env["FIREBIRD_LOCK"] = dest_dir
+
     # Try gbak restore
     for extra_args in [[], ["-page_size", "16384"]]:
         try:
             result = subprocess.run(
                 [gbak_bin, "-c", "-user", "SYSDBA", "-password", "masterkey",
                  *extra_args, backup_path, db_path],
-                capture_output=True, text=True, timeout=300
+                capture_output=True, text=True, timeout=300,
+                env=fb_env
             )
             if result.returncode == 0:
                 print(f"Restored backup to: {db_path}")
