@@ -1,0 +1,1367 @@
+{
+  "resumo": {
+    "totalContatos": 19722,
+    "comAniversario": 19722,
+    "comTelefone": 17826,
+    "clientesVIP": 7,
+    "clientesRegulares": 116,
+    "clientesOcasionais": 9380,
+    "semCompras": 10219
+  },
+  "aniversariosPorMes": [
+    {
+      "mes": "Janeiro",
+      "mesNum": 1,
+      "quantidade": 1636
+    },
+    {
+      "mes": "Fevereiro",
+      "mesNum": 2,
+      "quantidade": 1565
+    },
+    {
+      "mes": "Março",
+      "mesNum": 3,
+      "quantidade": 1851
+    },
+    {
+      "mes": "Abril",
+      "mesNum": 4,
+      "quantidade": 1722
+    },
+    {
+      "mes": "Maio",
+      "mesNum": 5,
+      "quantidade": 1702
+    },
+    {
+      "mes": "Junho",
+      "mesNum": 6,
+      "quantidade": 1660
+    },
+    {
+      "mes": "Julho",
+      "mesNum": 7,
+      "quantidade": 1693
+    },
+    {
+      "mes": "Agosto",
+      "mesNum": 8,
+      "quantidade": 1591
+    },
+    {
+      "mes": "Setembro",
+      "mesNum": 9,
+      "quantidade": 1636
+    },
+    {
+      "mes": "Outubro",
+      "mesNum": 10,
+      "quantidade": 1611
+    },
+    {
+      "mes": "Novembro",
+      "mesNum": 11,
+      "quantidade": 1486
+    },
+    {
+      "mes": "Dezembro",
+      "mesNum": 12,
+      "quantidade": 1569
+    }
+  ],
+  "aniversariosProximos": [
+    {
+      "nome": "MARILENE PINTO ORTOLANI",
+      "telefone": "(11) 97314-8304",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 93.5
+    },
+    {
+      "nome": "CLAUDIA DIAS OLLAY KANAWAZA",
+      "telefone": "(11) 94222-4525",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "fatima dias",
+      "telefone": "(11) 99315-6395",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "LUCIANE GARCIA BORGES",
+      "telefone": "(11) 99644-1500",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "LUCIMARA APARECIDA ALMENDRA",
+      "telefone": "(11) 95293-4335",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 78.68
+    },
+    {
+      "nome": "ana carolina nascimento",
+      "telefone": "(11) 99253-0705",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 213.22
+    },
+    {
+      "nome": "ANDERSON NASCIMENTO",
+      "telefone": "(11) 96338-0639",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "CRISTIANO ZUCCARATTO",
+      "telefone": "(11) 99162-4201",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 240.68
+    },
+    {
+      "nome": "KARLA MARIA MARQUES",
+      "telefone": "(11) 96838-3128",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "LUCIANA MARINHO DE CARVALHO",
+      "telefone": "(11) 94008-9867",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "KARINA SANTOD MORTARI",
+      "telefone": "",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "ANA PAULA VERDRAMINI",
+      "telefone": "(11) 98278-0092",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "MICHEL AUGUSTO",
+      "telefone": "(11) 99613-6556",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 175.73
+    },
+    {
+      "nome": "IVAN DEMASCENO",
+      "telefone": "(11) 96073-4050",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 144.66
+    },
+    {
+      "nome": "ADRIANNI CRISTINE SACUTE DA SILVA",
+      "telefone": "",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "JOSUE MACEDO",
+      "telefone": "(11) 98652-3785",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 246.81
+    },
+    {
+      "nome": "FERNANDA CAROLINA HENSEL",
+      "telefone": "",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 74.5
+    },
+    {
+      "nome": "ALINE PARDI RIBEIRO",
+      "telefone": "(11) 97600-9991",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "ANDREZA ESTEVARENGO",
+      "telefone": "(11) 94204-6507",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "MARCIA NASCIMENTO",
+      "telefone": "(11) 98108-2210",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 69.99
+    },
+    {
+      "nome": "GUSTAVO GENEROSO PEREIRA",
+      "telefone": "(11) 91101-5132",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "FERNANDA PIRES GELEGOV",
+      "telefone": "(11) 99995-2246",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "GABRIEL DE FREITAS DALLACQUA",
+      "telefone": "(11) 94034-2442",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "EMERSOM MOREIRA GONÇALVES",
+      "telefone": "(11) 94170-4074",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 27.28
+    },
+    {
+      "nome": "FABIO AGARIE",
+      "telefone": "(11) 98308-5387",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "GUSTAVO PERERA PEDROSO",
+      "telefone": "(11) 94779-5318",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 156.15
+    },
+    {
+      "nome": "CRISTIANE GUIMARAES DA SILVA",
+      "telefone": "(11) 98065-7509",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 32.59
+    },
+    {
+      "nome": "HELENA BRAGA LEITES",
+      "telefone": "(11) 99427-3362",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 0,
+      "totalGasto": 0
+    },
+    {
+      "nome": "newton junior",
+      "telefone": "(19) 99210-3892",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 173.95
+    },
+    {
+      "nome": "VINICIUS OLIVEIRA",
+      "telefone": "(11) 94029-9101",
+      "dia": 11,
+      "mes": 5,
+      "diasAte": 0,
+      "totalVisitas": 1,
+      "totalGasto": 69.8
+    }
+  ],
+  "topGastadores": [
+    {
+      "id": 8479,
+      "nome": "GABRIEL MARESI (FUNCIONÁRIO)",
+      "aniversarioMes": 1,
+      "aniversarioDia": 20,
+      "telefone": "(11) 95390-6958",
+      "totalVisitas": 58,
+      "totalGasto": 5209.4,
+      "ultimaVisita": "2026-05-01"
+    },
+    {
+      "id": 1360,
+      "nome": "JUMARA APARECIDA DEL PAZZO",
+      "aniversarioMes": 12,
+      "aniversarioDia": 11,
+      "telefone": "(11) 98126-4473",
+      "totalVisitas": 5,
+      "totalGasto": 2948.71,
+      "ultimaVisita": "2026-01-24"
+    },
+    {
+      "id": 27,
+      "nome": "GISELE FERNANDES INOCENCIO (GI JAVARI)",
+      "aniversarioMes": 8,
+      "aniversarioDia": 18,
+      "telefone": "(11) 93906-8339",
+      "totalVisitas": 39,
+      "totalGasto": 2522.0,
+      "ultimaVisita": "2024-12-22"
+    },
+    {
+      "id": 4215,
+      "nome": "REGINA CELIA DE ANDRADE LUIZ",
+      "aniversarioMes": 11,
+      "aniversarioDia": 22,
+      "telefone": "(11) 99872-2421",
+      "totalVisitas": 14,
+      "totalGasto": 2183.67,
+      "ultimaVisita": "2026-03-14"
+    },
+    {
+      "id": 5090,
+      "nome": "EMANUEL ALVES DE SOUSA",
+      "aniversarioMes": 11,
+      "aniversarioDia": 13,
+      "telefone": "(11) 99769-6900",
+      "totalVisitas": 2,
+      "totalGasto": 2168.66,
+      "ultimaVisita": "2025-12-19"
+    },
+    {
+      "id": 46395,
+      "nome": "ALINE MANOEL VAIANO VEDOLIM",
+      "aniversarioMes": 11,
+      "aniversarioDia": 28,
+      "telefone": "(11) 99289-6158",
+      "totalVisitas": 1,
+      "totalGasto": 2074.32,
+      "ultimaVisita": "2025-04-05"
+    },
+    {
+      "id": 4220,
+      "nome": "RENATO CESAR DE OLIVEIRA",
+      "aniversarioMes": 3,
+      "aniversarioDia": 3,
+      "telefone": "(11) 98837-7375",
+      "totalVisitas": 14,
+      "totalGasto": 2032.04,
+      "ultimaVisita": "2026-02-21"
+    },
+    {
+      "id": 533,
+      "nome": "FERNANDO MARTINS  ABDALLA BOCHOUR",
+      "aniversarioMes": 1,
+      "aniversarioDia": 12,
+      "telefone": "(11) 94128-0112",
+      "totalVisitas": 6,
+      "totalGasto": 1868.36,
+      "ultimaVisita": "2026-01-23"
+    },
+    {
+      "id": 379,
+      "nome": "CRISTINA GIL DURAN",
+      "aniversarioMes": 4,
+      "aniversarioDia": 13,
+      "telefone": "(11) 95610-7544",
+      "totalVisitas": 1,
+      "totalGasto": 1785.0,
+      "ultimaVisita": "2024-12-06"
+    },
+    {
+      "id": 44711,
+      "nome": "RENAN DIAS",
+      "aniversarioMes": 5,
+      "aniversarioDia": 24,
+      "telefone": "11999217752",
+      "totalVisitas": 2,
+      "totalGasto": 1498.36,
+      "ultimaVisita": "2025-05-24"
+    },
+    {
+      "id": 47017,
+      "nome": "CRISTIAN FONSECA",
+      "aniversarioMes": 9,
+      "aniversarioDia": 12,
+      "telefone": "(11) 98692-2899",
+      "totalVisitas": 3,
+      "totalGasto": 1412.73,
+      "ultimaVisita": "2026-03-21"
+    },
+    {
+      "id": 52487,
+      "nome": "ALLAN ALCANTARA",
+      "aniversarioMes": 3,
+      "aniversarioDia": 28,
+      "telefone": "(11) 94735-0095",
+      "totalVisitas": 2,
+      "totalGasto": 1368.03,
+      "ultimaVisita": "2026-03-28"
+    },
+    {
+      "id": 43962,
+      "nome": "GABRIEL FERREIRA ALVES",
+      "aniversarioMes": 5,
+      "aniversarioDia": 31,
+      "telefone": "(11) 94154-5396",
+      "totalVisitas": 4,
+      "totalGasto": 1360.17,
+      "ultimaVisita": "2026-04-11"
+    },
+    {
+      "id": 1684,
+      "nome": "MARIA FERNANDA FIGUEIREDO",
+      "aniversarioMes": 6,
+      "aniversarioDia": 5,
+      "telefone": "(11) 94720-5291",
+      "totalVisitas": 3,
+      "totalGasto": 1349.16,
+      "ultimaVisita": "2025-11-29"
+    },
+    {
+      "id": 46343,
+      "nome": "YGOR GRACIANO",
+      "aniversarioMes": 7,
+      "aniversarioDia": 15,
+      "telefone": "(11) 97502-8022",
+      "totalVisitas": 3,
+      "totalGasto": 1318.52,
+      "ultimaVisita": "2026-02-21"
+    },
+    {
+      "id": 2504,
+      "nome": "KEILA RAFAELA DE SOUZA",
+      "aniversarioMes": 11,
+      "aniversarioDia": 25,
+      "telefone": "(11) 99913-0075",
+      "totalVisitas": 2,
+      "totalGasto": 1304.96,
+      "ultimaVisita": "2026-04-25"
+    },
+    {
+      "id": 107,
+      "nome": "GABRIELA AVILA GARCIA",
+      "aniversarioMes": 6,
+      "aniversarioDia": 25,
+      "telefone": "(11) 98819-9611",
+      "totalVisitas": 2,
+      "totalGasto": 1238.7,
+      "ultimaVisita": "2024-09-14"
+    },
+    {
+      "id": 48099,
+      "nome": "DIEGO PAGGIORO GONÇALVES",
+      "aniversarioMes": 11,
+      "aniversarioDia": 19,
+      "telefone": "(11) 94747-9574",
+      "totalVisitas": 5,
+      "totalGasto": 1235.82,
+      "ultimaVisita": "2025-09-20"
+    },
+    {
+      "id": 50509,
+      "nome": "NOELI QUINTANA GOEDERT",
+      "aniversarioMes": 2,
+      "aniversarioDia": 6,
+      "telefone": "(11) 97990-8854",
+      "totalVisitas": 1,
+      "totalGasto": 1224.55,
+      "ultimaVisita": "2025-08-01"
+    },
+    {
+      "id": 44157,
+      "nome": "THAUNA PERROTTA",
+      "aniversarioMes": 12,
+      "aniversarioDia": 26,
+      "telefone": "(11) 9559-0261",
+      "totalVisitas": 2,
+      "totalGasto": 1219.3,
+      "ultimaVisita": "2026-02-28"
+    },
+    {
+      "id": 3053,
+      "nome": "EVANDRO MACIEL DOS SANTOS DA SILVA",
+      "aniversarioMes": 2,
+      "aniversarioDia": 27,
+      "telefone": "(11) 99153-8712",
+      "totalVisitas": 10,
+      "totalGasto": 1178.3,
+      "ultimaVisita": "2026-04-10"
+    },
+    {
+      "id": 1984,
+      "nome": "NADINE CARVALHO TOLEDO",
+      "aniversarioMes": 2,
+      "aniversarioDia": 8,
+      "telefone": "(11) 98554-8524",
+      "totalVisitas": 2,
+      "totalGasto": 1166.03,
+      "ultimaVisita": "2025-02-08"
+    },
+    {
+      "id": 55036,
+      "nome": "MARAYAH MIKAELA PICCINNI PINTOS",
+      "aniversarioMes": 1,
+      "aniversarioDia": 22,
+      "telefone": "(11) 97066-1182",
+      "totalVisitas": 1,
+      "totalGasto": 1151.28,
+      "ultimaVisita": "2025-11-29"
+    },
+    {
+      "id": 52163,
+      "nome": "ANNA LUIZA BATISTA LEITE",
+      "aniversarioMes": 2,
+      "aniversarioDia": 16,
+      "telefone": "(13) 99701-5588",
+      "totalVisitas": 1,
+      "totalGasto": 1141.84,
+      "ultimaVisita": "2025-09-06"
+    },
+    {
+      "id": 47776,
+      "nome": "Leticia souza de oliveira",
+      "aniversarioMes": 5,
+      "aniversarioDia": 17,
+      "telefone": "(11) 98448-3921",
+      "totalVisitas": 1,
+      "totalGasto": 1101.3,
+      "ultimaVisita": "2025-05-17"
+    },
+    {
+      "id": 43845,
+      "nome": "MONICA VALERIA",
+      "aniversarioMes": 1,
+      "aniversarioDia": 23,
+      "telefone": "(11) 95204-9673",
+      "totalVisitas": 2,
+      "totalGasto": 1092.94,
+      "ultimaVisita": "2026-01-17"
+    },
+    {
+      "id": 45427,
+      "nome": "RICARDO REA",
+      "aniversarioMes": 7,
+      "aniversarioDia": 18,
+      "telefone": "(11) 99608-5458",
+      "totalVisitas": 2,
+      "totalGasto": 1091.6,
+      "ultimaVisita": "2025-04-05"
+    },
+    {
+      "id": 9701,
+      "nome": "ARTUR ALMEIDA",
+      "aniversarioMes": 5,
+      "aniversarioDia": 20,
+      "telefone": "(93) 99100-4037",
+      "totalVisitas": 2,
+      "totalGasto": 1081.5,
+      "ultimaVisita": "2024-04-20"
+    },
+    {
+      "id": 8306,
+      "nome": "joyce malta",
+      "aniversarioMes": 2,
+      "aniversarioDia": 9,
+      "telefone": "(11) 98668-4476",
+      "totalVisitas": 4,
+      "totalGasto": 1059.69,
+      "ultimaVisita": "2025-10-04"
+    },
+    {
+      "id": 705,
+      "nome": "RAFAEL LIMA PEREIRA",
+      "aniversarioMes": 11,
+      "aniversarioDia": 20,
+      "telefone": "(11) 96676-7687",
+      "totalVisitas": 2,
+      "totalGasto": 1037.03,
+      "ultimaVisita": "2025-01-24"
+    },
+    {
+      "id": 2866,
+      "nome": "TATIANA VILELA VALLOCI",
+      "aniversarioMes": 6,
+      "aniversarioDia": 1,
+      "telefone": "(11) 91062-0370",
+      "totalVisitas": 8,
+      "totalGasto": 1033.94,
+      "ultimaVisita": "2025-11-15"
+    },
+    {
+      "id": 46152,
+      "nome": "MATHEUS BENETTI SIMÔES",
+      "aniversarioMes": 9,
+      "aniversarioDia": 6,
+      "telefone": "(11) 99297-9096",
+      "totalVisitas": 4,
+      "totalGasto": 1020.43,
+      "ultimaVisita": "2026-04-26"
+    },
+    {
+      "id": 59340,
+      "nome": "ANA LEE SANCHES DO NASCIMENTO SIRO",
+      "aniversarioMes": 5,
+      "aniversarioDia": 31,
+      "telefone": "(11) 95677-8052",
+      "totalVisitas": 1,
+      "totalGasto": 1004.01,
+      "ultimaVisita": "2026-04-18"
+    },
+    {
+      "id": 44137,
+      "nome": "VIVIANE REZENDE",
+      "aniversarioMes": 1,
+      "aniversarioDia": 8,
+      "telefone": "",
+      "totalVisitas": 2,
+      "totalGasto": 942.64,
+      "ultimaVisita": "2025-08-23"
+    },
+    {
+      "id": 8883,
+      "nome": "marluce miller",
+      "aniversarioMes": 8,
+      "aniversarioDia": 27,
+      "telefone": "(11) 94055-2999",
+      "totalVisitas": 2,
+      "totalGasto": 941.57,
+      "ultimaVisita": "2026-02-06"
+    },
+    {
+      "id": 9522,
+      "nome": "RITA DE KASSIA",
+      "aniversarioMes": 4,
+      "aniversarioDia": 28,
+      "telefone": "(11) 94720-2282",
+      "totalVisitas": 9,
+      "totalGasto": 933.12,
+      "ultimaVisita": "2026-03-14"
+    },
+    {
+      "id": 51363,
+      "nome": "VITOR PEREIRA NASCIMENTO",
+      "aniversarioMes": 8,
+      "aniversarioDia": 15,
+      "telefone": "(11) 95027-7474",
+      "totalVisitas": 2,
+      "totalGasto": 931.61,
+      "ultimaVisita": "2025-08-23"
+    },
+    {
+      "id": 44102,
+      "nome": "LEONARDO FERNANDES CYRILLO",
+      "aniversarioMes": 8,
+      "aniversarioDia": 18,
+      "telefone": "(11) 99530-4945",
+      "totalVisitas": 2,
+      "totalGasto": 921.44,
+      "ultimaVisita": "2025-08-23"
+    },
+    {
+      "id": 55197,
+      "nome": "VANESSA DIAS DA SILVA",
+      "aniversarioMes": 12,
+      "aniversarioDia": 5,
+      "telefone": "(11) 99313-6378",
+      "totalVisitas": 1,
+      "totalGasto": 908.72,
+      "ultimaVisita": "2025-12-06"
+    },
+    {
+      "id": 56408,
+      "nome": "RAFAEL GOUVEIA",
+      "aniversarioMes": 3,
+      "aniversarioDia": 31,
+      "telefone": "(11) 94733-6554",
+      "totalVisitas": 1,
+      "totalGasto": 908.6,
+      "ultimaVisita": "2026-01-10"
+    },
+    {
+      "id": 51135,
+      "nome": "THALITA DA SILVA ASSUNÇÃO",
+      "aniversarioMes": 4,
+      "aniversarioDia": 5,
+      "telefone": "(11) 96447-3568",
+      "totalVisitas": 1,
+      "totalGasto": 906.72,
+      "ultimaVisita": "2025-08-15"
+    },
+    {
+      "id": 44712,
+      "nome": "LARISSA CHACON",
+      "aniversarioMes": 10,
+      "aniversarioDia": 27,
+      "telefone": "(11) 98488-0150",
+      "totalVisitas": 3,
+      "totalGasto": 899.66,
+      "ultimaVisita": "2026-02-07"
+    },
+    {
+      "id": 45398,
+      "nome": "EDNALDO MARTINS",
+      "aniversarioMes": 1,
+      "aniversarioDia": 29,
+      "telefone": "(11) 99784-1191",
+      "totalVisitas": 2,
+      "totalGasto": 893.22,
+      "ultimaVisita": "2026-02-14"
+    },
+    {
+      "id": 9517,
+      "nome": "gabriel ferreira alves",
+      "aniversarioMes": 3,
+      "aniversarioDia": 1,
+      "telefone": "(11) 97132-4955",
+      "totalVisitas": 6,
+      "totalGasto": 888.88,
+      "ultimaVisita": "2026-02-21"
+    },
+    {
+      "id": 51816,
+      "nome": "JACQUELINE DE GENOVA SONA",
+      "aniversarioMes": 4,
+      "aniversarioDia": 15,
+      "telefone": "(11) 97525-8395",
+      "totalVisitas": 1,
+      "totalGasto": 872.48,
+      "ultimaVisita": "2025-08-30"
+    },
+    {
+      "id": 44012,
+      "nome": "THIAGO ANTONIO",
+      "aniversarioMes": 4,
+      "aniversarioDia": 13,
+      "telefone": "(11) 95000-1455",
+      "totalVisitas": 4,
+      "totalGasto": 868.54,
+      "ultimaVisita": "2026-04-11"
+    },
+    {
+      "id": 59144,
+      "nome": "THIAGO COLOMBI MORAES",
+      "aniversarioMes": 7,
+      "aniversarioDia": 14,
+      "telefone": "(11) 94234-1407",
+      "totalVisitas": 1,
+      "totalGasto": 862.08,
+      "ultimaVisita": "2026-04-11"
+    },
+    {
+      "id": 43793,
+      "nome": "elias soares",
+      "aniversarioMes": 9,
+      "aniversarioDia": 28,
+      "telefone": "(11) 98489-9538",
+      "totalVisitas": 2,
+      "totalGasto": 861.33,
+      "ultimaVisita": "2025-05-31"
+    },
+    {
+      "id": 44113,
+      "nome": "THAYSE SOUZA",
+      "aniversarioMes": 1,
+      "aniversarioDia": 3,
+      "telefone": "(11) 9425-8998",
+      "totalVisitas": 1,
+      "totalGasto": 861.31,
+      "ultimaVisita": "2025-02-08"
+    },
+    {
+      "id": 4086,
+      "nome": "DIEGO DINIZ",
+      "aniversarioMes": 10,
+      "aniversarioDia": 4,
+      "telefone": "(11) 95658-8158",
+      "totalVisitas": 6,
+      "totalGasto": 853.04,
+      "ultimaVisita": "2026-01-17"
+    }
+  ],
+  "maisFrequentes": [
+    {
+      "id": 8479,
+      "nome": "GABRIEL MARESI (FUNCIONÁRIO)",
+      "aniversarioMes": 1,
+      "aniversarioDia": 20,
+      "telefone": "(11) 95390-6958",
+      "totalVisitas": 58,
+      "totalGasto": 5209.4,
+      "ultimaVisita": "2026-05-01"
+    },
+    {
+      "id": 27,
+      "nome": "GISELE FERNANDES INOCENCIO (GI JAVARI)",
+      "aniversarioMes": 8,
+      "aniversarioDia": 18,
+      "telefone": "(11) 93906-8339",
+      "totalVisitas": 39,
+      "totalGasto": 2522.0,
+      "ultimaVisita": "2024-12-22"
+    },
+    {
+      "id": 4215,
+      "nome": "REGINA CELIA DE ANDRADE LUIZ",
+      "aniversarioMes": 11,
+      "aniversarioDia": 22,
+      "telefone": "(11) 99872-2421",
+      "totalVisitas": 14,
+      "totalGasto": 2183.67,
+      "ultimaVisita": "2026-03-14"
+    },
+    {
+      "id": 4220,
+      "nome": "RENATO CESAR DE OLIVEIRA",
+      "aniversarioMes": 3,
+      "aniversarioDia": 3,
+      "telefone": "(11) 98837-7375",
+      "totalVisitas": 14,
+      "totalGasto": 2032.04,
+      "ultimaVisita": "2026-02-21"
+    },
+    {
+      "id": 3,
+      "nome": "RENÊ CASTRO",
+      "aniversarioMes": 11,
+      "aniversarioDia": 21,
+      "telefone": "(11) 99447-4544",
+      "totalVisitas": 14,
+      "totalGasto": 39.8,
+      "ultimaVisita": "2026-01-24"
+    },
+    {
+      "id": 3053,
+      "nome": "EVANDRO MACIEL DOS SANTOS DA SILVA",
+      "aniversarioMes": 2,
+      "aniversarioDia": 27,
+      "telefone": "(11) 99153-8712",
+      "totalVisitas": 10,
+      "totalGasto": 1178.3,
+      "ultimaVisita": "2026-04-10"
+    },
+    {
+      "id": 4256,
+      "nome": "Giovanna Castro Gonçalves ( funcionário )",
+      "aniversarioMes": 10,
+      "aniversarioDia": 9,
+      "telefone": "(11) 95138-7003",
+      "totalVisitas": 10,
+      "totalGasto": 611.65,
+      "ultimaVisita": "2026-03-14"
+    },
+    {
+      "id": 9522,
+      "nome": "RITA DE KASSIA",
+      "aniversarioMes": 4,
+      "aniversarioDia": 28,
+      "telefone": "(11) 94720-2282",
+      "totalVisitas": 9,
+      "totalGasto": 933.12,
+      "ultimaVisita": "2026-03-14"
+    },
+    {
+      "id": 71,
+      "nome": "CAMILLA CASTRO DE JESUS",
+      "aniversarioMes": 11,
+      "aniversarioDia": 7,
+      "telefone": "(11) 98606-4664",
+      "totalVisitas": 9,
+      "totalGasto": 420.15,
+      "ultimaVisita": "2025-12-13"
+    },
+    {
+      "id": 2866,
+      "nome": "TATIANA VILELA VALLOCI",
+      "aniversarioMes": 6,
+      "aniversarioDia": 1,
+      "telefone": "(11) 91062-0370",
+      "totalVisitas": 8,
+      "totalGasto": 1033.94,
+      "ultimaVisita": "2025-11-15"
+    },
+    {
+      "id": 1855,
+      "nome": "RODOLFO DA CRUZ SOARES",
+      "aniversarioMes": 2,
+      "aniversarioDia": 8,
+      "telefone": "(11) 99470-5048",
+      "totalVisitas": 8,
+      "totalGasto": 753.8,
+      "ultimaVisita": "2025-11-29"
+    },
+    {
+      "id": 324,
+      "nome": "AMANDA ACUNZO",
+      "aniversarioMes": 2,
+      "aniversarioDia": 4,
+      "telefone": "(11) 94890-0906",
+      "totalVisitas": 6,
+      "totalGasto": 371.7,
+      "ultimaVisita": "2026-04-11"
+    },
+    {
+      "id": 2747,
+      "nome": "LUANA GARCIA SANTOS",
+      "aniversarioMes": 5,
+      "aniversarioDia": 13,
+      "telefone": "(11) 98143-6736",
+      "totalVisitas": 6,
+      "totalGasto": 418.04,
+      "ultimaVisita": "2025-10-11"
+    },
+    {
+      "id": 9517,
+      "nome": "gabriel ferreira alves",
+      "aniversarioMes": 3,
+      "aniversarioDia": 1,
+      "telefone": "(11) 97132-4955",
+      "totalVisitas": 6,
+      "totalGasto": 888.88,
+      "ultimaVisita": "2026-02-21"
+    },
+    {
+      "id": 533,
+      "nome": "FERNANDO MARTINS  ABDALLA BOCHOUR",
+      "aniversarioMes": 1,
+      "aniversarioDia": 12,
+      "telefone": "(11) 94128-0112",
+      "totalVisitas": 6,
+      "totalGasto": 1868.36,
+      "ultimaVisita": "2026-01-23"
+    },
+    {
+      "id": 4086,
+      "nome": "DIEGO DINIZ",
+      "aniversarioMes": 10,
+      "aniversarioDia": 4,
+      "telefone": "(11) 95658-8158",
+      "totalVisitas": 6,
+      "totalGasto": 853.04,
+      "ultimaVisita": "2026-01-17"
+    },
+    {
+      "id": 9516,
+      "nome": "fernando avila",
+      "aniversarioMes": 12,
+      "aniversarioDia": 7,
+      "telefone": "(11) 99684-7250",
+      "totalVisitas": 5,
+      "totalGasto": 625.76,
+      "ultimaVisita": "2025-08-23"
+    },
+    {
+      "id": 1360,
+      "nome": "JUMARA APARECIDA DEL PAZZO",
+      "aniversarioMes": 12,
+      "aniversarioDia": 11,
+      "telefone": "(11) 98126-4473",
+      "totalVisitas": 5,
+      "totalGasto": 2948.71,
+      "ultimaVisita": "2026-01-24"
+    },
+    {
+      "id": 791,
+      "nome": "INGRID DA GAMA CASTRO",
+      "aniversarioMes": 3,
+      "aniversarioDia": 17,
+      "telefone": "(11) 98240-5706",
+      "totalVisitas": 5,
+      "totalGasto": 238.86,
+      "ultimaVisita": "2025-11-16"
+    },
+    {
+      "id": 86,
+      "nome": "CARLA CHICONELO GADDI",
+      "aniversarioMes": 3,
+      "aniversarioDia": 6,
+      "telefone": "(11) 93062-2126",
+      "totalVisitas": 5,
+      "totalGasto": 824.99,
+      "ultimaVisita": "2026-03-07"
+    },
+    {
+      "id": 48099,
+      "nome": "DIEGO PAGGIORO GONÇALVES",
+      "aniversarioMes": 11,
+      "aniversarioDia": 19,
+      "telefone": "(11) 94747-9574",
+      "totalVisitas": 5,
+      "totalGasto": 1235.82,
+      "ultimaVisita": "2025-09-20"
+    },
+    {
+      "id": 3047,
+      "nome": "LETICIA MITSUGUI",
+      "aniversarioMes": 5,
+      "aniversarioDia": 23,
+      "telefone": "(11) 96022-6951",
+      "totalVisitas": 5,
+      "totalGasto": 643.8,
+      "ultimaVisita": "2024-09-07"
+    },
+    {
+      "id": 5,
+      "nome": "NATANE SIMOES MUSIAL (FUNCIONÁRIO)",
+      "aniversarioMes": 3,
+      "aniversarioDia": 2,
+      "telefone": "(11) 91171-3954",
+      "totalVisitas": 5,
+      "totalGasto": 108.15,
+      "ultimaVisita": "2025-09-26"
+    },
+    {
+      "id": 1168,
+      "nome": "DEBORA ARANTES",
+      "aniversarioMes": 10,
+      "aniversarioDia": 21,
+      "telefone": "(11) 95239-3885",
+      "totalVisitas": 5,
+      "totalGasto": 229.98,
+      "ultimaVisita": "2025-10-25"
+    },
+    {
+      "id": 48156,
+      "nome": "VIVIANE MUNHOZ",
+      "aniversarioMes": 2,
+      "aniversarioDia": 8,
+      "telefone": "(11) 95896-2234",
+      "totalVisitas": 4,
+      "totalGasto": 556.37,
+      "ultimaVisita": "2026-02-08"
+    },
+    {
+      "id": 1819,
+      "nome": "MARCELO MAZOTTI NETO",
+      "aniversarioMes": 5,
+      "aniversarioDia": 15,
+      "telefone": "(11) 99873-0730",
+      "totalVisitas": 4,
+      "totalGasto": 759.9,
+      "ultimaVisita": "2025-04-27"
+    },
+    {
+      "id": 96,
+      "nome": "PATRICIA VICENTINI VERPA",
+      "aniversarioMes": 7,
+      "aniversarioDia": 9,
+      "telefone": "(11) 97370-2655",
+      "totalVisitas": 4,
+      "totalGasto": 511.72,
+      "ultimaVisita": "2026-03-07"
+    },
+    {
+      "id": 8306,
+      "nome": "joyce malta",
+      "aniversarioMes": 2,
+      "aniversarioDia": 9,
+      "telefone": "(11) 98668-4476",
+      "totalVisitas": 4,
+      "totalGasto": 1059.69,
+      "ultimaVisita": "2025-10-04"
+    },
+    {
+      "id": 45595,
+      "nome": "VIVIANE FERREIRA DA FONSECA",
+      "aniversarioMes": 9,
+      "aniversarioDia": 24,
+      "telefone": "(11) 98528-0670",
+      "totalVisitas": 4,
+      "totalGasto": 291.22,
+      "ultimaVisita": "2026-02-28"
+    },
+    {
+      "id": 53991,
+      "nome": "GISLAINE MARIA",
+      "aniversarioMes": 1,
+      "aniversarioDia": 16,
+      "telefone": "(11) 96094-2554",
+      "totalVisitas": 4,
+      "totalGasto": 300.39,
+      "ultimaVisita": "2026-01-09"
+    },
+    {
+      "id": 1483,
+      "nome": "MAYARA SOARES DE OLIVEIRA",
+      "aniversarioMes": 4,
+      "aniversarioDia": 25,
+      "telefone": "(11) 99395-3090",
+      "totalVisitas": 4,
+      "totalGasto": 587.0,
+      "ultimaVisita": "2025-02-15"
+    },
+    {
+      "id": 1142,
+      "nome": "BRUNO BERTALHA",
+      "aniversarioMes": 5,
+      "aniversarioDia": 9,
+      "telefone": "(11) 96117-2485",
+      "totalVisitas": 4,
+      "totalGasto": 326.61,
+      "ultimaVisita": "2025-10-25"
+    },
+    {
+      "id": 43615,
+      "nome": "ANANDA SOARES LOPES",
+      "aniversarioMes": 11,
+      "aniversarioDia": 15,
+      "telefone": "(11) 96451-8510",
+      "totalVisitas": 4,
+      "totalGasto": 655.97,
+      "ultimaVisita": "2026-02-07"
+    },
+    {
+      "id": 44616,
+      "nome": "PAOLA VERONA",
+      "aniversarioMes": 2,
+      "aniversarioDia": 17,
+      "telefone": "(11) 96082-0550",
+      "totalVisitas": 4,
+      "totalGasto": 240.14,
+      "ultimaVisita": "2026-02-07"
+    },
+    {
+      "id": 45476,
+      "nome": "JOSE AUGUSTO NUNES DA SILVA FILHO",
+      "aniversarioMes": 2,
+      "aniversarioDia": 24,
+      "telefone": "(11) 94503-5485",
+      "totalVisitas": 4,
+      "totalGasto": 837.24,
+      "ultimaVisita": "2026-01-23"
+    },
+    {
+      "id": 46347,
+      "nome": "BIANCA CAREON",
+      "aniversarioMes": 9,
+      "aniversarioDia": 19,
+      "telefone": "(11) 97014-9322",
+      "totalVisitas": 4,
+      "totalGasto": 231.62,
+      "ultimaVisita": "2026-02-21"
+    },
+    {
+      "id": 1056,
+      "nome": "GIOVANNA NASCIMENTO",
+      "aniversarioMes": 3,
+      "aniversarioDia": 5,
+      "telefone": "(11) 94002-4146",
+      "totalVisitas": 4,
+      "totalGasto": 488.66,
+      "ultimaVisita": "2026-01-17"
+    },
+    {
+      "id": 43962,
+      "nome": "GABRIEL FERREIRA ALVES",
+      "aniversarioMes": 5,
+      "aniversarioDia": 31,
+      "telefone": "(11) 94154-5396",
+      "totalVisitas": 4,
+      "totalGasto": 1360.17,
+      "ultimaVisita": "2026-04-11"
+    },
+    {
+      "id": 931,
+      "nome": "GUSTAVO GOMES AFFONSO",
+      "aniversarioMes": 10,
+      "aniversarioDia": 22,
+      "telefone": "(11) 95201-3112",
+      "totalVisitas": 4,
+      "totalGasto": 484.58,
+      "ultimaVisita": "2026-01-17"
+    },
+    {
+      "id": 44012,
+      "nome": "THIAGO ANTONIO",
+      "aniversarioMes": 4,
+      "aniversarioDia": 13,
+      "telefone": "(11) 95000-1455",
+      "totalVisitas": 4,
+      "totalGasto": 868.54,
+      "ultimaVisita": "2026-04-11"
+    },
+    {
+      "id": 46152,
+      "nome": "MATHEUS BENETTI SIMÔES",
+      "aniversarioMes": 9,
+      "aniversarioDia": 6,
+      "telefone": "(11) 99297-9096",
+      "totalVisitas": 4,
+      "totalGasto": 1020.43,
+      "ultimaVisita": "2026-04-26"
+    },
+    {
+      "id": 48140,
+      "nome": "CRISTINA FERRI",
+      "aniversarioMes": 1,
+      "aniversarioDia": 27,
+      "telefone": "(11) 96193-6253",
+      "totalVisitas": 3,
+      "totalGasto": 334.94,
+      "ultimaVisita": "2026-02-08"
+    },
+    {
+      "id": 43874,
+      "nome": "eliete silvana",
+      "aniversarioMes": 4,
+      "aniversarioDia": 11,
+      "telefone": "(11) 99940-1696",
+      "totalVisitas": 3,
+      "totalGasto": 775.88,
+      "ultimaVisita": "2026-01-25"
+    },
+    {
+      "id": 1529,
+      "nome": "ANDREA CARDOSO",
+      "aniversarioMes": 3,
+      "aniversarioDia": 7,
+      "telefone": "(11) 98957-8647",
+      "totalVisitas": 3,
+      "totalGasto": 276.23,
+      "ultimaVisita": "2025-09-21"
+    },
+    {
+      "id": 47768,
+      "nome": "WALDIRENE DOS SANTOS MUNHOS",
+      "aniversarioMes": 4,
+      "aniversarioDia": 3,
+      "telefone": "(11) 97981-5220",
+      "totalVisitas": 3,
+      "totalGasto": 266.79,
+      "ultimaVisita": "2025-08-09"
+    },
+    {
+      "id": 4175,
+      "nome": "ALESSANDRA SOARES DOS SANTOS",
+      "aniversarioMes": 5,
+      "aniversarioDia": 25,
+      "telefone": "(11) 99795-1472",
+      "totalVisitas": 3,
+      "totalGasto": 721.05,
+      "ultimaVisita": "2025-09-27"
+    },
+    {
+      "id": 9515,
+      "nome": "claudia cassia ferreira avila",
+      "aniversarioMes": 9,
+      "aniversarioDia": 8,
+      "telefone": "(11) 98182-3709",
+      "totalVisitas": 3,
+      "totalGasto": 342.17,
+      "ultimaVisita": "2026-02-21"
+    },
+    {
+      "id": 7291,
+      "nome": "JANAINA AVALONE",
+      "aniversarioMes": 12,
+      "aniversarioDia": 26,
+      "telefone": "(11) 99880-3097",
+      "totalVisitas": 3,
+      "totalGasto": 464.9,
+      "ultimaVisita": "2024-06-23"
+    },
+    {
+      "id": 747,
+      "nome": "ROGERIO DAMASIO DE OLIVEIRA",
+      "aniversarioMes": 3,
+      "aniversarioDia": 15,
+      "telefone": "(11) 99968-7712",
+      "totalVisitas": 3,
+      "totalGasto": 669.28,
+      "ultimaVisita": "2025-03-14"
+    },
+    {
+      "id": 9523,
+      "nome": "ESDRAS FELIPE",
+      "aniversarioMes": 4,
+      "aniversarioDia": 8,
+      "telefone": "(11) 94717-0446",
+      "totalVisitas": 3,
+      "totalGasto": 674.44,
+      "ultimaVisita": "2025-08-23"
+    }
+  ],
+  "fidelidade": {
+    "vip": {
+      "qtd": 7,
+      "label": "VIP (10+ visitas)"
+    },
+    "regular": {
+      "qtd": 116,
+      "label": "Regular (3-9 visitas)"
+    },
+    "ocasional": {
+      "qtd": 9380,
+      "label": "Ocasional (1-2 visitas)"
+    },
+    "semCompra": {
+      "qtd": 10219,
+      "label": "Sem compras registradas"
+    }
+  }
+}

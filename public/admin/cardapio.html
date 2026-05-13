@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio — Javari StrEat Park</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4a90e2; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 0; box-shadow: 0 4px 8px rgba(0,0,0,.1); position: relative; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+        .header h1 { color: white !important; font-size: 1.4em; margin: 0; padding-right: 50px; }
+        .header p { color: white; font-size: 0.8em; margin-top: 4px; }
+        .header .logout-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.2); color: white; border: 1px solid rgba(255,255,255,.4); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: background .2s; }
+        .header .logout-btn:hover { background: rgba(255,255,255,.3); }
+
+        .admin-nav { display: flex; background: white; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,.08); margin-bottom: 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        .admin-nav a { flex: 1; text-align: center; padding: 14px 8px; text-decoration: none; color: #666; font-weight: 600; font-size: 13px; border-bottom: 3px solid transparent; transition: all .2s; }
+        .admin-nav a:hover { background: #f8f9fa; }
+        .admin-nav a.active { color: #4a90e2; border-bottom-color: #4a90e2; background: #f0f7ff; }
+
+        .section-card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 20px; }
+
+        .cat-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+        .cat-tabs::-webkit-scrollbar { height: 4px; }
+        .cat-tabs::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .cat-tab { white-space: nowrap; padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd; background: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; color: #555; }
+        .cat-tab:hover { border-color: #4a90e2; color: #4a90e2; }
+        .cat-tab.active { background: #4a90e2; color: white; border-color: #4a90e2; }
+
+        .actions-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .add-btn { display: inline-flex; align-items: center; gap: 6px; background: #4a90e2; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+        .add-btn:hover { background: #357abd; }
+        .add-btn.secondary { background: #6b7280; }
+        .add-btn.secondary:hover { background: #4b5563; }
+        .add-btn.danger { background: #e53e3e; }
+        .add-btn.danger:hover { background: #c53030; }
+        .add-btn.success { background: #38a169; }
+        .add-btn.success:hover { background: #2f855a; }
+
+        .item-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; transition: border-color .2s; }
+        .item-card:hover { border-color: #4a90e2; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-name { font-weight: 600; font-size: .95em; color: #222; }
+        .item-desc { font-size: .82em; color: #888; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-price { font-weight: 700; color: #4a90e2; font-size: .95em; white-space: nowrap; }
+        .item-price.consult { color: #999; font-weight: 500; font-style: italic; }
+        .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .item-actions button { background: none; border: 1px solid #ddd; border-radius: 6px; padding: 5px 9px; cursor: pointer; font-size: 12px; transition: all .2s; }
+        .item-actions .edit-btn:hover { border-color: #4a90e2; color: #4a90e2; }
+        .item-actions .delete-btn:hover { border-color: #e53e3e; color: #e53e3e; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+        .empty-state p { font-size: .95em; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,.6); justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background-color: #fefefe; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,.2); width: 90%; max-width: 480px; position: relative; transform: scale(.95); opacity: 0; animation: fadeInScale .3s forwards; }
+        @keyframes fadeInScale { to { transform: scale(1); opacity: 1; } }
+        .close-button { color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 28px; font-weight: bold; cursor: pointer; transition: color .2s; }
+        .close-button:hover { color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; font-family: inherit; transition: border-color .2s; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74,144,226,.2); }
+        .submit-button { background-color: #4a90e2; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: 600; transition: background-color .2s ease; width: 100%; }
+        .submit-button:hover { background-color: #357ABD; }
+
+        .confirm-modal .modal-content { max-width: 380px; text-align: center; }
+        .confirm-modal p { margin-bottom: 20px; font-size: 1em; color: #555; }
+        .confirm-actions { display: flex; gap: 12px; }
+        .confirm-actions button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: .95em; border: none; }
+        .confirm-cancel { background: #e5e7eb; color: #333; }
+        .confirm-delete { background: #e53e3e; color: white; }
+
+        .message-box { display: none; position: fixed; z-index: 1001; left: 50%; top: 50%; transform: translate(-50%,-50%); background-color: #4CAF50; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,.2); font-size: 1.1em; text-align: center; opacity: 0; animation: fadeInOut 3s forwards; }
+        .message-box.error { background-color: #e53e3e; }
+        @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; display: none; } }
+
+        .auth-loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; font-size: 18px; color: #777; }
+
+        .cat-count { font-size: 12px; color: #999; font-weight: 400; margin-left: 4px; }
+        .items-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+        .items-header h3 { font-size: 1.05em; font-weight: 700; color: #333; }
+        @media(max-width:480px){
+            .container{padding:12px}
+            .header{padding:16px 20px}
+        }
+        @media(min-width:640px){
+            .header h1{font-size:1.8em;padding-right:0}
+            .admin-nav a{font-size:14px}
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-loading" class="auth-loading">Verificando autenticação...</div>
+
+    <div class="container" id="app-container" style="display:none;">
+        <header class="header">
+            <h1 class="text-3xl font-bold">Central de Reservas</h1>
+            <p id="user-email-display"></p>
+            <button class="logout-btn" id="logoutBtn">Sair</button>
+        </header>
+
+        <nav class="admin-nav">
+            <a href="/admin/dashboard.html">Dashboard</a>
+            <a href="/admin/reservas.html">Reservas</a>
+            <a href="/admin/agenda.html">Agenda</a>
+            <a href="/admin/cardapio.html" class="active">Cardápio</a>
+        </nav>
+
+        <div class="section-card">
+            <div class="actions-bar">
+                <button class="add-btn" id="add-category-btn">+ Categoria</button>
+                <button class="add-btn success" id="import-json-btn">Importar JSON</button>
+            </div>
+            <div class="cat-tabs" id="cat-tabs"></div>
+        </div>
+
+        <div class="section-card" id="items-section">
+            <div class="items-header">
+                <h3 id="items-section-title">Selecione uma categoria</h3>
+                <div class="flex gap-2">
+                    <button class="add-btn" id="add-item-btn" style="display:none">+ Item</button>
+                    <button class="add-btn danger" id="delete-category-btn" style="display:none;font-size:12px;padding:8px 12px">Excluir Categoria</button>
+                </div>
+            </div>
+            <div id="items-list">
+                <div class="empty-state"><p>Selecione uma categoria para ver os itens.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div class="modal" id="category-modal">
+        <div class="modal-content">
+            <span class="close-button" data-close="category-modal">&times;</span>
+            <h2 id="category-modal-title" class="text-xl font-bold mb-4">Nova Categoria</h2>
+            <form id="category-form">
+                <input type="hidden" id="cat-edit-id" />
+                <div class="form-group">
+                    <label for="cat-name">Nome da Categoria *</label>
+                    <input type="text" id="cat-name" placeholder="Ex: CERVEJAS ARTESANAIS" required />
+                </div>
+                <button type="submit" class="submit-button">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Item Modal -->
+    <div class="modal" id="item-modal">
+        <div class="modal-content">
+            <span class="close-button" data-close="item-modal">&times;</span>
+            <h2 id="item-modal-title" class="text-xl font-bold mb-4">Novo Item</h2>
+            <form id="item-form">
+                <input type="hidden" id="item-edit-id" />
+                <div class="form-group">
+                    <label for="item-name">Nome *</label>
+                    <input type="text" id="item-name" placeholder="Ex: IPA Artesanal" required />
+                </div>
+                <div class="form-group">
+                    <label for="item-price">Preço (R$)</label>
+                    <input type="text" id="item-price" placeholder="Ex: 25,90 (deixe vazio para 'Consultar')" inputmode="decimal" />
+                </div>
+                <div class="form-group">
+                    <label for="item-description">Descrição</label>
+                    <textarea id="item-description" rows="2" placeholder="Descrição do item (opcional)"></textarea>
+                </div>
+                <button type="submit" class="submit-button">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal confirm-modal" id="confirm-modal">
+        <div class="modal-content">
+            <h2 class="text-lg font-bold mb-2">Confirmar Exclusão</h2>
+            <p id="confirm-message">Deseja realmente excluir?</p>
+            <div class="confirm-actions">
+                <button class="confirm-cancel" data-close="confirm-modal">Cancelar</button>
+                <button class="confirm-delete" id="confirm-delete-btn">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import JSON Modal -->
+    <div class="modal" id="import-modal">
+        <div class="modal-content">
+            <span class="close-button" data-close="import-modal">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Importar Cardápio (JSON)</h2>
+            <p class="text-sm text-gray-500 mb-4">Importa os dados do arquivo <code>cardapio.json</code> público. Categorias existentes serão mantidas; novas serão adicionadas.</p>
+            <button class="submit-button" id="run-import-btn">Importar de /data/cardapio.json</button>
+            <p id="import-status" class="text-sm text-center mt-3" style="display:none"></p>
+        </div>
+    </div>
+
+    <div id="message-box" class="message-box"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
+            authDomain: "central-de-reservas-jsp.firebaseapp.com",
+            projectId: "central-de-reservas-jsp",
+            storageBucket: "central-de-reservas-jsp.firebasestorage.app",
+            appId: "1:574859111927:web:83df67ed1865a59c0392f2"
+        };
+
+        const appId = firebaseConfig.projectId;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const $ = id => document.getElementById(id);
+        const messageBox = $('message-box');
+
+        let categories = [];
+        let selectedCatId = null;
+        let deleteAction = null;
+        let unsubscribe = null;
+
+        // Auth guard (sessionStorage)
+        const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
+        if (!session) { window.location.href = '/admin/index.html'; }
+        $('auth-loading').style.display = 'none';
+        $('app-container').style.display = 'block';
+        $('user-email-display').textContent = session ? session.email : '';
+        listenToCardapio();
+
+        $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('javari_admin_auth'); window.location.href = '/admin/index.html'; });
+
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = 'message-box' + (type === 'error' ? ' error' : '');
+            messageBox.style.display = 'block';
+            messageBox.style.animation = 'none';
+            void messageBox.offsetWidth;
+            messageBox.style.animation = 'fadeInOut 3s forwards';
+            setTimeout(() => { messageBox.style.display = 'none'; }, 3100);
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+        }
+
+        function slugify(str) {
+            return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+
+        // Firestore
+        function cardapioCol() {
+            return collection(db, `artifacts/${appId}/public/data/cardapio`);
+        }
+
+        function listenToCardapio() {
+            if (unsubscribe) unsubscribe();
+            unsubscribe = onSnapshot(cardapioCol(), (snap) => {
+                categories = [];
+                snap.forEach(d => {
+                    categories.push({ id: d.id, ...d.data() });
+                });
+                categories.sort((a, b) => (a.order || 0) - (b.order || 0));
+                renderCategoryTabs();
+                if (selectedCatId) {
+                    const exists = categories.find(c => c.id === selectedCatId);
+                    if (exists) renderItems(exists);
+                    else { selectedCatId = null; renderItems(null); }
+                }
+            });
+        }
+
+        // Render category tabs
+        function renderCategoryTabs() {
+            const container = $('cat-tabs');
+            container.innerHTML = categories.map(cat => {
+                const count = (cat.items || []).length;
+                return `<button class="cat-tab${cat.id === selectedCatId ? ' active' : ''}" data-id="${cat.id}">${escapeHtml(cat.name)}<span class="cat-count">(${count})</span></button>`;
+            }).join('');
+
+            container.querySelectorAll('.cat-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    selectedCatId = tab.dataset.id;
+                    const cat = categories.find(c => c.id === selectedCatId);
+                    renderCategoryTabs();
+                    renderItems(cat);
+                });
+            });
+        }
+
+        // Render items for selected category
+        function renderItems(cat) {
+            const list = $('items-list');
+            const title = $('items-section-title');
+            const addBtn = $('add-item-btn');
+            const delCatBtn = $('delete-category-btn');
+
+            if (!cat) {
+                title.textContent = 'Selecione uma categoria';
+                addBtn.style.display = 'none';
+                delCatBtn.style.display = 'none';
+                list.innerHTML = '<div class="empty-state"><p>Selecione uma categoria para ver os itens.</p></div>';
+                return;
+            }
+
+            title.textContent = cat.name;
+            addBtn.style.display = 'inline-flex';
+            delCatBtn.style.display = 'inline-flex';
+
+            const items = cat.items || [];
+            if (items.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>Nenhum item nesta categoria.</p></div>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const priceDisplay = item.price != null
+                    ? `R$ ${Number(item.price).toFixed(2).replace('.', ',')}`
+                    : (item.priceFormatted || 'Consultar');
+                const priceClass = item.price != null ? 'item-price' : 'item-price consult';
+                return `
+                    <div class="item-card" data-id="${item.id}">
+                        <div class="item-info">
+                            <div class="item-name">${escapeHtml(item.name)}</div>
+                            ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ''}
+                        </div>
+                        <div class="${priceClass}">${priceDisplay}</div>
+                        <div class="item-actions">
+                            <button class="edit-btn" onclick="window._editItem('${item.id}')">Editar</button>
+                            <button class="delete-btn" onclick="window._deleteItem('${item.id}')">Excluir</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // Parse price input (accepts "25,90" or "25.90")
+        function parsePrice(str) {
+            if (!str || !str.trim()) return null;
+            const cleaned = str.trim().replace(',', '.');
+            const val = parseFloat(cleaned);
+            return isNaN(val) ? null : val;
+        }
+
+        // Modal logic
+        function openModal(id) { $(id).classList.add('active'); }
+        function closeModal(id) { $(id).classList.remove('active'); }
+
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.close));
+        });
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id));
+        });
+
+        // Add Category
+        $('add-category-btn').addEventListener('click', () => {
+            $('category-modal-title').textContent = 'Nova Categoria';
+            $('category-form').reset();
+            $('cat-edit-id').value = '';
+            openModal('category-modal');
+        });
+
+        $('category-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = $('cat-name').value.trim();
+            if (!name) return;
+            const editId = $('cat-edit-id').value;
+
+            try {
+                if (editId) {
+                    const catRef = doc(db, `artifacts/${appId}/public/data/cardapio`, editId);
+                    const cat = categories.find(c => c.id === editId);
+                    await setDoc(catRef, { ...cat, name }, { merge: true });
+                    showMessage('Categoria atualizada!');
+                } else {
+                    const id = slugify(name) || generateId();
+                    const catRef = doc(db, `artifacts/${appId}/public/data/cardapio`, id);
+                    await setDoc(catRef, { name, order: categories.length, items: [] });
+                    selectedCatId = id;
+                    showMessage('Categoria criada!');
+                }
+                closeModal('category-modal');
+            } catch (err) {
+                console.error(err);
+                showMessage('Erro ao salvar categoria.', 'error');
+            }
+        });
+
+        // Delete Category
+        $('delete-category-btn').addEventListener('click', () => {
+            const cat = categories.find(c => c.id === selectedCatId);
+            if (!cat) return;
+            $('confirm-message').textContent = `Excluir a categoria "${cat.name}" e todos os seus itens?`;
+            deleteAction = async () => {
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/cardapio`, selectedCatId));
+                    selectedCatId = null;
+                    renderItems(null);
+                    showMessage('Categoria excluída.');
+                } catch (err) {
+                    console.error(err);
+                    showMessage('Erro ao excluir.', 'error');
+                }
+            };
+            openModal('confirm-modal');
+        });
+
+        // Add Item
+        $('add-item-btn').addEventListener('click', () => {
+            if (!selectedCatId) return;
+            $('item-modal-title').textContent = 'Novo Item';
+            $('item-form').reset();
+            $('item-edit-id').value = '';
+            openModal('item-modal');
+        });
+
+        // Edit Item
+        window._editItem = function(id) {
+            const cat = categories.find(c => c.id === selectedCatId);
+            if (!cat) return;
+            const item = (cat.items || []).find(i => i.id === id);
+            if (!item) return;
+            $('item-modal-title').textContent = 'Editar Item';
+            $('item-edit-id').value = item.id;
+            $('item-name').value = item.name;
+            $('item-price').value = item.price != null ? Number(item.price).toFixed(2).replace('.', ',') : '';
+            $('item-description').value = item.description || '';
+            openModal('item-modal');
+        };
+
+        // Submit Item
+        $('item-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const cat = categories.find(c => c.id === selectedCatId);
+            if (!cat) return;
+
+            const editId = $('item-edit-id').value;
+            const name = $('item-name').value.trim();
+            const price = parsePrice($('item-price').value);
+            const description = $('item-description').value.trim();
+
+            if (!name) return;
+
+            let items = [...(cat.items || [])];
+            if (editId) {
+                items = items.map(i => i.id === editId ? { ...i, name, price, description } : i);
+                showMessage('Item atualizado!');
+            } else {
+                items.push({ id: generateId(), name, price, description });
+                showMessage('Item adicionado!');
+            }
+
+            try {
+                const catRef = doc(db, `artifacts/${appId}/public/data/cardapio`, selectedCatId);
+                await setDoc(catRef, { ...cat, items }, { merge: true });
+                closeModal('item-modal');
+            } catch (err) {
+                console.error(err);
+                showMessage('Erro ao salvar item.', 'error');
+            }
+        });
+
+        // Delete Item
+        window._deleteItem = function(id) {
+            const cat = categories.find(c => c.id === selectedCatId);
+            if (!cat) return;
+            const item = (cat.items || []).find(i => i.id === id);
+            if (!item) return;
+            $('confirm-message').textContent = `Excluir "${item.name}"?`;
+            deleteAction = async () => {
+                const items = (cat.items || []).filter(i => i.id !== id);
+                try {
+                    const catRef = doc(db, `artifacts/${appId}/public/data/cardapio`, selectedCatId);
+                    await setDoc(catRef, { ...cat, items }, { merge: true });
+                    showMessage('Item excluído.');
+                } catch (err) {
+                    console.error(err);
+                    showMessage('Erro ao excluir.', 'error');
+                }
+            };
+            openModal('confirm-modal');
+        };
+
+        // Confirm delete (shared)
+        $('confirm-delete-btn').addEventListener('click', async () => {
+            if (deleteAction) { await deleteAction(); deleteAction = null; }
+            closeModal('confirm-modal');
+        });
+
+        // Import from JSON
+        $('import-json-btn').addEventListener('click', () => openModal('import-modal'));
+
+        $('run-import-btn').addEventListener('click', async () => {
+            const status = $('import-status');
+            status.style.display = 'block';
+            status.textContent = 'Importando...';
+            status.style.color = '#4a90e2';
+
+            try {
+                const res = await fetch('/data/cardapio.json');
+                if (!res.ok) throw new Error('Arquivo não encontrado');
+                const data = await res.json();
+
+                let imported = 0;
+                for (let i = 0; i < (data.categories || []).length; i++) {
+                    const cat = data.categories[i];
+                    const id = slugify(cat.category) || `cat-${i}`;
+                    const items = (cat.items || []).map(item => ({
+                        id: generateId(),
+                        name: item.name,
+                        price: item.price,
+                        priceFormatted: item.priceFormatted || '',
+                        description: item.description || ''
+                    }));
+                    const catRef = doc(db, `artifacts/${appId}/public/data/cardapio`, id);
+                    await setDoc(catRef, { name: cat.category, order: i, items });
+                    imported++;
+                }
+
+                status.textContent = `${imported} categorias importadas com sucesso!`;
+                status.style.color = '#38a169';
+                showMessage(`${imported} categorias importadas!`);
+            } catch (err) {
+                console.error(err);
+                status.textContent = 'Erro: ' + err.message;
+                status.style.color = '#e53e3e';
+            }
+        });
+    </script>
+</body>
+</html>

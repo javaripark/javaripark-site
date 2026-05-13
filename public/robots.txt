@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://javaripark.com.br/sitemap.xml
+
+Disallow: /admin/
+Disallow: /data/

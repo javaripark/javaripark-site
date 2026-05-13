@@ -1,0 +1,36 @@
+name: Sync Cardápio
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # Every day at 10:00 UTC (07:00 BRT)
+  workflow_dispatch:        # Manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Puppeteer
+        run: npm install puppeteer
+
+      - name: Scrape menu
+        run: node scripts/sync-cardapio.js
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git diff --quiet public/data/cardapio.json && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/cardapio.json
+          git commit -m "chore: sync cardápio from menudino"
+          git push

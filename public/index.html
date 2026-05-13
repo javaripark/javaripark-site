@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Javari StrEat Park — O quintal mais charmoso da Mooca</title>
+  <meta name="description" content="850m² de oásis urbano na Mooca. Música ao vivo, drinks autorais, cervejas artesanais, Bus Lounge e feijoada de domingo. Pet & kids friendly." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header" id="header">
+    <a href="#top" class="brand" aria-label="Javari StrEat Park">
+      <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--white" />
+      <img src="assets/images/logo-horizontal-black.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--black" />
+    </a>
+    <nav class="site-nav" aria-label="Navegação principal">
+      <a href="#copa" class="nav-copa">Copa 2026</a>
+      <a href="#manifesto">A casa</a>
+      <a href="#bus-lounge">Bus Lounge</a>
+      <a href="#cardapio">Cardápio</a>
+      <a href="#agenda">Agenda</a>
+      <a href="#galeria">Galeria</a>
+      <a href="#depoimentos">Quem vem</a>
+      <a href="#localizacao">Onde estamos</a>
+      <a href="/regras">Regras</a>
+      <a href="/blog">Blog</a>
+      <div class="nav-dropdown">
+        <a class="nav-dropdown-toggle" role="button" tabindex="0">Serviços <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5L6 7.5L9 4.5"/></svg></a>
+        <ul class="nav-dropdown-menu">
+          <li><a href="/convite">Convite personalizado</a></li>
+          <li><a href="/cotacao">Cotação de pacotes</a></li>
+          <li><a href="/fotos">Cobertura fotográfica</a></li>
+        </ul>
+      </div>
+      <a class="btn btn-primary magnetic" href="https://wa.me/+551120811544" target="_blank" rel="noopener">Reservar</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- ===== BOTTOM NAV (Mobile) ===== -->
+  <nav class="bottom-nav" aria-label="Navegação rápida">
+    <a href="#hero" class="bottom-nav-link active">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Início</span>
+    </a>
+    <a href="#cardapio" class="bottom-nav-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <span>Cardápio</span>
+    </a>
+    <a href="#agenda" class="bottom-nav-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Agenda</span>
+    </a>
+    <a href="#localizacao" class="bottom-nav-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>Mapa</span>
+    </a>
+    <a href="https://wa.me/+551120811544" class="bottom-nav-link bottom-nav-link--cta" target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <span>Reservar</span>
+    </a>
+  </nav>
+
+  <main id="top">
+
+    <!-- ===== HERO ===== -->
+    <section class="hero" id="hero">
+      <div class="hero-photo" id="hero-photo">
+        <img src="assets/images/quintal/quintal-hero.webp" alt="O quintal Javari StrEat Park na Mooca" />
+      </div>
+      <div class="hero-overlay" id="hero-overlay" aria-hidden="true"></div>
+      <canvas class="hero-flame" id="flame-canvas" aria-hidden="true"></canvas>
+
+      <div class="hero-content" id="hero-content">
+        <p class="hero-eyebrow"><span class="line"></span> desde 2018 <span class="line"></span></p>
+        <h1 class="hero-title">
+          <span class="word">O</span>
+          <span class="word">QUINTAL</span>
+          <span class="word word--accent">mais charmoso</span>
+          <span class="word">DA</span>
+          <span class="word">MOOCA.</span>
+        </h1>
+        <p class="hero-tagline">
+          Música ao vivo, drinks autorais, porções caseiras e o melhor ambiente para reunir a sua galera.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg magnetic" href="https://wa.me/+551120811544" target="_blank" rel="noopener">Reserve sua mesa</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== COPA DO MUNDO 2026 ===== -->
+    <section class="copa" id="copa">
+      <div class="container">
+        <div class="copa-header">
+          <p class="section-eyebrow copa-eyebrow">Copa do Mundo 2026</p>
+          <h2 class="copa-title">
+            Assista aos jogos do <em>Brasil</em><br>no melhor quintal da Mooca.
+          </h2>
+          <p class="copa-lead">
+            TVs grandes, som ambiente dos jogos, cerveja gelada e a energia da galera.
+            Reserve sua mesa para o grupo ou empresa e viva cada gol como se estivesse no estádio.
+          </p>
+        </div>
+
+        <div class="copa-features">
+          <div class="copa-feat">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+            <strong>Telões e TVs</strong>
+            <span>Múltiplas telas para ninguém perder nenhum lance</span>
+          </div>
+          <div class="copa-feat">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <strong>Música ao vivo</strong>
+            <span>Antes e depois dos jogos, a festa continua</span>
+          </div>
+          <div class="copa-feat">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+            <strong>Pacotes para empresas</strong>
+            <span>Mesas reservadas + consumo com condição especial</span>
+          </div>
+        </div>
+
+        <h3 class="copa-subtitle">Jogos do Brasil — Grupo C</h3>
+        <div class="copa-matches">
+          <div class="copa-match">
+            <div class="copa-match-date">
+              <span class="copa-day">13</span>
+              <span class="copa-month">JUN</span>
+              <span class="copa-weekday">Sábado</span>
+            </div>
+            <div class="copa-match-teams">
+              <div class="copa-team">
+                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" />
+                <span>Brasil</span>
+              </div>
+              <span class="copa-vs">vs</span>
+              <div class="copa-team">
+                <img src="https://flagcdn.com/w40/ma.png" alt="Marrocos" class="copa-flag" />
+                <span>Marrocos</span>
+              </div>
+            </div>
+            <div class="copa-match-info">
+              <span class="copa-time">19h</span>
+              <span class="copa-venue">MetLife Stadium, Nova Jersey</span>
+            </div>
+          </div>
+
+          <div class="copa-match">
+            <div class="copa-match-date">
+              <span class="copa-day">19</span>
+              <span class="copa-month">JUN</span>
+              <span class="copa-weekday">Sexta</span>
+            </div>
+            <div class="copa-match-teams">
+              <div class="copa-team">
+                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" />
+                <span>Brasil</span>
+              </div>
+              <span class="copa-vs">vs</span>
+              <div class="copa-team">
+                <img src="https://flagcdn.com/w40/ht.png" alt="Haiti" class="copa-flag" />
+                <span>Haiti</span>
+              </div>
+            </div>
+            <div class="copa-match-info">
+              <span class="copa-time">21h30</span>
+              <span class="copa-venue">Lincoln Financial Field, Filadélfia</span>
+            </div>
+          </div>
+
+          <div class="copa-match">
+            <div class="copa-match-date">
+              <span class="copa-day">24</span>
+              <span class="copa-month">JUN</span>
+              <span class="copa-weekday">Quarta</span>
+            </div>
+            <div class="copa-match-teams">
+              <div class="copa-team">
+                <img src="https://flagcdn.com/w40/gb-sct.png" alt="Escócia" class="copa-flag" />
+                <span>Escócia</span>
+              </div>
+              <span class="copa-vs">vs</span>
+              <div class="copa-team">
+                <img src="https://flagcdn.com/w40/br.png" alt="Brasil" class="copa-flag" />
+                <span>Brasil</span>
+              </div>
+            </div>
+            <div class="copa-match-info">
+              <span class="copa-time">19h</span>
+              <span class="copa-venue">Hard Rock Stadium, Miami</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="copa-subtitle">Fase eliminatória</h3>
+        <div class="copa-knockout">
+          <div class="copa-ko-item">
+            <span class="copa-ko-phase">Oitavas</span>
+            <span class="copa-ko-dates">4 a 7 de julho</span>
+          </div>
+          <div class="copa-ko-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="copa-ko-item">
+            <span class="copa-ko-phase">Quartas</span>
+            <span class="copa-ko-dates">9 a 12 de julho</span>
+          </div>
+          <div class="copa-ko-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="copa-ko-item">
+            <span class="copa-ko-phase">Semi</span>
+            <span class="copa-ko-dates">14 e 15 de julho</span>
+          </div>
+          <div class="copa-ko-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <div class="copa-ko-item copa-ko-final">
+            <span class="copa-ko-phase">Final</span>
+            <span class="copa-ko-dates">19 de julho, 18h</span>
+          </div>
+        </div>
+
+        <div class="copa-cta">
+          <p class="copa-cta-text">Garanta a mesa do seu grupo ou empresa para os jogos do Brasil.</p>
+          <a class="btn btn-primary btn-lg magnetic" href="https://wa.me/+551120811544?text=Quero%20reservar%20mesa%20para%20os%20jogos%20da%20Copa%20no%20Javari!" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Reservar para a Copa
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MANIFESTO ===== -->
+    <section class="manifesto" id="manifesto">
+      <div class="container">
+        <p class="section-eyebrow">A casa</p>
+        <h2 class="manifesto-title">
+          É bar, é <em>quintal</em>,<br>
+          é família, é <em>democracia</em><br>
+          em forma de diversão.
+        </h2>
+
+        <div class="pillars">
+          <article class="pillar" data-reveal>
+            <div class="pillar-img">
+              <img src="assets/images/quintal/quintal-oasis.webp" alt="Vista do quintal Javari ao ar livre" loading="lazy" />
+            </div>
+            <h3>850 m² de oásis urbano</h3>
+            <p>Quintal instagramável com área kids, palco, Bus Lounge e copo americano. Aqui cabe todo mundo sem complicação.</p>
+          </article>
+
+          <article class="pillar" data-reveal>
+            <div class="pillar-img">
+              <img src="assets/images/quintal/quintal-pets-kids.webp" alt="Área kids do Javari StrEat Park" loading="lazy" />
+            </div>
+            <h3>Pet &amp; kids friendly</h3>
+            <p>Traz os pequenos e os cachorros. Aqui é casa de família — sem julgamento, com respeito.</p>
+          </article>
+
+          <article class="pillar" data-reveal>
+            <div class="pillar-img">
+              <img src="assets/images/quintal/quintal-tribos.webp" alt="Clientes curtindo o Javari StrEat Park" loading="lazy" />
+            </div>
+            <h3>Pra todas as tribos</h3>
+            <p>Ambiente democrático, no coração da Mooca. Aqui você pode tirar gravata e salto alto.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BUS LOUNGE ===== -->
+    <section class="bus-lounge" id="bus-lounge">
+      <div class="bus-bg" id="bus-bg" aria-hidden="true">
+        <img src="assets/images/quintal/bus-bg.webp" alt="" loading="lazy" />
+        <div class="bus-bg-overlay"></div>
+      </div>
+
+      <div class="container bus-lounge-intro">
+        <p class="section-eyebrow">Atração única</p>
+        <h2 class="bus-title">
+          <span class="word">BUS</span>
+          <span class="word word--script">Lounge</span>
+        </h2>
+        <p class="bus-lead">
+          Um ônibus articulado de <strong>+20 metros</strong> virou o camarote mais disputado da Mooca.
+          Karaokê, playlist personalizada e uma decoração que é praticamente outro bar dentro do bar.
+        </p>
+      </div>
+
+      <div class="bus-gallery" id="bus-gallery">
+        <div class="bus-track">
+          <figure class="bus-slide">
+            <img src="assets/images/bus-lounge/bus-01.webp" alt="Interior do Bus Lounge decorado" loading="lazy" />
+            <figcaption>20m de festa<br><em>em forma de ônibus</em></figcaption>
+          </figure>
+          <figure class="bus-slide">
+            <img src="assets/images/bus-lounge/bus-02.webp" alt="Bus Lounge ao entardecer" loading="lazy" />
+            <figcaption>Karaokê,<br><em>noite garantida</em></figcaption>
+          </figure>
+          <figure class="bus-slide">
+            <img src="assets/images/bus-lounge/bus-03.webp" alt="Detalhes do Bus Lounge" loading="lazy" />
+            <figcaption>O camarote<br><em>mais disputado</em></figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="container" style="text-align:center; padding-top: 48px;">
+        <a class="btn btn-primary btn-lg magnetic" href="https://wa.me/+551120811544" target="_blank" rel="noopener">Reservar o Bus Lounge</a>
+      </div>
+    </section>
+
+    <!-- ===== CARDÁPIO ===== -->
+    <section class="cardapio" id="cardapio">
+      <div class="container">
+        <p class="section-eyebrow">Cardápio</p>
+        <h2 class="cardapio-title">
+          <span class="stamp">BÁSICO</span><br>
+          bem feito.
+        </h2>
+        <p class="cardapio-lead">
+          Cerveja gelada, porções caseiras, lanches imensos, drinks autorais.
+          Não dá pra exigir menos, né?
+        </p>
+
+        <div class="cardapio-grid">
+          <article class="card-item" data-reveal>
+            <div class="card-img-wrap">
+              <img src="assets/images/drinks/drink-01.webp" alt="Drinks autorais" loading="lazy" />
+            </div>
+            <div class="card-body">
+              <h3>Drinks autorais</h3>
+              <p>Caiprinhas e gins são a especialidade da casa - e você vai entender por quê.</p>
+            </div>
+          </article>
+          <article class="card-item" data-reveal>
+            <div class="card-img-wrap">
+              <img src="assets/images/drinks/cerveja-trincando.webp" alt="Cerveja trincando" loading="lazy" />
+            </div>
+            <div class="card-body">
+              <h3>Cerveja trincando</h3>
+              <p>Trincando, do nacional ao importado. Tem rótulo pra cada momento da noite.</p>
+            </div>
+          </article>
+          <article class="card-item" data-reveal>
+            <div class="card-img-wrap">
+              <img src="assets/images/lanches/lanche-01.webp" alt="Comidinhas de boteco" loading="lazy" />
+            </div>
+            <div class="card-body">
+              <h3>Comidinhas de boteco</h3>
+              <p>Porções caseiras, lanches gigantes, fritas com cheddar, bolinhas, coxinhas. Tudo artesanal.</p>
+            </div>
+          </article>
+          <article class="card-item" data-reveal>
+            <div class="card-img-wrap">
+              <img src="assets/images/lanches/feijoada.webp" alt="Feijoada de domingo" loading="lazy" />
+            </div>
+            <div class="card-body">
+              <h3>Feijoada de domingo</h3>
+              <p>Único quintal de São Paulo que serve feijoada <em>somente</em> aos domingos. Tradição da casa.</p>
+            </div>
+          </article>
+          <article class="card-item" data-reveal>
+            <div class="card-img-wrap">
+              <img src="assets/images/lanches/cannoli.webp" alt="Cannoli artesanal" loading="lazy" />
+            </div>
+            <div class="card-body">
+              <h3>Tradicional cannoli</h3>
+              <p>Crocante por fora, cremoso por dentro. A sobremesa italiana que virou queridinha do quintal.</p>
+            </div>
+          </article>
+          <article class="card-item" data-reveal>
+            <div class="card-img-wrap">
+              <img src="assets/images/drinks/bebidas-infantis.webp" alt="Bebidas infantis coloridas" loading="lazy" />
+            </div>
+            <div class="card-body">
+              <h3>Bebidas infantis</h3>
+              <p>Sucos, refrigerante e drinks sem álcool para os pequenos se sentirem VIP no quintal.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="cardapio-cta">
+          <a class="btn btn-dark btn-lg magnetic" href="https://javaripark.menudino.com" target="_blank" rel="noopener">
+            Ver cardápio completo
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AGENDA ===== -->
+    <section class="agenda" id="agenda">
+      <div class="container">
+        <p class="section-eyebrow">Música ao vivo</p>
+        <h2 class="agenda-title">
+          A semana <em>tem trilha sonora</em>.
+        </h2>
+        <p class="agenda-lead">
+          Brasilidades, pop rock, samba, pagode, sertanejo. Tem pra todos os estilos —
+          qual o seu?
+        </p>
+
+        <ul class="agenda-list">
+          <li class="agenda-item" data-reveal>
+            <span class="agenda-day">Qua &amp; Qui</span>
+            <span class="agenda-genre">Happy hour</span>
+            <span class="agenda-detail">com promoções</span>
+          </li>
+          <li class="agenda-item" data-reveal>
+            <span class="agenda-day">Sex</span>
+            <span class="agenda-genre">Brasilidades &amp; pop rock</span>
+            <span class="agenda-detail">a casa cheia, sempre</span>
+          </li>
+          <li class="agenda-item" data-reveal>
+            <span class="agenda-day">Sáb</span>
+            <span class="agenda-genre">Samba, pagode &amp; sertanejo</span>
+            <span class="agenda-detail">noite alta, drink na mão</span>
+          </li>
+          <li class="agenda-item" data-reveal>
+            <span class="agenda-day">Dom</span>
+            <span class="agenda-genre">Samba, pagode + Feijoada</span>
+            <span class="agenda-detail">o domingo perfeito</span>
+          </li>
+        </ul>
+
+        <p class="agenda-foot">
+          Programação completa no <a href="https://instagram.com/javaripark" target="_blank" rel="noopener">Instagram</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== GALERIA ===== -->
+    <section class="galeria" id="galeria">
+      <div class="container">
+        <p class="section-eyebrow">A casa pelo olhar de quem vem</p>
+        <h2 class="galeria-title">Quem vem, <em>volta</em>.</h2>
+      </div>
+      <div class="galeria-mosaic">
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-01.webp" alt="Clientes curtindo o Javari" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-02.webp" alt="Galera no quintal" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-03.webp" alt="Noite no Javari" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-04.webp" alt="Energia boa no quintal" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-05.webp" alt="Amigos no Javari" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-06.webp" alt="Diversão no quintal" loading="lazy" /></div>
+        <div class="mosaic-item"><img src="assets/images/clientes/galeria-07.webp" alt="A galera do Javari" loading="lazy" /></div>
+      </div>
+      <div class="container galeria-foot">
+        <a class="btn btn-dark btn-lg magnetic" href="https://instagram.com/javaripark" target="_blank" rel="noopener">
+          Seguir @javaripark
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== DEPOIMENTOS ===== -->
+    <section class="depoimentos" id="depoimentos">
+      <div class="container">
+        <p class="section-eyebrow">Quem já veio</p>
+        <h2 class="depoimentos-title">
+          Não é a gente que fala:<br><em>é quem já passou aqui.</em>
+        </h2>
+
+        <div class="depoimentos-grid">
+          <figure class="depo-card" data-reveal>
+            <div class="depo-head">
+              <div class="depo-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              </div>
+              <div class="depo-meta">
+                <span class="depo-source">Avaliação Google</span>
+                <span class="depo-stars" aria-label="5 estrelas">★★★★★</span>
+              </div>
+            </div>
+            <blockquote>
+              <p>Cerveja sempre trincando, drinks clássicos e de própria autoria deliciosos e a melhor coxinha que já comi na vida!</p>
+            </blockquote>
+          </figure>
+
+          <figure class="depo-card depo-card--featured" data-reveal>
+            <div class="depo-head">
+              <div class="depo-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              </div>
+              <div class="depo-meta">
+                <span class="depo-source">Avaliação Google</span>
+                <span class="depo-stars" aria-label="5 estrelas">★★★★★</span>
+              </div>
+            </div>
+            <blockquote>
+              <p>O lugar mais democrático que já conheci. Escolha certeira pra comemorações de qualquer tipo: agrada adultos, crianças, idosos e até nossos doguinhos.</p>
+            </blockquote>
+          </figure>
+
+          <figure class="depo-card" data-reveal>
+            <div class="depo-head">
+              <div class="depo-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              </div>
+              <div class="depo-meta">
+                <span class="depo-source">Avaliação Google</span>
+                <span class="depo-stars" aria-label="5 estrelas">★★★★★</span>
+              </div>
+            </div>
+            <blockquote>
+              <p>Amei a experiência. Local agradável e com uma música incrível.</p>
+            </blockquote>
+          </figure>
+        </div>
+
+        <p class="depoimentos-foot">
+          <span class="rating-big">4,6</span>
+          <span class="rating-stars">★★★★★</span>
+          <span class="rating-text">no Google · mais de 1.200 avaliações</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== LOCALIZAÇÃO ===== -->
+    <section class="localizacao" id="localizacao">
+      <div class="container">
+        <p class="section-eyebrow">Onde estamos</p>
+        <h2 class="localizacao-title">
+          Rua Javari, 112 — <em>Mooca</em>.
+        </h2>
+        <p class="localizacao-lead">
+          Coração da Mooca, fácil de chegar — escolha sua rota.
+        </p>
+      </div>
+
+      <div class="map-wrap">
+        <iframe
+          class="map-frame"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=-46.6090%2C-23.5570%2C-46.6010%2C-23.5510&layer=mapnik&marker=-23.5539815%2C-46.6050521"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Mapa Javari StrEat Park — Rua Javari 112, Mooca"
+          allowfullscreen></iframe>
+        <div class="map-overlay" id="map-overlay"></div>
+        <a class="map-pin" href="https://www.openstreetmap.org/?mlat=-23.5539815&mlon=-46.6050521#map=18/-23.5539815/-46.6050521" target="_blank" rel="noopener" aria-label="Ver no OpenStreetMap">
+          <img src="assets/images/icon-flame-white.webp" alt="" />
+          <span>Javari StrEat Park · Rua Javari, 112</span>
+        </a>
+      </div>
+
+      <div class="container localizacao-actions">
+        <a class="btn btn-dark btn-lg magnetic loc-btn" href="https://www.google.com/maps/dir/?api=1&destination=Rua+Javari+112+Mooca+S%C3%A3o+Paulo" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.71 11.29l-9-9a1 1 0 0 0-1.41 0l-9 9a1 1 0 0 0 0 1.41l9 9a1 1 0 0 0 1.41 0l9-9a1 1 0 0 0 0-1.41zM14 14.5V12h-4v3H8v-4a1 1 0 0 1 1-1h5V7.5l3.5 3.5z"/></svg>
+          Rota no Google Maps
+        </a>
+        <a class="btn btn-primary btn-lg magnetic loc-btn" href="https://waze.com/ul?q=Rua%20Javari%20112%20Mooca%20S%C3%A3o%20Paulo&navigate=yes" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 6.63A9.93 9.93 0 0 0 4.83 18.5l-.83 2.14a.5.5 0 0 0 .68.65l2.43-1.05a9.93 9.93 0 0 0 13.43-13.6zM8.5 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm7 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM12 18a4 4 0 0 1-3.86-3h7.72A4 4 0 0 1 12 18z"/></svg>
+          Rota no Waze
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== REGRAS DA CASA (resumo) ===== -->
+    <section class="regras-home" id="regras">
+      <div class="container">
+        <p class="section-eyebrow">Antes de vir</p>
+        <h2 class="regras-home-title">
+          Regras da <em>casa</em>.
+        </h2>
+        <p class="regras-home-lead">
+          Pra curtir sem perrengue. Tudo que você precisa saber antes de chegar no quintal.
+        </p>
+
+        <div class="regras-cards">
+          <div class="regra-card">
+            <div class="regra-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            </div>
+            <h3>Entrada</h3>
+            <p>Confira os valores de entrada para cada dia da semana.</p>
+          </div>
+          <div class="regra-card">
+            <div class="regra-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <h3>Reservas</h3>
+            <p>Fale com o nosso time pelo WhatsApp agora mesmo e reserve um espaço para a sua galera.</p>
+          </div>
+          <div class="regra-card">
+            <div class="regra-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3>Aniversários</h3>
+            <p>A nossa especialidade. Tem cortesia, combo grátis e mais algumas vantagens. Só vem!</p>
+          </div>
+          <div class="regra-card">
+            <div class="regra-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <h3>Comandas</h3>
+            <p>Sistema com comandas individuais, pra você não se preocupar com aquele seu amigo que adora aprontar. Cada um paga o seu!</p>
+          </div>
+        </div>
+
+        <div class="regras-home-cta">
+          <a class="btn btn-dark btn-lg magnetic" href="/regras">
+            Ver todas as regras e FAQ
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ANIVERSÁRIOS ===== -->
+    <section class="aniversarios" id="aniversarios">
+      <div class="container aniversarios-grid">
+        <div class="aniversarios-content">
+          <p class="section-eyebrow">Comemore com a gente</p>
+          <h2 class="aniversarios-title">
+            Seu aniversário no <em>quintal.</em>
+          </h2>
+          <p class="aniversarios-lead">
+            Aqui aniversário é coisa séria. Monte sua festa sem dor de cabeça: a gente cuida da mesa, do brinde e até do flyer personalizado.
+          </p>
+          <ul class="aniversarios-lista">
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Aniversariante do mês + 1 acompanhante não pagam entrada
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              +20 pessoas: combo de bebidas cortesia da casa
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Pode trazer bolo (até 3kg, em embalagem)
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Flyer de aniversário personalizado
+            </li>
+          </ul>
+          <a class="btn btn-primary btn-lg magnetic" href="/cotacao">
+            Monte em tempo real seu pacote de consumação
+          </a>
+        </div>
+        <div class="aniversarios-img">
+          <img src="assets/images/quintal/quintal-aniversario.webp" alt="Aniversário no Javari StrEat Park" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CORPORATIVO ===== -->
+    <section class="corporativo" id="corporativo">
+      <div class="container corporativo-grid">
+        <div class="corporativo-img">
+          <img src="assets/images/quintal/quintal-happyhour.webp" alt="Happy hour corporativo no Javari StrEat Park" loading="lazy" />
+        </div>
+        <div class="corporativo-content">
+          <p class="section-eyebrow">Para empresas</p>
+          <h2 class="corporativo-title">
+            Happy hour <em>de verdade.</em>
+          </h2>
+          <p class="corporativo-lead">
+            Traga sua equipe para o quintal. Confraternização, integração, encerramento de projeto ou aquele after que todo mundo merece — o Javari é o cenário perfeito.
+          </p>
+          <ul class="corporativo-lista">
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Mesas reservadas para grupos grandes
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Bus Lounge exclusivo para sua equipe
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Ambiente descontraído com música ao vivo
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Cardápio completo: drinks, cervejas e porções
+            </li>
+            <li>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <a href="/cotacao" class="link-underline">Monte o pacote do evento com 5% off</a>
+            </li>
+          </ul>
+          <a class="btn btn-primary btn-lg magnetic" href="https://wa.me/+551120811544?text=Quero%20fazer%20um%20happy%20hour%20corporativo%20no%20Javari!" target="_blank" rel="noopener">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Fale com a gente
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== RESERVAS ===== -->
+    <section class="reservas" id="reservas">
+      <div class="reservas-photo" id="reservas-photo" aria-hidden="true">
+        <img src="assets/images/quintal/quintal-reservas.webp" alt="" />
+      </div>
+      <div class="reservas-overlay" id="reservas-overlay" aria-hidden="true"></div>
+
+      <div class="container">
+        <p class="section-eyebrow">Bora pro quintal?</p>
+        <h2 class="reservas-title">
+          Fale com a gente e <em>reserve</em> sua mesa.
+        </h2>
+        <a class="btn btn-primary btn-xl magnetic" href="https://wa.me/+551120811544" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Entre em contato
+        </a>
+        <p class="reservas-phone">(11) 2081-1544</p>
+      </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer" id="contato">
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="footer-logo" />
+          <p class="footer-tagline">SÓ VEM!</p>
+        </div>
+
+        <div class="footer-block">
+          <h4>Endereço</h4>
+          <p>Rua Javari, 112<br>Mooca · São Paulo</p>
+          <a class="link-underline" href="#localizacao">Ver no mapa</a>
+        </div>
+
+        <div class="footer-block">
+          <h4>Contato</h4>
+          <ul class="footer-links">
+            <li><a href="https://wa.me/+551120811544" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp · (11) 2081-1544</a></li>
+            <li><a href="https://instagram.com/javaripark" target="_blank" rel="noopener">Instagram · @javaripark</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bar">
+        <span>© <span id="year"></span> Javari StrEat Park</span>
+        <span class="footer-spacer">·</span>
+        <span>SÓ VEM!</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+
+  <script src="js/flame.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

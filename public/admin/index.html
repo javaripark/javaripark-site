@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Javari StrEat Park Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #111;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 36px 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.3);
+      text-align: center;
+    }
+    @media(min-width:480px){
+      .login-card{padding:48px 36px}
+    }
+    .login-logo {
+      width: 180px;
+      margin-bottom: 24px;
+    }
+    .login-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .login-sub {
+      font-size: 14px;
+      color: #777;
+      margin-bottom: 28px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #4f1964;
+      box-shadow: 0 0 0 3px rgba(79,25,100,.15);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: #4f1964;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+      margin-top: 8px;
+    }
+    .login-btn:hover { background: #3a1150; }
+    .login-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .login-error {
+      margin-top: 16px;
+      padding: 10px;
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .login-error.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <img src="/assets/images/logo-horizontal-black.png" alt="Javari StrEat Park" class="login-logo">
+    <h1 class="login-title">Painel Administrativo</h1>
+    <p class="login-sub">Acesso restrito. Faça login para continuar.</p>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" placeholder="Sua senha" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Entrar</button>
+    </form>
+
+    <div class="login-error" id="loginError"></div>
+  </div>
+
+  <script>
+    if (sessionStorage.getItem('javari_admin_auth')) {
+      window.location.href = '/admin/dashboard.html';
+    }
+
+    const USERS = [
+      { email: 'admin@javaripark.com.br', password: 'javari2026', name: 'Administrador' },
+      { email: 'rene@javaripark.com.br', password: 'javari2026', name: 'René' }
+    ];
+
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('loginBtn');
+    const errorBox = document.getElementById('loginError');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      errorBox.classList.remove('visible');
+
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+
+      const user = USERS.find(u => u.email === email && u.password === password);
+
+      if (user) {
+        sessionStorage.setItem('javari_admin_auth', JSON.stringify({ email: user.email, name: user.name, ts: Date.now() }));
+        window.location.href = '/admin/dashboard.html';
+      } else {
+        errorBox.textContent = 'E-mail ou senha incorretos.';
+        errorBox.classList.add('visible');
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

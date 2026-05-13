@@ -1,0 +1,32 @@
+name: Sync Consumer → Dashboard
+
+on:
+  schedule:
+    - cron: '0 11 * * *'   # Every day at 11:00 UTC (08:00 BRT)
+  workflow_dispatch:        # Manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Firebird utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y firebird3.0-utils firebird3.0-server-core
+
+      - name: Install Python dependencies
+        run: pip install google-api-python-client google-auth firebase-admin firebird-driver
+
+      - name: Run sync
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_PROJECT_ID: central-de-reservas-jsp
+        run: python scripts/sync-consumer.py

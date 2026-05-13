@@ -1,0 +1,30 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+*.local
+
+# Editor
+.vscode/
+.idea/
+
+# Env
+.env
+.env.local
+
+# Claude Code
+.claude/
+
+# Fotos brutas e backups (nao fazem parte do site)
+/Javari Park - Redes Sociais
+/backups consumer
+/admin
+/docs
+/functions

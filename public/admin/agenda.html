@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Atrações — Javari StrEat Park</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#333}
+        .container{max-width:1100px;margin:0 auto;padding:16px}
+        .header{background:#4a90e2;padding:20px;border-radius:12px 12px 0 0;text-align:center;position:relative}
+        .header h1{color:#fff;font-size:1.4em;margin:0}
+        .header p{color:#fff;font-size:.8em;margin-top:4px}
+        .header .logout-btn{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:background .2s}
+        .header .logout-btn:hover{background:rgba(255,255,255,.3)}
+        .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 8px rgba(0,0,0,.06);border-radius:0 0 12px 12px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+        .admin-nav a{flex:1;min-width:0;text-align:center;padding:14px 8px;text-decoration:none;color:#666;font-weight:600;font-size:13px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+        .admin-nav a:hover{background:#f8f9fa}
+        .admin-nav a.active{color:#4a90e2;border-bottom-color:#4a90e2;background:#f0f7ff}
+
+        .toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+        .month-nav{display:flex;align-items:center;gap:10px}
+        .month-nav button{background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:16px;font-weight:700;transition:all .2s}
+        .month-nav button:hover{background:#f0f7ff;border-color:#4a90e2}
+        .month-label{font-size:1.1em;font-weight:700;min-width:180px;text-align:center;text-transform:capitalize}
+        .today-btn{background:#fff;border:1px solid #ddd;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+        .today-btn:hover{background:#f0f7ff;border-color:#4a90e2}
+        .add-btn{display:inline-flex;align-items:center;gap:6px;background:#4a90e2;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
+        .add-btn:hover{background:#357abd}
+
+        .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+        .filter-pill{padding:7px 14px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+        .filter-pill:hover{border-color:#4a90e2;color:#4a90e2}
+        .filter-pill.active{background:#4a90e2;color:#fff;border-color:#4a90e2}
+
+        .calendar{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:16px}
+        .cal-header{display:grid;grid-template-columns:repeat(7,1fr);background:#f8f9fa;border-bottom:2px solid #eee}
+        .cal-header span{text-align:center;padding:10px 4px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px}
+        .cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+        .cal-day{min-height:90px;border:1px solid #f0f0f0;padding:6px;position:relative;cursor:pointer;transition:background .15s}
+        .cal-day:hover{background:#f8fbff}
+        .cal-day.other-month{background:#fafafa;color:#ccc}
+        .cal-day.other-month:hover{background:#f5f5f5}
+        .cal-day.today{background:#f0f7ff}
+        .cal-day.today .day-number{background:#4a90e2;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+        .cal-day.selected{outline:2px solid #4a90e2;outline-offset:-2px;z-index:1}
+        .day-number{font-size:13px;font-weight:600;margin-bottom:4px;display:inline-block}
+        .day-events{display:flex;flex-direction:column;gap:2px}
+        .day-event{font-size:10px;padding:2px 5px;border-radius:4px;background:#e8f0fe;color:#1a56db;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+        .day-event:nth-child(n+4){display:none}
+        .day-more{font-size:9px;color:#888;font-weight:600;margin-top:1px}
+
+        .day-detail{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);padding:20px}
+        .day-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+        .day-detail-title{font-size:1.05em;font-weight:700;color:#333}
+        .day-detail-date{font-size:.85em;color:#888}
+        .event-card{background:#f8f9fa;border:1px solid #e9ecef;border-radius:10px;padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;transition:border-color .2s}
+        .event-card:hover{border-color:#4a90e2}
+        .event-time-badge{background:#4a90e2;color:#fff;font-weight:700;font-size:1em;padding:6px 12px;border-radius:8px;white-space:nowrap;min-width:60px;text-align:center}
+        .event-body{flex:1;min-width:0}
+        .event-name{font-weight:700;font-size:.95em;color:#222}
+        .event-obs{font-size:.82em;color:#666;margin-top:3px}
+        .event-actions{display:flex;gap:6px;flex-shrink:0}
+        .event-actions button{background:none;border:1px solid #ddd;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;transition:all .2s}
+        .event-actions .edit-btn:hover{border-color:#4a90e2;color:#4a90e2}
+        .event-actions .delete-btn:hover{border-color:#e53e3e;color:#e53e3e}
+        .empty-detail{text-align:center;padding:30px 20px;color:#999;font-size:.9em}
+
+        .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.6);justify-content:center;align-items:center}
+        .modal.active{display:flex}
+        .modal-content{background:#fff;padding:28px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);width:90%;max-width:460px;position:relative;animation:fadeIn .2s}
+        @keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+        .close-button{color:#aaa;position:absolute;top:12px;right:18px;font-size:26px;font-weight:bold;cursor:pointer;transition:color .2s}
+        .close-button:hover{color:#333}
+        .form-group{margin-bottom:14px}
+        .form-group label{display:block;margin-bottom:6px;font-weight:600;color:#555;font-size:13px}
+        .form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s}
+        .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:#4a90e2;box-shadow:0 0 0 3px rgba(74,144,226,.15)}
+        .submit-button{background:#4a90e2;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;width:100%;transition:background .2s}
+        .submit-button:hover{background:#357abd}
+
+        .confirm-modal .modal-content{max-width:380px;text-align:center}
+        .confirm-modal p{margin-bottom:20px;font-size:.95em;color:#555}
+        .confirm-actions{display:flex;gap:12px}
+        .confirm-actions button{flex:1;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;font-size:.9em;border:none}
+        .confirm-cancel{background:#e5e7eb;color:#333}
+        .confirm-delete{background:#e53e3e;color:#fff}
+
+        .message-box{display:none;position:fixed;z-index:1001;left:50%;top:20px;transform:translateX(-50%);background:#4CAF50;color:#fff;padding:12px 24px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);font-size:14px;animation:slideDown 3s forwards}
+        .message-box.error{background:#e53e3e}
+        @keyframes slideDown{0%{opacity:0;top:0}8%{opacity:1;top:20px}80%{opacity:1}100%{opacity:0}}
+
+        .auth-loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:18px;color:#777}
+
+        .stats-bar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+        .stat-card{background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 2px 6px rgba(0,0,0,.05);flex:1;min-width:120px}
+        .stat-value{font-size:1.4em;font-weight:700;color:#333}
+        .stat-label{font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+
+        @media(max-width:640px){
+            .container{padding:10px}
+            .cal-day{min-height:64px;padding:4px}
+            .day-number{font-size:11px}
+            .day-event{font-size:9px;padding:1px 4px}
+            .day-event:nth-child(n+3){display:none}
+            .month-label{font-size:.95em;min-width:140px}
+            .toolbar{gap:8px}
+            .filter-bar{gap:4px}
+            .filter-pill{padding:5px 10px;font-size:11px}
+            .event-card{flex-direction:column;gap:8px}
+            .stats-bar{gap:8px}
+            .stat-card{padding:10px 14px}
+            .stat-value{font-size:1.1em}
+        }
+        @media(min-width:900px){
+            .container{padding:20px}
+            .header h1{font-size:1.8em}
+            .admin-nav a{font-size:14px}
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-loading" class="auth-loading">Verificando autenticação...</div>
+
+    <div class="container" id="app-container" style="display:none;">
+        <header class="header">
+            <h1>Central de Reservas</h1>
+            <p id="user-email-display"></p>
+            <button class="logout-btn" id="logoutBtn">Sair</button>
+        </header>
+
+        <nav class="admin-nav">
+            <a href="/admin/dashboard.html">Dashboard</a>
+            <a href="/admin/reservas.html">Reservas</a>
+            <a href="/admin/agenda.html" class="active">Agenda</a>
+            <a href="/admin/cardapio.html">Cardápio</a>
+        </nav>
+
+        <div class="toolbar">
+            <div class="month-nav">
+                <button id="prev-month">&larr;</button>
+                <span class="month-label" id="month-label"></span>
+                <button id="next-month">&rarr;</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <button class="today-btn" id="today-btn">Hoje</button>
+                <button class="add-btn" id="add-event-btn">+ Evento</button>
+            </div>
+        </div>
+
+        <div class="filter-bar" id="filter-bar">
+            <button class="filter-pill active" data-filter="mes">Mês</button>
+            <button class="filter-pill" data-filter="semana">Semana</button>
+            <button class="filter-pill" data-filter="dia">Dia</button>
+        </div>
+
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Eventos no mês</div></div>
+            <div class="stat-card"><div class="stat-value" id="stat-days">0</div><div class="stat-label">Dias com evento</div></div>
+            <div class="stat-card"><div class="stat-value" id="stat-week">0</div><div class="stat-label">Esta semana</div></div>
+        </div>
+
+        <div class="calendar" id="calendar-container">
+            <div class="cal-header">
+                <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+        </div>
+
+        <div class="day-detail" id="day-detail">
+            <div class="day-detail-header">
+                <div>
+                    <div class="day-detail-title" id="detail-title">Eventos do dia</div>
+                    <div class="day-detail-date" id="detail-date"></div>
+                </div>
+                <button class="add-btn" id="add-event-day-btn">+ Adicionar</button>
+            </div>
+            <div id="events-list"></div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Event Modal -->
+    <div class="modal" id="event-modal">
+        <div class="modal-content">
+            <span class="close-button" data-close="event-modal">&times;</span>
+            <h2 id="event-modal-title" style="font-size:1.1em;font-weight:700;margin-bottom:16px">Nova Atração</h2>
+            <form id="event-form">
+                <input type="hidden" id="event-id" />
+                <input type="hidden" id="event-date-hidden" />
+                <div class="form-group">
+                    <label for="event-date-input">Data</label>
+                    <input type="date" id="event-date-input" required />
+                </div>
+                <div class="form-group">
+                    <label for="event-name">Banda / Evento *</label>
+                    <input type="text" id="event-name" placeholder="Ex: Banda Rock Mooca" required />
+                </div>
+                <div class="form-group">
+                    <label for="event-time">Horário *</label>
+                    <input type="time" id="event-time" required />
+                </div>
+                <div class="form-group">
+                    <label for="event-obs">Observações</label>
+                    <textarea id="event-obs" rows="2" placeholder="Gênero musical, detalhes..."></textarea>
+                </div>
+                <button type="submit" class="submit-button" id="event-submit-btn">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation -->
+    <div class="modal confirm-modal" id="confirm-modal">
+        <div class="modal-content">
+            <h2 style="font-size:1.05em;font-weight:700;margin-bottom:8px">Confirmar Exclusão</h2>
+            <p id="confirm-message">Deseja realmente excluir esta atração?</p>
+            <div class="confirm-actions">
+                <button class="confirm-cancel" data-close="confirm-modal">Cancelar</button>
+                <button class="confirm-delete" id="confirm-delete-btn">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-box" class="message-box"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
+            authDomain: "central-de-reservas-jsp.firebaseapp.com",
+            projectId: "central-de-reservas-jsp",
+            storageBucket: "central-de-reservas-jsp.firebasestorage.app",
+            appId: "1:574859111927:web:83df67ed1865a59c0392f2"
+        };
+
+        const appId = firebaseConfig.projectId;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const $ = id => document.getElementById(id);
+        const messageBox = $('message-box');
+
+        const today = new Date();
+        let viewYear = today.getFullYear();
+        let viewMonth = today.getMonth();
+        let selectedDate = today.toISOString().split('T')[0];
+        let activeFilter = 'mes';
+
+        let monthEvents = {};
+        let listeners = {};
+        let deleteTarget = null;
+
+        // Auth
+        const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
+        if (!session) { window.location.href = '/admin/index.html'; }
+        $('auth-loading').style.display = 'none';
+        $('app-container').style.display = 'block';
+        $('user-email-display').textContent = session ? session.email : '';
+
+        $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('javari_admin_auth'); window.location.href = '/admin/index.html'; });
+
+        function showMessage(msg, type = 'info') {
+            messageBox.textContent = msg;
+            messageBox.className = 'message-box' + (type === 'error' ? ' error' : '');
+            messageBox.style.display = 'block';
+            messageBox.style.animation = 'none';
+            void messageBox.offsetWidth;
+            messageBox.style.animation = 'slideDown 3s forwards';
+            setTimeout(() => { messageBox.style.display = 'none'; }, 3100);
+        }
+
+        function escapeHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+        }
+
+        function formatDateBR(dateStr) {
+            const d = new Date(dateStr + 'T12:00:00');
+            return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+        function dateKey(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
+
+        // Firestore
+        function agendaDocRef(date) {
+            return doc(db, `artifacts/${appId}/public/data/agenda`, date);
+        }
+
+        function loadMonthEvents() {
+            Object.values(listeners).forEach(unsub => unsub());
+            listeners = {};
+            monthEvents = {};
+
+            const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dk = dateKey(viewYear, viewMonth, d);
+                listeners[dk] = onSnapshot(agendaDocRef(dk), (snap) => {
+                    if (snap.exists()) {
+                        monthEvents[dk] = snap.data().events || [];
+                    } else {
+                        monthEvents[dk] = [];
+                    }
+                    renderCalendar();
+                    if (dk === selectedDate) renderDayDetail();
+                    updateStats();
+                }, (err) => {
+                    console.error('Listener error for', dk, err);
+                });
+            }
+        }
+
+        async function saveEvents(date, events) {
+            try {
+                await setDoc(agendaDocRef(date), { events, updatedAt: new Date().toISOString() });
+            } catch (err) {
+                console.error('Save error:', err);
+                showMessage('Erro ao salvar.', 'error');
+            }
+        }
+
+        // Calendar render
+        function renderCalendar() {
+            const grid = $('cal-grid');
+            const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+            const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+            const prevDays = new Date(viewYear, viewMonth, 0).getDate();
+
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            let html = '';
+
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const d = prevDays - i;
+                const pm = viewMonth === 0 ? 11 : viewMonth - 1;
+                const py = viewMonth === 0 ? viewYear - 1 : viewYear;
+                html += `<div class="cal-day other-month"><span class="day-number">${d}</span></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dk = dateKey(viewYear, viewMonth, d);
+                const isToday = dk === todayStr;
+                const isSelected = dk === selectedDate;
+                const events = monthEvents[dk] || [];
+                const sorted = [...events].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+                let classes = 'cal-day';
+                if (isToday) classes += ' today';
+                if (isSelected) classes += ' selected';
+
+                let evHtml = '';
+                sorted.slice(0, 3).forEach(ev => {
+                    evHtml += `<div class="day-event">${ev.time ? ev.time + ' ' : ''}${escapeHtml(ev.name)}</div>`;
+                });
+                if (sorted.length > 3) {
+                    evHtml += `<div class="day-more">+${sorted.length - 3} mais</div>`;
+                }
+
+                html += `<div class="${classes}" data-date="${dk}">
+                    <span class="day-number">${d}</span>
+                    <div class="day-events">${evHtml}</div>
+                </div>`;
+            }
+
+            const totalCells = firstDay + daysInMonth;
+            const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (let i = 1; i <= remaining; i++) {
+                html += `<div class="cal-day other-month"><span class="day-number">${i}</span></div>`;
+            }
+
+            grid.innerHTML = html;
+
+            grid.querySelectorAll('.cal-day:not(.other-month)').forEach(cell => {
+                cell.addEventListener('click', () => {
+                    selectedDate = cell.dataset.date;
+                    renderCalendar();
+                    renderDayDetail();
+                });
+            });
+
+            const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            $('month-label').textContent = `${monthNames[viewMonth]} ${viewYear}`;
+        }
+
+        function renderDayDetail() {
+            const events = monthEvents[selectedDate] || [];
+            const sorted = [...events].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            const list = $('events-list');
+
+            $('detail-date').textContent = formatDateBR(selectedDate);
+
+            if (sorted.length === 0) {
+                $('detail-title').textContent = 'Nenhum evento';
+                list.innerHTML = '<div class="empty-detail">Nenhuma atração cadastrada para este dia. Clique em "+ Adicionar" para criar.</div>';
+                return;
+            }
+
+            $('detail-title').textContent = `${sorted.length} evento${sorted.length > 1 ? 's' : ''}`;
+
+            list.innerHTML = sorted.map(ev => `
+                <div class="event-card" data-id="${ev.id}">
+                    <div class="event-time-badge">${ev.time || '--:--'}</div>
+                    <div class="event-body">
+                        <div class="event-name">${escapeHtml(ev.name)}</div>
+                        ${ev.obs ? `<div class="event-obs">${escapeHtml(ev.obs)}</div>` : ''}
+                    </div>
+                    <div class="event-actions">
+                        <button class="edit-btn" data-action="edit" data-id="${ev.id}" data-date="${selectedDate}">Editar</button>
+                        <button class="delete-btn" data-action="delete" data-id="${ev.id}" data-date="${selectedDate}">Excluir</button>
+                    </div>
+                </div>
+            `).join('');
+
+            list.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', () => editEvent(btn.dataset.date, btn.dataset.id));
+            });
+            list.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', () => deleteEvent(btn.dataset.date, btn.dataset.id));
+            });
+        }
+
+        function updateStats() {
+            let totalEvents = 0;
+            let daysWithEvents = 0;
+            let weekEvents = 0;
+
+            const now = new Date();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            const wsStr = weekStart.toISOString().split('T')[0];
+            const weStr = weekEnd.toISOString().split('T')[0];
+
+            Object.entries(monthEvents).forEach(([dk, evs]) => {
+                if (evs.length > 0) {
+                    totalEvents += evs.length;
+                    daysWithEvents++;
+                    if (dk >= wsStr && dk <= weStr) weekEvents += evs.length;
+                }
+            });
+
+            $('stat-total').textContent = totalEvents;
+            $('stat-days').textContent = daysWithEvents;
+            $('stat-week').textContent = weekEvents;
+        }
+
+        // Filter pills
+        function applyFilter(filter) {
+            activeFilter = filter;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.toggle('active', p.dataset.filter === filter));
+
+            const cal = $('calendar-container');
+            if (filter === 'mes') {
+                cal.style.display = '';
+            } else if (filter === 'semana') {
+                cal.style.display = '';
+                const d = new Date(selectedDate + 'T12:00:00');
+                const startOfWeek = new Date(d);
+                startOfWeek.setDate(d.getDate() - d.getDay());
+                selectedDate = startOfWeek.toISOString().split('T')[0];
+                viewYear = startOfWeek.getFullYear();
+                viewMonth = startOfWeek.getMonth();
+                renderCalendar();
+                renderDayDetail();
+            } else {
+                cal.style.display = '';
+            }
+            renderDayDetail();
+        }
+
+        $('filter-bar').addEventListener('click', (e) => {
+            const pill = e.target.closest('.filter-pill');
+            if (pill) applyFilter(pill.dataset.filter);
+        });
+
+        // Month navigation
+        $('prev-month').addEventListener('click', () => {
+            viewMonth--;
+            if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+            selectedDate = dateKey(viewYear, viewMonth, 1);
+            loadMonthEvents();
+            renderDayDetail();
+        });
+
+        $('next-month').addEventListener('click', () => {
+            viewMonth++;
+            if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+            selectedDate = dateKey(viewYear, viewMonth, 1);
+            loadMonthEvents();
+            renderDayDetail();
+        });
+
+        $('today-btn').addEventListener('click', () => {
+            const t = new Date();
+            viewYear = t.getFullYear();
+            viewMonth = t.getMonth();
+            selectedDate = t.toISOString().split('T')[0];
+            loadMonthEvents();
+            renderDayDetail();
+        });
+
+        // Modal logic
+        function openModal(id) { $(id).classList.add('active'); }
+        function closeModal(id) { $(id).classList.remove('active'); }
+
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.close));
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(modal.id);
+            });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id));
+        });
+
+        // Add event
+        function openAddModal(date) {
+            $('event-modal-title').textContent = 'Nova Atração';
+            $('event-form').reset();
+            $('event-id').value = '';
+            $('event-date-input').value = date || selectedDate;
+            $('event-submit-btn').textContent = 'Salvar';
+            openModal('event-modal');
+        }
+
+        $('add-event-btn').addEventListener('click', () => openAddModal(selectedDate));
+        $('add-event-day-btn').addEventListener('click', () => openAddModal(selectedDate));
+
+        // Edit event
+        function editEvent(date, id) {
+            const events = monthEvents[date] || [];
+            const ev = events.find(e => e.id === id);
+            if (!ev) return;
+            $('event-modal-title').textContent = 'Editar Atração';
+            $('event-id').value = ev.id;
+            $('event-date-input').value = date;
+            $('event-date-hidden').value = date;
+            $('event-name').value = ev.name;
+            $('event-time').value = ev.time || '';
+            $('event-obs').value = ev.obs || '';
+            $('event-submit-btn').textContent = 'Atualizar';
+            openModal('event-modal');
+        }
+
+        // Submit form
+        $('event-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = $('event-id').value;
+            const targetDate = $('event-date-input').value;
+            const originalDate = $('event-date-hidden').value;
+            const name = $('event-name').value.trim();
+            const time = $('event-time').value;
+            const obs = $('event-obs').value.trim();
+
+            if (!name || !time || !targetDate) return;
+
+            if (id && originalDate && originalDate !== targetDate) {
+                const oldEvents = (monthEvents[originalDate] || []).filter(ev => ev.id !== id);
+                await saveEvents(originalDate, oldEvents);
+                const newEvents = [...(monthEvents[targetDate] || []), { id: generateId(), name, time, obs, createdAt: new Date().toISOString() }];
+                await saveEvents(targetDate, newEvents);
+                showMessage('Atração movida e atualizada!');
+            } else if (id) {
+                const events = (monthEvents[targetDate] || []).map(ev =>
+                    ev.id === id ? { ...ev, name, time, obs } : ev
+                );
+                await saveEvents(targetDate, events);
+                showMessage('Atração atualizada!');
+            } else {
+                const events = [...(monthEvents[targetDate] || []), { id: generateId(), name, time, obs, createdAt: new Date().toISOString() }];
+                await saveEvents(targetDate, events);
+                showMessage('Atração adicionada!');
+            }
+
+            selectedDate = targetDate;
+            const d = new Date(targetDate + 'T12:00:00');
+            if (d.getMonth() !== viewMonth || d.getFullYear() !== viewYear) {
+                viewMonth = d.getMonth();
+                viewYear = d.getFullYear();
+                loadMonthEvents();
+            }
+            renderDayDetail();
+            closeModal('event-modal');
+        });
+
+        // Delete event
+        function deleteEvent(date, id) {
+            const events = monthEvents[date] || [];
+            const ev = events.find(e => e.id === id);
+            if (!ev) return;
+            deleteTarget = { date, id };
+            $('confirm-message').textContent = `Deseja realmente excluir "${ev.name}"?`;
+            openModal('confirm-modal');
+        }
+
+        $('confirm-delete-btn').addEventListener('click', async () => {
+            if (!deleteTarget) return;
+            const { date, id } = deleteTarget;
+            const events = (monthEvents[date] || []).filter(ev => ev.id !== id);
+            await saveEvents(date, events);
+            deleteTarget = null;
+            closeModal('confirm-modal');
+            showMessage('Atração excluída.');
+        });
+
+        // Init
+        loadMonthEvents();
+        renderCalendar();
+        renderDayDetail();
+    </script>
+</body>
+</html>

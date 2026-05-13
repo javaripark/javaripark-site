@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Regras da Casa — Javari StrEat Park</title>
+  <meta name="description" content="Tudo que você precisa saber antes de vir ao Javari StrEat Park: valores de entrada, reservas, aniversários, menores de idade e mais." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/regras.css" />
+</head>
+<body class="page-regras">
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header scrolled" id="header">
+    <a href="/" class="brand" aria-label="Javari StrEat Park">
+      <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="brand-logo brand-logo--white" />
+      <img src="assets/images/logo-horizontal-black.png" alt="Javari StrEat Park" class="brand-logo brand-logo--black" />
+    </a>
+    <nav class="site-nav" aria-label="Navegação principal">
+      <a href="/">Início</a>
+      <a href="/#cardapio">Cardápio</a>
+      <a href="/#agenda">Agenda</a>
+      <a href="/#localizacao">Onde estamos</a>
+      <a href="/regras">Regras</a>
+      <a href="/blog">Blog</a>
+      <div class="nav-dropdown">
+        <a class="nav-dropdown-toggle" role="button" tabindex="0">Serviços <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5L6 7.5L9 4.5"/></svg></a>
+        <ul class="nav-dropdown-menu">
+          <li><a href="/convite">Convite personalizado</a></li>
+          <li><a href="/cotacao">Cotação de pacotes</a></li>
+          <li><a href="/fotos">Cobertura fotográfica</a></li>
+        </ul>
+      </div>
+      <a class="btn btn-primary magnetic" href="/#reservas">Reservar</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main>
+
+    <!-- ===== HERO REGRAS ===== -->
+    <section class="regras-hero">
+      <div class="container">
+        <p class="section-eyebrow">Regras da casa</p>
+        <h1 class="regras-hero-title">
+          Pra <em>curtir</em> sem <em>perrengue</em>.
+        </h1>
+        <p class="regras-hero-lead">
+          Tudo que você precisa saber antes de chegar no quintal.
+          Leia com carinho — a gente cuida pra que todo mundo se divirta.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== BENEFÍCIOS ANIVERSARIANTE ===== -->
+    <section class="niver-destaque" id="aniversariante">
+      <div class="container">
+        <div class="niver-card">
+          <div class="niver-header">
+            <span class="niver-emoji">🎂</span>
+            <p class="niver-eyebrow">Benefícios exclusivos</p>
+            <h2 class="niver-title">Aniversariante do mês</h2>
+          </div>
+          <div class="niver-grid">
+            <div class="niver-perk">
+              <span class="niver-perk-num">01</span>
+              <h3>Entrada grátis</h3>
+              <p>Você + 1 acompanhante, qualquer dia e horário. Apresente o RG na portaria.</p>
+            </div>
+            <div class="niver-perk">
+              <span class="niver-perk-num">02</span>
+              <h3>Brinde da casa</h3>
+              <p>Com 20+ convidados adultos: 6 Heineken 600ml ou combo vodka/gin — cortesia.</p>
+            </div>
+            <div class="niver-perk">
+              <span class="niver-perk-num">03</span>
+              <h3>Traga seu bolo</h3>
+              <p>Bolo de até 3kg em caixa. A gente guarda na cozinha pra hora certa.</p>
+            </div>
+            <div class="niver-perk">
+              <span class="niver-perk-num">04</span>
+              <h3>Convite personalizado</h3>
+              <p>Crie e baixe um convite com foto, grátis, direto no nosso site.</p>
+            </div>
+          </div>
+          <div class="niver-actions">
+            <a class="btn btn-primary" href="/#reservas">Reservar minha comemoração</a>
+            <a class="niver-link" href="/convite">Criar meu convite →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BUSCA ===== -->
+    <section class="regras-search-section">
+      <div class="container">
+        <div class="regras-search-wrap">
+          <svg class="regras-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="regras-search" class="regras-search-input" placeholder="Buscar nas regras... (ex: bolo, entrada, menor)" autocomplete="off" />
+          <button type="button" id="regras-search-clear" class="regras-search-clear" aria-label="Limpar busca" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <p class="regras-search-status" id="regras-search-status" hidden></p>
+      </div>
+    </section>
+
+    <!-- ===== TEMAS / ACCORDION ===== -->
+    <section class="regras-content">
+      <div class="container">
+
+        <!-- TEMA 1: VALOR DE ENTRADA -->
+        <div class="regras-tema" id="entrada">
+          <h2 class="tema-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Valor de entrada
+          </h2>
+
+          <details class="faq-item">
+            <summary class="faq-q">Quanto custa a entrada?</summary>
+            <div class="faq-a">
+              <ul class="regras-list">
+                <li><strong>Quarta-feira (18h–0h):</strong> grátis a noite toda</li>
+                <li><strong>Quinta-feira (18h–0h):</strong> grátis a noite toda</li>
+                <li><strong>Sexta-feira (18h–1h):</strong> grátis até 18h30, depois R$10</li>
+                <li><strong>Sábado (14h–0h):</strong> grátis até 14h30 e R$15 até 16h, depois R$25</li>
+                <li><strong>Domingo (12h–22h):</strong> grátis até 12h30, depois R$10</li>
+              </ul>
+              <p class="regras-note">Valores podem ser alterados mediante atração do dia.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Quem tem isenção de entrada?</summary>
+            <div class="faq-a">
+              <p>Aniversariante do mês + 1 acompanhante não pagam para entrar no Javari StrEat Park, independentemente do horário de chegada, desde que estejam juntos no momento da chegada. A comprovação é feita a partir da apresentação do documento de identidade original.</p>
+              <p>Crianças até 10 anos não pagam entrada e crianças entre 11 e 14 anos têm desconto de 50% no valor da entrada.</p>
+            </div>
+          </details>
+        </div>
+
+        <!-- TEMA 2: RESERVAS DE MESAS -->
+        <div class="regras-tema" id="reservas-regras">
+          <h2 class="tema-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Reservas de mesas
+          </h2>
+
+          <details class="faq-item">
+            <summary class="faq-q">Como faço uma reserva?</summary>
+            <div class="faq-a">
+              <p>É possível reservar mesas para as mais diversas ocasiões sem custo, com pedido máximo de 20 lugares sentados. A reserva é feita via Instagram (<a href="https://instagram.com/javaripark" target="_blank" rel="noopener">@javaripark</a>) ou pelo WhatsApp <a href="https://wa.me/+551120811544" target="_blank" rel="noopener">(11) 2081-1544</a>.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Qual o horário limite para chegar com reserva?</summary>
+            <div class="faq-a">
+              <ul class="regras-list">
+                <li>Até 16h, aos sábados</li>
+                <li>14h aos domingos</li>
+                <li>20h de quarta-feira a sexta-feira</li>
+              </ul>
+              <p>Caso o representante da reserva não esteja na casa até esses horários, as mesas são liberadas para uso. Basta uma pessoa presente para manter a reserva ativa.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Mapa de assentos — como é o espaço?</summary>
+            <div class="faq-a">
+              <div class="mapa-wrap-inline">
+                <svg class="mapa-svg" viewBox="0 0 640 780" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mapa dos setores do Javari StrEat Park">
+                  <rect x="2" y="2" width="636" height="776" rx="16" fill="#faf8f4" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+                  <rect x="12" y="12" width="250" height="110" rx="10" fill="rgba(80,170,120,0.1)" stroke="rgba(80,170,120,0.3)" stroke-width="1"/>
+                  <text x="137" y="58" text-anchor="middle" fill="#2a2a2a" font-family="Bebas Neue,sans-serif" font-size="15" letter-spacing="1">ÁREA KIDS</text>
+                  <text x="137" y="76" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="9">Playground</text>
+                  <rect x="272" y="12" width="356" height="110" rx="10" fill="rgba(0,0,0,0.03)" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+                  <text x="450" y="58" text-anchor="middle" fill="#2a2a2a" font-family="Bebas Neue,sans-serif" font-size="15" letter-spacing="1">COZINHA</text>
+                  <text x="450" y="76" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="9">Uso interno</text>
+                  <rect x="258" y="50" width="18" height="28" rx="2" fill="rgba(0,0,0,0.06)" stroke="rgba(0,0,0,0.12)" stroke-width="1"/>
+                  <rect x="12" y="185" width="100" height="32" rx="8" fill="rgba(0,0,0,0.03)" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+                  <text x="62" y="206" text-anchor="middle" fill="rgba(0,0,0,0.45)" font-family="Poppins,sans-serif" font-size="8">🚬 Fumódromo</text>
+                  <rect x="12" y="235" width="100" height="160" rx="10" fill="rgba(79,25,100,0.15)" stroke="rgba(79,25,100,0.35)" stroke-width="1"/>
+                  <text x="62" y="310" text-anchor="middle" fill="#3a1550" font-family="Bebas Neue,sans-serif" font-size="15" letter-spacing="1">PALCO</text>
+                  <text x="62" y="330" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="9">Música ao vivo</text>
+                  <rect x="12" y="415" width="100" height="32" rx="8" fill="rgba(0,0,0,0.03)" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+                  <text x="62" y="436" text-anchor="middle" fill="rgba(0,0,0,0.45)" font-family="Poppins,sans-serif" font-size="8">🚬 Fumódromo</text>
+                  <rect x="12" y="465" width="100" height="90" rx="10" fill="rgba(0,0,0,0.03)" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+                  <text x="62" y="510" text-anchor="middle" fill="rgba(0,0,0,0.55)" font-family="Bebas Neue,sans-serif" font-size="12" letter-spacing="1">WC MASC.</text>
+                  <rect x="122" y="135" width="346" height="460" rx="12" fill="rgba(79,25,100,0.04)" stroke="rgba(79,25,100,0.15)" stroke-width="1.5" stroke-dasharray="6 3"/>
+                  <text x="260" y="155" text-anchor="middle" fill="rgba(79,25,100,0.35)" font-family="Poppins,sans-serif" font-size="9" letter-spacing="1">QUINTAL</text>
+                  <rect x="145" y="170" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="189" y="194" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">9</text>
+                  <text x="189" y="212" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="145" y="380" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="189" y="404" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">4</text>
+                  <text x="189" y="422" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="145" y="520" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="189" y="544" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">2</text>
+                  <text x="189" y="562" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="378" y="170" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="422" y="194" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">8</text>
+                  <text x="422" y="212" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="378" y="240" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="422" y="264" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">7</text>
+                  <text x="422" y="282" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="378" y="310" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="422" y="334" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">6</text>
+                  <text x="422" y="352" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="378" y="380" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="422" y="404" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">5</text>
+                  <text x="422" y="422" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="378" y="450" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="422" y="474" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">3</text>
+                  <text x="422" y="492" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">Até 20 lugares</text>
+                  <rect x="378" y="520" width="88" height="55" rx="8" fill="rgba(228,85,75,0.07)" stroke="rgba(228,85,75,0.4)" stroke-width="1.5"/>
+                  <text x="422" y="544" text-anchor="middle" fill="#d64545" font-family="Bebas Neue,sans-serif" font-size="24">1</text>
+                  <text x="422" y="562" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="7">15 lug. · Sofás</text>
+                  <rect x="478" y="135" width="150" height="460" rx="10" fill="rgba(79,25,100,0.1)" stroke="rgba(79,25,100,0.25)" stroke-width="1.5"/>
+                  <text x="553" y="330" text-anchor="middle" fill="#3a1550" font-family="Bebas Neue,sans-serif" font-size="16" letter-spacing="1">BUS</text>
+                  <text x="553" y="352" text-anchor="middle" fill="#3a1550" font-family="Bebas Neue,sans-serif" font-size="16" letter-spacing="1">LOUNGE</text>
+                  <text x="553" y="374" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="9">Até 40 pessoas</text>
+                  <text x="553" y="394" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Poppins,sans-serif" font-size="9">🎤 Karaokê</text>
+                  <rect x="12" y="620" width="92" height="105" rx="10" fill="rgba(0,0,0,0.03)" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+                  <text x="58" y="675" text-anchor="middle" fill="rgba(0,0,0,0.55)" font-family="Bebas Neue,sans-serif" font-size="12" letter-spacing="1">WC FEM.</text>
+                  <rect x="114" y="620" width="78" height="105" rx="10" fill="rgba(180,140,40,0.08)" stroke="rgba(180,140,40,0.25)" stroke-width="1"/>
+                  <text x="153" y="675" text-anchor="middle" fill="#2a2a2a" font-family="Bebas Neue,sans-serif" font-size="12" letter-spacing="1">CAIXA</text>
+                  <rect x="202" y="620" width="156" height="105" rx="10" fill="rgba(0,0,0,0.04)" stroke="rgba(0,0,0,0.12)" stroke-width="1.5"/>
+                  <text x="280" y="665" text-anchor="middle" fill="#2a2a2a" font-family="Bebas Neue,sans-serif" font-size="14" letter-spacing="1">ENTRADA</text>
+                  <text x="280" y="683" text-anchor="middle" fill="rgba(0,0,0,0.35)" font-family="Poppins,sans-serif" font-size="9">Saída</text>
+                  <polygon points="272,705 280,715 288,705" fill="rgba(0,0,0,0.18)"/>
+                  <rect x="368" y="620" width="100" height="105" rx="10" fill="rgba(79,25,100,0.06)" stroke="rgba(79,25,100,0.18)" stroke-width="1"/>
+                  <text x="418" y="667" text-anchor="middle" fill="#2a2a2a" font-family="Bebas Neue,sans-serif" font-size="12" letter-spacing="1">BEER</text>
+                  <text x="418" y="685" text-anchor="middle" fill="#2a2a2a" font-family="Bebas Neue,sans-serif" font-size="12" letter-spacing="1">PONG</text>
+                  <rect x="478" y="620" width="150" height="105" rx="10" fill="rgba(180,140,40,0.1)" stroke="rgba(180,140,40,0.3)" stroke-width="1.5"/>
+                  <text x="553" y="675" text-anchor="middle" fill="#2a2a2a" font-family="Bebas Neue,sans-serif" font-size="15" letter-spacing="1">BAR</text>
+                  <text x="320" y="760" text-anchor="middle" fill="rgba(0,0,0,0.25)" font-family="Poppins,sans-serif" font-size="9" letter-spacing="2">↓  RUA JAVARI  ↓</text>
+                </svg>
+              </div>
+              <div class="mapa-fotos">
+                <div class="mapa-foto-card" tabindex="0">
+                  <img src="assets/images/quintal/quintal-01.jpg" alt="Quintal do Javari" loading="lazy" />
+                  <span>Quintal</span>
+                </div>
+                <div class="mapa-foto-card" tabindex="0">
+                  <img src="assets/images/bus-lounge/bus-01.jpg" alt="Bus Lounge por fora" loading="lazy" />
+                  <span>Bus Lounge</span>
+                </div>
+                <div class="mapa-foto-card" tabindex="0">
+                  <img src="assets/images/bus-lounge/bus-03.jpg" alt="Interior do Bus Lounge" loading="lazy" />
+                  <span>Dentro do Bus</span>
+                </div>
+                <div class="mapa-foto-card" tabindex="0">
+                  <img src="assets/images/quintal/quintal-04.jpg" alt="Palco e música ao vivo" loading="lazy" />
+                  <span>Palco</span>
+                </div>
+                <div class="mapa-foto-card" tabindex="0">
+                  <img src="assets/images/quintal/quintal-bora.jpg" alt="Bar e mesas do Javari" loading="lazy" />
+                  <span>Bar</span>
+                </div>
+                <div class="mapa-foto-card" tabindex="0">
+                  <img src="assets/images/quintal/quintal-06.jpg" alt="Área Kids com grafite e pneus coloridos" loading="lazy" />
+                  <span>Área Kids</span>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Como funcionam os setores?</summary>
+            <div class="faq-a">
+              <p>Todos os setores são cobertos. Reservamos 1 setor por reserva, com até 20 lugares sentados (setor 1: 15 em sofás). Para reservas maiores, acrescentamos mais lugares no momento da chegada, conforme necessidade e disponibilidade.</p>
+              <p>Não reservamos área kids e áreas descobertas.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">O que é o Bus Lounge?</summary>
+            <div class="faq-a">
+              <p>O Bus Lounge é um espaço exclusivo com capacidade para até 40 pessoas, com consumação mínima de R$&nbsp;300 (100% consumível, incluindo 10% de serviço). Mínimo de 10 pessoas.</p>
+              <p>Inclui som ambiente via Spotify, TV 60", películas privativas, banheira de cervejas (sob consulta) e fechamento de comanda sem filas. Reserva via WhatsApp ou Instagram conforme disponibilidade.</p>
+            </div>
+          </details>
+        </div>
+
+        <!-- TEMA 3: ANIVERSÁRIOS E COMEMORAÇÕES -->
+        <div class="regras-tema" id="aniversarios">
+          <h2 class="tema-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Aniversários e comemorações
+          </h2>
+
+          <details class="faq-item">
+            <summary class="faq-q">Tem brinde para aniversariante?</summary>
+            <div class="faq-a">
+              <p>Em caso de aniversário com presença confirmada de mais de 20 pessoas (adultos), o grupo tem direito a 6 unidades de Heineken 600ml ou Original 600ml ou combo de vodka Smirnoff (4 energéticos Red Bull ou 1L de suco de laranja) ou gin Gordons (+ 4 tônicas), conforme disponibilidade de itens no dia.</p>
+              <p>O brinde é entregue a partir das 19h aos finais de semana e, durante a semana, a partir das 21h.</p>
+              <p>O benefício não é acumulativo. O controle de pessoas da reserva é feito a partir dos registros na portaria.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Posso levar bolo?</summary>
+            <div class="faq-a">
+              <p>O Javari StrEat Park não oferece serviço de bolos, portanto, permite que o cliente traga seu bolo e descartáveis (pratinhos e talheres). O armazenamento é feito na cozinha do espaço, com limite para bolos de até 3kg.</p>
+              <p>Os bolos devem vir em caixas/embalagens, caso contrário, não serão aceitos. Doces, como brigadeiros, beijinhos, sorvetes e similares não são aceitos; enquadram-se na proibição itens como tortas e bolos salgados.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Tem flyer de aniversário?</summary>
+            <div class="faq-a">
+              <p>O Javari StrEat Park disponibiliza um sistema para criação de flyer/cartão de aniversário.</p>
+            </div>
+          </details>
+        </div>
+
+        <!-- TEMA 4: MENORES DE IDADE -->
+        <div class="regras-tema" id="menores">
+          <h2 class="tema-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Menores de idade
+          </h2>
+
+          <details class="faq-item">
+            <summary class="faq-q">Menor de idade pode entrar?</summary>
+            <div class="faq-a">
+              <p>Menores de idade devem, obrigatoriamente, estar acompanhados dos pais ou responsável legal para entrar no Javari Park.</p>
+              <p>No caso de responsável temporário acompanhando menores, é solicitado o preenchimento e impressão do documento disponível no link fornecido. Não serão aceitas assinaturas digitais.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Menor pode consumir bebida alcoólica?</summary>
+            <div class="faq-a">
+              <p class="regras-alerta"><strong>IMPORTANTE:</strong> o Javari Park não comercializa bebidas para menores de 18 anos. Em caso de identificação de consumo de álcool por menor de idade dentro do estabelecimento, nossa equipe de segurança se coloca no direito de convidar o menor de idade e seu responsável a se retirarem da casa.</p>
+            </div>
+          </details>
+        </div>
+
+        <!-- TEMA 5: COMANDAS E COBRANÇA -->
+        <div class="regras-tema" id="comandas">
+          <h2 class="tema-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Comandas e cobrança
+          </h2>
+
+          <details class="faq-item">
+            <summary class="faq-q">Como funciona a comanda?</summary>
+            <div class="faq-a">
+              <p>O Javari StrEat Park possui um sistema de identificação de clientes por meio de pulseiras, que funcionam também como comandas individuais numeradas. O consumo deve ocorrer por meio da apresentação desta pulseira, possibilitando à nossa equipe registrar o pedido em sistema. O pagamento da conta ocorre na saída.</p>
+              <p>Menores de idade não têm direito a pulseiras e, portanto, o consumo deve ser feito por meio do acompanhante e responsável legal.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q">Quais formas de pagamento são aceitas?</summary>
+            <div class="faq-a">
+              <p>A casa aceita as seguintes formas de pagamento:</p>
+              <ul class="regras-list">
+                <li><strong>Débito</strong></li>
+                <li><strong>Crédito</strong></li>
+                <li><strong>Pix</strong></li>
+                <li><strong>Dinheiro</strong></li>
+              </ul>
+              <p class="regras-note">Vales (refeição e alimentação) não são aceitos, infelizmente.</p>
+            </div>
+          </details>
+        </div>
+
+        <!-- TEMA 6: INFORMAÇÕES ADICIONAIS -->
+        <div class="regras-tema" id="informacoes">
+          <h2 class="tema-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Informações adicionais
+          </h2>
+
+          <details class="faq-item">
+            <summary class="faq-q">Posso levar comida ou bebida de fora?</summary>
+            <div class="faq-a">
+              <p>Não é permitida entrada de comida e/ou bebida de qualquer espécie.</p>
+              <p>Não trabalhamos com sistema de rolha.</p>
+            </div>
+          </details>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Photo lightbox (shared) -->
+    <div class="foto-lightbox" id="fotoLightbox" hidden>
+      <button class="foto-lightbox-close" id="lightboxClose" aria-label="Fechar">&times;</button>
+      <img class="foto-lightbox-img" id="lightboxImg" src="" alt="" />
+      <p class="foto-lightbox-caption" id="lightboxCaption"></p>
+    </div>
+
+    <!-- CTA -->
+    <section class="regras-cta-section">
+      <div class="container" style="text-align:center;padding:48px 0">
+        <p style="font-size:15px;color:var(--text-muted);margin-bottom:16px">Ficou com alguma dúvida?</p>
+        <a class="btn btn-primary btn-lg" href="https://wa.me/+551120811544" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Fala com a gente no WhatsApp
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== LOCALIZAÇÃO ===== -->
+    <div class="regras-localizacao">
+      <div class="container" style="text-align:center; padding: 32px 0;">
+        <p style="font-family:var(--font-body); font-size:14px; color:var(--text-muted); margin:0;">
+          <strong>Localização:</strong> Rua Javari, 112 — Mooca (SP)
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer" id="contato">
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="footer-logo" />
+          <p class="footer-tagline">SÓ VEM!</p>
+        </div>
+        <div class="footer-block">
+          <h4>Endereço</h4>
+          <p>Rua Javari, 112<br>Mooca · São Paulo</p>
+          <a class="link-underline" href="/#localizacao">Ver no mapa</a>
+        </div>
+        <div class="footer-block">
+          <h4>Contato</h4>
+          <ul class="footer-links">
+            <li><a href="https://wa.me/+551120811544" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp · (11) 2081-1544</a></li>
+            <li><a href="https://instagram.com/javaripark" target="_blank" rel="noopener">Instagram · @javaripark</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <span>© <span id="year"></span> Javari StrEat Park</span>
+        <span class="footer-spacer">·</span>
+        <span>SÓ VEM!</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const navToggle = document.getElementById('nav-toggle');
+    const siteNav = document.querySelector('.site-nav');
+    if (navToggle && siteNav) {
+      navToggle.addEventListener('click', () => {
+        const open = siteNav.classList.toggle('open');
+        navToggle.setAttribute('aria-expanded', open);
+      });
+      siteNav.querySelectorAll('a:not(.nav-dropdown-toggle)').forEach(a => {
+        a.addEventListener('click', () => {
+          siteNav.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+
+    document.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
+      toggle.addEventListener('click', e => {
+        e.preventDefault();
+        toggle.closest('.nav-dropdown').classList.toggle('open');
+      });
+    });
+
+    // ===== Photo lightbox =====
+    (() => {
+      const lb = document.getElementById('fotoLightbox');
+      const lbImg = document.getElementById('lightboxImg');
+      const lbCap = document.getElementById('lightboxCaption');
+      if (!lb) return;
+
+      document.querySelectorAll('.mapa-foto-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const img = card.querySelector('img');
+          const cap = card.querySelector('span');
+          lbImg.src = img.src;
+          lbImg.alt = img.alt;
+          lbCap.textContent = cap ? cap.textContent : '';
+          lb.hidden = false;
+          document.body.style.overflow = 'hidden';
+        });
+      });
+
+      function closeLb() {
+        lb.hidden = true;
+        document.body.style.overflow = '';
+      }
+      document.getElementById('lightboxClose').addEventListener('click', closeLb);
+      lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !lb.hidden) closeLb(); });
+    })();
+
+    // ===== Search =====
+    (() => {
+      const input = document.getElementById('regras-search');
+      const clearBtn = document.getElementById('regras-search-clear');
+      const status = document.getElementById('regras-search-status');
+      const temas = document.querySelectorAll('.regras-tema');
+      const items = document.querySelectorAll('.faq-item');
+
+      if (!input) return;
+
+      const normalize = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+      input.addEventListener('input', () => {
+        const raw = input.value.trim();
+        const q = normalize(raw);
+        clearBtn.hidden = !raw;
+
+        if (!q) {
+          temas.forEach(t => { t.style.display = ''; t.classList.remove('regras-no-match'); });
+          items.forEach(it => { it.style.display = ''; it.removeAttribute('open'); });
+          items.forEach(it => { if (it.querySelector('[data-default-open]')) it.setAttribute('open', ''); });
+          unhighlight();
+          status.hidden = true;
+          return;
+        }
+
+        let total = 0;
+        unhighlight();
+
+        temas.forEach(tema => {
+          let temaHasMatch = false;
+          const faqItems = tema.querySelectorAll('.faq-item');
+
+          faqItems.forEach(item => {
+            const text = normalize(item.textContent);
+            if (text.includes(q)) {
+              item.style.display = '';
+              item.setAttribute('open', '');
+              temaHasMatch = true;
+              total++;
+              highlight(item, raw);
+            } else {
+              item.style.display = 'none';
+              item.removeAttribute('open');
+            }
+          });
+
+          if (temaHasMatch) {
+            tema.style.display = '';
+            tema.classList.remove('regras-no-match');
+          } else {
+            tema.style.display = 'none';
+          }
+        });
+
+        status.hidden = false;
+        if (total === 0) {
+          status.textContent = 'Nenhum resultado encontrado para "' + raw + '".';
+        } else {
+          status.textContent = total + (total === 1 ? ' resultado encontrado.' : ' resultados encontrados.');
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        input.focus();
+      });
+
+      function highlight(container, term) {
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        const regex = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+        nodes.forEach(node => {
+          if (node.parentElement.closest('summary') && node.parentElement.tagName !== 'MARK') {
+            // skip highlight inside summary to avoid layout issues
+          }
+          if (node.parentElement.tagName === 'MARK') return;
+          if (!regex.test(node.textContent)) return;
+          const span = document.createElement('span');
+          span.innerHTML = node.textContent.replace(regex, '<mark class="regras-highlight">$1</mark>');
+          node.parentNode.replaceChild(span, node);
+        });
+      }
+
+      function unhighlight() {
+        document.querySelectorAll('.regras-highlight').forEach(mark => {
+          const parent = mark.parentNode;
+          parent.replaceChild(document.createTextNode(mark.textContent), mark);
+          parent.normalize();
+        });
+        document.querySelectorAll('.faq-a span:not([class])').forEach(span => {
+          if (!span.querySelector('.regras-highlight')) {
+            const parent = span.parentNode;
+            while (span.firstChild) parent.insertBefore(span.firstChild, span);
+            parent.removeChild(span);
+            parent.normalize();
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

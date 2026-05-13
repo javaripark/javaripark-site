@@ -1,0 +1,245 @@
+{
+  "lastUpdated": "2026-05-10T00:00:00.000Z",
+  "source": "javaripark.menudino.com",
+  "categories": [
+    {
+      "category": "CERVEJAS",
+      "items": [
+        { "name": "AMSTEL 600ML", "price": 16.9, "priceFormatted": "R$ 16,90", "description": "", "image": "" },
+        { "name": "AMSTEL ULTRA LATA", "price": 12, "priceFormatted": "R$ 12,00", "description": "", "image": "" },
+        { "name": "BLUE MOON LATA", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "COLORADO APPIA 600 ML", "price": 26.9, "priceFormatted": "R$ 26,90", "description": "", "image": "" },
+        { "name": "COLORADO INDICA", "price": 26.9, "priceFormatted": "R$ 26,90", "description": "", "image": "" },
+        { "name": "COLORADO RIBEIRÃO LAGER 600 ML", "price": 26.9, "priceFormatted": "R$ 26,90", "description": "", "image": "" },
+        { "name": "CORONA LATA 350ML", "price": 16.9, "priceFormatted": "R$ 16,90", "description": "", "image": "" },
+        { "name": "CORONA LONG NECK 330 ML", "price": 17.9, "priceFormatted": "R$ 17,90", "description": "", "image": "" },
+        { "name": "CORONA ZERO LATA", "price": 17.9, "priceFormatted": "R$ 17,90", "description": "", "image": "" },
+        { "name": "HEINEKEN 600ML", "price": 21.9, "priceFormatted": "R$ 21,90", "description": "", "image": "" },
+        { "name": "HEINEKEN ZERO LATA", "price": 16.9, "priceFormatted": "R$ 16,90", "description": "", "image": "" },
+        { "name": "LAGUNITAS DAY TIME LATA 350 ML", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "LAGUNITAS IPA LATA", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "MICHELOB ULTRA LATA 350 ML", "price": 16.9, "priceFormatted": "R$ 16,90", "description": "", "image": "" },
+        { "name": "ORIGINAL 600 ML", "price": 18.9, "priceFormatted": "R$ 18,90", "description": "", "image": "" },
+        { "name": "PATAGONIA IPA LATA 350ML", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "DRINKS PRONTOS",
+      "items": [
+        { "name": "SMIRNOFF ICE 275 ML", "price": 20, "priceFormatted": "R$ 20,00", "description": "", "image": "" },
+        { "name": "XEQUE MATE LATA 362ML", "price": 22, "priceFormatted": "R$ 22,00", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "CAIPIRINHA",
+      "items": [
+        { "name": "CAIPIRINHA ABSOLUT", "price": null, "priceFormatted": "A partir de R$ 41,80", "description": "", "image": "" },
+        { "name": "CAIPIRINHA SAKE", "price": 28.9, "priceFormatted": "R$ 28,90", "description": "", "image": "" },
+        { "name": "CAIPIRINHA SMIRNOFF", "price": null, "priceFormatted": "A partir de R$ 32,80", "description": "", "image": "" },
+        { "name": "CAIPIRINHA VELHO BARREIRO", "price": null, "priceFormatted": "A partir de R$ 28,80", "description": "", "image": "" },
+        { "name": "CAIPIRINHA YPIOCA OURO", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "GIN",
+      "items": [
+        { "name": "GIN FRUTAS VERMELHAS GORDONS", "price": 42.9, "priceFormatted": "R$ 42,90", "description": "Com gin, xarope de morango, frutas vermelhas e Red Bull Melancia, esse drink une doçura e energia na medida", "image": "" },
+        { "name": "GIN FRUTAS VERMELHAS TANQUERAY", "price": 49.9, "priceFormatted": "R$ 49,90", "description": "", "image": "" },
+        { "name": "GIN LAGOA AZUL GORDONS", "price": 35.9, "priceFormatted": "R$ 35,90", "description": "Gin, água com gás, xarope de curaçau blue e limão: o drink perfeito pra quem quer sensação de liberdade!", "image": "" },
+        { "name": "GIN LAGOA AZUL TANQUERAY", "price": 41.9, "priceFormatted": "R$ 41,90", "description": "", "image": "" },
+        { "name": "GIN MAÇA VERDE GORDONS", "price": 38.9, "priceFormatted": "R$ 38,90", "description": "Uma mistura vibrante de gin, tônica, xarope de maçã verde e limão siciliano. É pura ousadia!", "image": "" },
+        { "name": "GIN MAÇA VERDE TANQUERAY", "price": 46.9, "priceFormatted": "R$ 46,90", "description": "", "image": "" },
+        { "name": "GIN MANGO LOCO GORDONS", "price": 35.9, "priceFormatted": "R$ 35,90", "description": "O toque seco do gin com a pegada exótica do Monster Mango Loco. Vibrante do primeiro ao último gole!", "image": "" },
+        { "name": "GIN MANGO LOCO TANQUERAY", "price": 43.9, "priceFormatted": "R$ 43,90", "description": "", "image": "" },
+        { "name": "GIN SPICE GORDONS", "price": 36.9, "priceFormatted": "R$ 36,90", "description": "Gin com tônica, limão siciliano e canela em pau - um mix aromático que esquenta até o gelo do copo!", "image": "" },
+        { "name": "GIN SPICE TANQUERAY", "price": 42.9, "priceFormatted": "R$ 42,90", "description": "", "image": "" },
+        { "name": "GIN TONICA GORDONS", "price": 34.9, "priceFormatted": "R$ 34,90", "description": "O clássico refrescante com gin, tônica e um toque cítrico de limão pra elevar qualquer brinde!", "image": "" },
+        { "name": "GIN TONICA TANQUERAY", "price": 40.9, "priceFormatted": "R$ 40,90", "description": "", "image": "" },
+        { "name": "GIN TROPICAL GORDONS", "price": 40.9, "priceFormatted": "R$ 40,90", "description": "Uma baita dose de gin, um toque de Red Bull Tropical e está feito: o drink que deixa a energia lá no alto!", "image": "" },
+        { "name": "GIN TROPICAL TANQUERAY", "price": 47.9, "priceFormatted": "R$ 47,90", "description": "", "image": "" },
+        { "name": "GIN VERÃO GORDONS", "price": 34.9, "priceFormatted": "R$ 34,90", "description": "Uma explosão cítrica de gin, suco de laranja e grenadine que vai te transportar direto pro calor do quintal", "image": "" },
+        { "name": "GIN VIOLETA GORDONS", "price": 34.9, "priceFormatted": "R$ 34,90", "description": "Gin, suco de limão, xarope de violeta e água com gás: a suavidade da flor e o toque cítrico que conquista!", "image": "" },
+        { "name": "GIN VIOLETA TANQUERAY", "price": 40.9, "priceFormatted": "R$ 40,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "DRINKS CLÁSSICOS",
+      "items": [
+        { "name": "APEROL SPRITZ", "price": 39.9, "priceFormatted": "R$ 39,90", "description": "Aperol, espumante, água com gás e laranja: aquele amargor charmoso que é a cara do fim de tarde!", "image": "" },
+        { "name": "BATIDA DE MARACUJÁ", "price": 36.9, "priceFormatted": "R$ 36,90", "description": "", "image": "" },
+        { "name": "BATIDA DE MORANGO", "price": 36.9, "priceFormatted": "R$ 36,90", "description": "", "image": "" },
+        { "name": "GINGERMEISTER", "price": 51.9, "priceFormatted": "R$ 51,90", "description": "Jägermeister, Gordon's, gengibre e suco de laranja em um mix intenso, picante e cítrico que acorda o paladar!", "image": "" },
+        { "name": "JACK COKE", "price": 40.9, "priceFormatted": "R$ 40,90", "description": "O clássico que nunca erra, com Jack Daniels e Coca-Cola. Ideal para quem gosta de um drink com muita atitude.", "image": "" },
+        { "name": "MARACUJACK", "price": 41.9, "priceFormatted": "R$ 41,90", "description": "Jack Daniel's, suco de maracujá e refrigerante de citrus em um mix com personalidade de sobra!", "image": "" },
+        { "name": "MOJITO", "price": 30.9, "priceFormatted": "R$ 30,90", "description": "Misturar rum Bacardi, suco de limão, água com gás e hortelã é simplesmente genial, não acha?", "image": "" },
+        { "name": "NEGRONI", "price": 30.9, "priceFormatted": "R$ 30,90", "description": "Gin Gordons, Campari, Vermouth Rosso e uma rodela de laranja. Um clássico forte e elegante.", "image": "" },
+        { "name": "ON FIRE", "price": 51.9, "priceFormatted": "R$ 51,90", "description": "Com Jack Fire, gengibre, limão siciliano e maracujá, este drink é puro chama. Está preparado?", "image": "" },
+        { "name": "PINA COLADA", "price": 31.9, "priceFormatted": "R$ 31,90", "description": "Com rum Bacardi, leite de coco, abacaxi e leite condensado, é a representação da cremosidade.", "image": "" },
+        { "name": "SCREWDRIVER", "price": 30, "priceFormatted": "R$ 30,00", "description": "", "image": "" },
+        { "name": "SEX ON THE BEACH", "price": 32.9, "priceFormatted": "R$ 32,90", "description": "Uma dose cavalar de Smirnoff, xarope de pêssego, suco de laranja e groselha em um mix doce, tropical e, claro, sexy!", "image": "" }
+      ]
+    },
+    {
+      "category": "DOSES E GARRAFAS",
+      "items": [
+        { "name": "DOSE ABSOLUT", "price": 22.9, "priceFormatted": "R$ 22,90", "description": "", "image": "" },
+        { "name": "DOSE BLACK LABEL", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "DOSE CAMPARI", "price": 16.9, "priceFormatted": "R$ 16,90", "description": "", "image": "" },
+        { "name": "DOSE GORDONS", "price": 23.9, "priceFormatted": "R$ 23,90", "description": "", "image": "" },
+        { "name": "DOSE JACK DANIELS", "price": 27.9, "priceFormatted": "R$ 27,90", "description": "", "image": "" },
+        { "name": "DOSE JACK DANIELS FIRE", "price": 27.9, "priceFormatted": "R$ 27,90", "description": "", "image": "" },
+        { "name": "DOSE JACK DANIELS HONEY", "price": 27.9, "priceFormatted": "R$ 27,90", "description": "", "image": "" },
+        { "name": "DOSE JAGERMEISTER", "price": 25.9, "priceFormatted": "R$ 25,90", "description": "", "image": "" },
+        { "name": "DOSE JOSE CUERVO OURO", "price": 27.9, "priceFormatted": "R$ 27,90", "description": "", "image": "" },
+        { "name": "DOSE JOSE CUERVO PRATA", "price": 27.9, "priceFormatted": "R$ 27,90", "description": "", "image": "" },
+        { "name": "DOSE LICOR 43", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "DOSE RED LABEL", "price": 24.9, "priceFormatted": "R$ 24,90", "description": "", "image": "" },
+        { "name": "DOSE SMIRNOFF", "price": 17.9, "priceFormatted": "R$ 17,90", "description": "", "image": "" },
+        { "name": "DOSE TANQUERAY", "price": 26.9, "priceFormatted": "R$ 26,90", "description": "", "image": "" },
+        { "name": "GARRAFA ABSOLUT", "price": 350, "priceFormatted": "R$ 350,00", "description": "", "image": "" },
+        { "name": "GARRAFA BLACK LABEL", "price": 450, "priceFormatted": "R$ 450,00", "description": "", "image": "" },
+        { "name": "GARRAFA CAMPARI", "price": 200, "priceFormatted": "R$ 200,00", "description": "", "image": "" },
+        { "name": "GARRAFA JACK DANIELS", "price": 400, "priceFormatted": "R$ 400,00", "description": "", "image": "" },
+        { "name": "GARRAFA JACK FIRE", "price": 400, "priceFormatted": "R$ 400,00", "description": "", "image": "" },
+        { "name": "GARRAFA JAGERMEISTER", "price": 380, "priceFormatted": "R$ 380,00", "description": "", "image": "" },
+        { "name": "GARRAFA JOSE CUERVO OURO", "price": 400, "priceFormatted": "R$ 400,00", "description": "", "image": "" },
+        { "name": "GARRAFA JOSE CUERVO PRATA", "price": 400, "priceFormatted": "R$ 400,00", "description": "", "image": "" },
+        { "name": "GARRAFA LICOR 43", "price": 400, "priceFormatted": "R$ 400,00", "description": "", "image": "" },
+        { "name": "GARRAFA RED LABEL", "price": 360, "priceFormatted": "R$ 360,00", "description": "", "image": "" },
+        { "name": "GARRAFA SMIRNOFF", "price": 170, "priceFormatted": "R$ 170,00", "description": "", "image": "" },
+        { "name": "GARRAFA TANQUERAY", "price": 400, "priceFormatted": "R$ 400,00", "description": "", "image": "" },
+        { "name": "GARRRAFA GIN GORDONS", "price": 280, "priceFormatted": "R$ 280,00", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "CACHAÇAS",
+      "items": [
+        { "name": "DOSE BANANAZINHA (GOIÁS)", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "DOSE BOAZINHA (MINAS GERAIS)", "price": 13.9, "priceFormatted": "R$ 13,90", "description": "", "image": "" },
+        { "name": "DOSE BUSCA VIDA", "price": 15.9, "priceFormatted": "R$ 15,90", "description": "", "image": "" },
+        { "name": "DOSE POÇO DA PEDRA UMBURANA (BAHIA)", "price": 15.9, "priceFormatted": "R$ 15,90", "description": "", "image": "" },
+        { "name": "DOSE SAGATIBA CRISTALINA", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "DOSE SALINAS TRADICIONAL", "price": 15.9, "priceFormatted": "R$ 15,90", "description": "", "image": "" },
+        { "name": "DOSE SALINÍSSIMA BÁLSAMO (MINAS GERAIS)", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "DOSE SANTO GRAU (RIO DE JANEIRO)", "price": 17.9, "priceFormatted": "R$ 17,90", "description": "", "image": "" },
+        { "name": "DOSE SERRA DAS ALMAS (BAHIA)", "price": 14.9, "priceFormatted": "R$ 14,90", "description": "", "image": "" },
+        { "name": "DOSE VALE VERDE (MINAS GERAIS)", "price": 17.9, "priceFormatted": "R$ 17,90", "description": "", "image": "" },
+        { "name": "DOSE WEBER HAUS CARVALHO - (RIO GRANDE DO SUL)", "price": 17.9, "priceFormatted": "R$ 17,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "VINHOS E ESPUMANTES",
+      "items": [
+        { "name": "CASILLERO DEL DIABLO CABERNET SAUVIGNON", "price": 99.9, "priceFormatted": "R$ 99,90", "description": "", "image": "" },
+        { "name": "ESPUMANTE PROSECCO SALTON", "price": 89.9, "priceFormatted": "R$ 89,90", "description": "", "image": "" },
+        { "name": "RESERVADO CABERNET SAUVIGNON CONCHA Y TORO", "price": 74.9, "priceFormatted": "R$ 74,90", "description": "", "image": "" },
+        { "name": "RESERVADO CARMENERE CONCHA Y TORO", "price": 74.9, "priceFormatted": "R$ 74,90", "description": "", "image": "" },
+        { "name": "RESERVADO ROSE CONCHA Y TORO", "price": 74.9, "priceFormatted": "R$ 74,90", "description": "", "image": "" },
+        { "name": "RESERVADO SAUVIGNON BLANC CONCHA Y TORO", "price": 74.9, "priceFormatted": "R$ 74,90", "description": "", "image": "" },
+        { "name": "RESERVADO SWEET ROSE CONCHA Y TORO", "price": 74.9, "priceFormatted": "R$ 74,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "NÃO ALCOÓLICOS",
+      "items": [
+        { "name": "ÁGUA COM GÁS 500ML", "price": 6.9, "priceFormatted": "R$ 6,90", "description": "", "image": "" },
+        { "name": "ÁGUA SEM GÁS 500ML", "price": 6.9, "priceFormatted": "R$ 6,90", "description": "", "image": "" },
+        { "name": "COCA ZERO LATA", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "COCA-COLA LATA", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "DIVERTIDAMENTE (MORANGO COM XAROPE DE MORANGO)", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "Morango, xarope de morango, leite condensado e água com gás em uma bebida doce e animada, decorada com balas e canudo colorido pra entrar no clima da diversão!", "image": "" },
+        { "name": "GELO DE MORANGO", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "GELO DE COCO", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "GELO DE MAÇA VERDE", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "GELO DE MARACUJA", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "GUARANÁ ANTARTICA LATA", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "GUARANA ZERO ANTARCTICA", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "JARRA SUCO ABACAXI 1L", "price": 31.9, "priceFormatted": "R$ 31,90", "description": "", "image": "" },
+        { "name": "JARRA SUCO LARANJA 1L", "price": 31.9, "priceFormatted": "R$ 31,90", "description": "", "image": "" },
+        { "name": "JARRA SUCO LIMÃO 1L", "price": 31.9, "priceFormatted": "R$ 31,90", "description": "", "image": "" },
+        { "name": "JARRA SUCO MARACUJÁ 1L", "price": 31.9, "priceFormatted": "R$ 31,90", "description": "", "image": "" },
+        { "name": "JARRA SUCO MORANGO 1L", "price": 31.9, "priceFormatted": "R$ 31,90", "description": "", "image": "" },
+        { "name": "LILO & STICH (LIMÃO E CURAÇAU BLUE)", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "Limão, xarope de Curaçao Blue, leite condensado e água com gás num mix explosivo e divertido, com balas e canudo colorido pra soltar a imaginação!", "image": "" },
+        { "name": "MANGO LOCO 473 ML", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "MONSTROS S.A (KIWI COM XAROPE DE MAÇA VERDE)", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "Kiwi, xarope de maçã verde, leite condensado e água com gás numa combinação monstrinha cheia de sabor, com balas e canudo colorido que brilham no susto!", "image": "" },
+        { "name": "PIKACHU (MARACUJÁ E XAROPE DE MORANGO)", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "Maracujá, xarope de morango, leite condensado e água com gás pra um gole elétrico, decorado com balas e canudo colorido que vão te deixar no clima Pokémon!", "image": "" },
+        { "name": "RED BULL LATA", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "RED BULL MELANCIA LATA", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "RED BULL TROPICAL LATA", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "RED BULL ZERO", "price": 19.9, "priceFormatted": "R$ 19,90", "description": "", "image": "" },
+        { "name": "SCHWEPPES CITRUS LATA", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA BLUEBERRY", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA CRANBERRY", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA CURACAO BLUE", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA GRENADINE", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA MAÇA VERDE", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA MELANCIA", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA MORANGO", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA PÊSSEGO", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA ITALIANA TANGERINA", "price": 29.9, "priceFormatted": "R$ 29,90", "description": "", "image": "" },
+        { "name": "SODA LIMONADA", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "SUCO CAJU POLPA 400 ML", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "SUCO DE LARANJA NATURAL 400ML", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "SUCO DEL VALE GOIABA", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "SUCO DEL VALE MANGA", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "SUCO DEL VALE MARACUJA", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "SUCO DEL VALE PÊSSEGO", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "SUCO DEL VALE UVA", "price": 9.9, "priceFormatted": "R$ 9,90", "description": "", "image": "" },
+        { "name": "SUCO LIMÃO NATURAL 400ML", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "SUCO NATURAL DE ABACAXI 400ML", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "SUCO NATURAL DE KIWI 400ML", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "SUCO NATURAL DE MARACUJA 400ML", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "SUCO NATURAL DE MORANGO 400ML", "price": 12.9, "priceFormatted": "R$ 12,90", "description": "", "image": "" },
+        { "name": "SUKITA LARANJA", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "TÔNICA LATA", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" },
+        { "name": "TÔNICA ZERO", "price": 8.9, "priceFormatted": "R$ 8,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "PORÇÕES",
+      "items": [
+        { "name": "BOLOTA DE CARNE", "price": 42.9, "priceFormatted": "R$ 42,90", "description": "Porção com 6 unidades grandes. Acompanha pimenta da casa.", "image": "" },
+        { "name": "BOLOTAS DE QUEIJO", "price": 42.9, "priceFormatted": "R$ 42,90", "description": "Porção com 6 unidades grandes. Acompanha pimenta da casa.", "image": "" },
+        { "name": "COXINHAS DE FRANGO", "price": 44.9, "priceFormatted": "R$ 44,90", "description": "Porção com 6 unidades médias. Acompanha pimenta da casa.", "image": "" },
+        { "name": "DADINHO TAPIOCA", "price": 41.9, "priceFormatted": "R$ 41,90", "description": "300g de crocância por fora, maciez por dentro e um toque agridoce com geleia de pimenta que faz a diferença!", "image": "" },
+        { "name": "FRITAS ALHO E ALECRIM", "price": 39.9, "priceFormatted": "R$ 39,90", "description": "350g de batata frita na hora com finalização de lascas de alho e alecrim frito.", "image": "" },
+        { "name": "FRITAS CHEESE E BACON", "price": 39.9, "priceFormatted": "R$ 39,90", "description": "Uma porção generosa de 350g + molho de queijos e cubinhos de bacon.", "image": "" },
+        { "name": "FRITAS CLÁSSICA", "price": 26.9, "priceFormatted": "R$ 26,90", "description": "350g de batata dourada com tempero da casa e ketchup pra mergulhar sem culpa!", "image": "" },
+        { "name": "KIBE CASEIRO", "price": 39.9, "priceFormatted": "R$ 39,90", "description": "Uma porção incrível com 8 unidades dessa delícia caseira. Acompanha limão pra você temperar a gosto.", "image": "" },
+        { "name": "PASTÉIS DE CARNE", "price": 43.9, "priceFormatted": "R$ 43,90", "description": "São 10 unidades por porção e acompanha vinagrete.", "image": "" },
+        { "name": "PASTÉIS DE QUEIJO", "price": 43.9, "priceFormatted": "R$ 43,90", "description": "São 10 unidades por porção e acompanha vinagrete.", "image": "" },
+        { "name": "TIRAS DE FRANGO EMPANADO", "price": 44.9, "priceFormatted": "R$ 44,90", "description": "300g de frango empanado dourado e suculento, servido com molho de mostarda e mel que é puro sabor!", "image": "" }
+      ]
+    },
+    {
+      "category": "BAGUETES",
+      "items": [
+        { "name": "BAGUETE 3 QUEIJOS", "price": 42.9, "priceFormatted": "R$ 42,90", "description": "", "image": "" },
+        { "name": "BAGUETE CHURRASCO", "price": 42.9, "priceFormatted": "R$ 42,90", "description": "", "image": "" },
+        { "name": "BAGUETE DE FRANGO", "price": 40.9, "priceFormatted": "R$ 40,90", "description": "", "image": "" },
+        { "name": "BAGUETE DE LINGUIÇA", "price": 39.9, "priceFormatted": "R$ 39,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "SOBREMESAS",
+      "items": [
+        { "name": "CANNOLI CREME", "price": 14.9, "priceFormatted": "R$ 14,90", "description": "", "image": "" },
+        { "name": "CANNOLI DOCE DE LEITE", "price": 14.9, "priceFormatted": "R$ 14,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "FEIJOADA",
+      "items": [
+        { "name": "FEIJOADA COMPLETA GRANDE", "price": 119.9, "priceFormatted": "R$ 119,90", "description": "", "image": "" },
+        { "name": "FEIJOADA COMPLETA MÉDIA", "price": 94.9, "priceFormatted": "R$ 94,90", "description": "", "image": "" },
+        { "name": "FEIJOADA LIGHT GRANDE", "price": 119.9, "priceFormatted": "R$ 119,90", "description": "", "image": "" },
+        { "name": "FEIJOADA LIGHT MÉDIA", "price": 94.9, "priceFormatted": "R$ 94,90", "description": "", "image": "" }
+      ]
+    },
+    {
+      "category": "BRINDES",
+      "items": [
+        { "name": "COMBO ANIVERSARIO SMIRNOFF E SCHWEPPES", "price": null, "priceFormatted": "", "description": "", "image": "" }
+      ]
+    }
+  ]
+}

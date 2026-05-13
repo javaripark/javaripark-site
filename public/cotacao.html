@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Cotação de Pacotes — Javari StrEat Park</title>
+  <meta name="description" content="Monte seu pacote de consumação pré-pago no Javari StrEat Park. Escolha bebidas, porções e muito mais, e envie direto pelo WhatsApp." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/cotacao.css" />
+</head>
+<body class="page-cotacao">
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header scrolled" id="header">
+    <a href="/" class="brand" aria-label="Javari StrEat Park">
+      <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="brand-logo brand-logo--white" />
+      <img src="assets/images/logo-horizontal-black.png" alt="Javari StrEat Park" class="brand-logo brand-logo--black" />
+    </a>
+    <nav class="site-nav" aria-label="Navegação principal">
+      <a href="/">Início</a>
+      <a href="/#cardapio">Cardápio</a>
+      <a href="/#agenda">Agenda</a>
+      <a href="/#localizacao">Onde estamos</a>
+      <a href="/regras">Regras</a>
+      <a href="/blog">Blog</a>
+      <div class="nav-dropdown">
+        <a class="nav-dropdown-toggle" role="button" tabindex="0">Serviços <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5L6 7.5L9 4.5"/></svg></a>
+        <ul class="nav-dropdown-menu">
+          <li><a href="/convite">Convite personalizado</a></li>
+          <li><a href="/cotacao">Cotação de pacotes</a></li>
+          <li><a href="/fotos">Cobertura fotográfica</a></li>
+        </ul>
+      </div>
+      <a class="btn btn-primary magnetic" href="/#reservas">Reservar</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main>
+
+    <!-- ===== HERO ===== -->
+    <section class="cotacao-hero">
+      <div class="cotacao-hero-photo">
+        <img src="assets/images/cotacao-hero.webp" alt="" />
+      </div>
+      <div class="cotacao-hero-overlay"></div>
+      <div class="container">
+        <p class="section-eyebrow">Cotação de pacotes</p>
+        <h1 class="cotacao-hero-title">
+          Monte seu <em>pacote</em> de consumação <em>pré-pago</em>.
+        </h1>
+        <p class="cotacao-hero-lead">
+          Escolha bebidas, porções e muito mais do nosso cardápio. Finalize e envie pelo WhatsApp para fechar com nosso time e ter acesso a condições especiais.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== COTAÇÃO APP ===== -->
+    <section class="cotacao-content">
+      <div class="container">
+
+        <!-- Category tabs -->
+        <div class="cat-tabs-wrap">
+          <button class="cat-arrow cat-arrow--left" id="catArrowLeft" aria-label="Rolar categorias para esquerda">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="cat-tabs" id="catTabs"></div>
+          <button class="cat-arrow cat-arrow--right" id="catArrowRight" aria-label="Rolar categorias para direita">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+
+        <!-- Items grid -->
+        <div class="items-grid" id="itemsGrid">
+          <div class="items-loading">Carregando cardápio…</div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="items-empty hidden" id="itemsEmpty">
+          <p>Nenhum item disponível nesta categoria.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== STICKY BOTTOM BAR ===== -->
+    <div class="cotacao-bar hidden" id="cotacaoBar">
+      <div class="container cotacao-bar-inner">
+        <div class="cotacao-bar-summary">
+          <div class="cotacao-bar-items" id="barItemCount">0 itens</div>
+          <div class="cotacao-bar-prices">
+            <span class="price-original" id="barOriginal">R$ 0,00</span>
+            <span class="price-discount" id="barDiscount">-5%</span>
+            <span class="price-final" id="barFinal">R$ 0,00</span>
+          </div>
+        </div>
+        <button class="btn btn-primary cotacao-bar-cta" id="barCTA">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Enviar pelo WhatsApp
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== REVIEW MODAL ===== -->
+    <div class="cotacao-modal hidden" id="reviewModal">
+      <div class="cotacao-modal-backdrop" id="modalBackdrop"></div>
+      <div class="cotacao-modal-content">
+        <button class="cotacao-modal-close" id="modalClose" aria-label="Fechar">&times;</button>
+        <h2>Resumo do Pacote</h2>
+        <p class="cotacao-modal-sub">Confira os itens selecionados antes de enviar.</p>
+        <div class="cotacao-modal-list" id="modalList"></div>
+        <div class="cotacao-modal-totals">
+          <div class="modal-total-row">
+            <span>Subtotal</span>
+            <span id="modalSubtotal">R$ 0,00</span>
+          </div>
+          <div class="modal-total-row modal-discount">
+            <span>Desconto pacote (5%)</span>
+            <span id="modalDiscountVal">- R$ 0,00</span>
+          </div>
+          <div class="modal-total-row modal-final">
+            <span>Total estimado</span>
+            <span id="modalFinal">R$ 0,00</span>
+          </div>
+        </div>
+        <p class="cotacao-modal-note">Valores sujeitos a confirmação. Nosso time pode oferecer condições ainda melhores!</p>
+        <a class="btn btn-primary cotacao-modal-send" id="modalSend" target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Enviar pelo WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer" id="contato">
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="footer-logo" />
+          <p class="footer-tagline">SÓ VEM!</p>
+        </div>
+        <div class="footer-block">
+          <h4>Endereço</h4>
+          <p>Rua Javari, 112<br>Mooca · São Paulo</p>
+          <a class="link-underline" href="/#localizacao">Ver no mapa</a>
+        </div>
+        <div class="footer-block">
+          <h4>Contato</h4>
+          <ul class="footer-links">
+            <li><a href="https://wa.me/+551120811544" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp · (11) 2081-1544</a></li>
+            <li><a href="https://instagram.com/javaripark" target="_blank" rel="noopener">Instagram · @javaripark</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bar">
+        <span>© <span id="year"></span> Javari StrEat Park</span>
+        <span class="footer-spacer">·</span>
+        <span>SÓ VEM!</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <script src="js/cotacao.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const navToggle = document.getElementById('nav-toggle');
+    const siteNav = document.querySelector('.site-nav');
+    if (navToggle && siteNav) {
+      navToggle.addEventListener('click', () => {
+        const open = siteNav.classList.toggle('open');
+        navToggle.setAttribute('aria-expanded', open);
+      });
+      siteNav.querySelectorAll('a:not(.nav-dropdown-toggle)').forEach(a => {
+        a.addEventListener('click', () => {
+          siteNav.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+
+    document.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
+      toggle.addEventListener('click', e => {
+        e.preventDefault();
+        toggle.closest('.nav-dropdown').classList.toggle('open');
+      });
+    });
+  </script>
+</body>
+</html>

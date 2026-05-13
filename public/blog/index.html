@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Blog — Javari StrEat Park</title>
+  <meta name="description" content="Dicas, novidades e bastidores do quintal mais charmoso da Mooca. Tudo sobre eventos, gastronomia e cultura de boteco em SP." />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Blog — Javari StrEat Park" />
+  <meta property="og:description" content="Dicas, novidades e bastidores do quintal mais charmoso da Mooca." />
+  <meta property="og:url" content="https://javaripark.com.br/blog/" />
+  <meta property="og:image" content="https://javaripark.com.br/assets/images/quintal/quintal-hero.jpg" />
+  <meta property="og:site_name" content="Javari StrEat Park" />
+  <meta property="og:locale" content="pt_BR" />
+
+  <link rel="canonical" href="https://javaripark.com.br/blog/" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/blog.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header site-header--inner" id="header">
+    <a href="/" class="brand" aria-label="Javari StrEat Park">
+      <img src="/assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="brand-logo brand-logo--white" />
+      <img src="/assets/images/logo-horizontal-black.png" alt="Javari StrEat Park" class="brand-logo brand-logo--black" />
+    </a>
+    <nav class="site-nav" aria-label="Navegação principal">
+      <a href="/">Início</a>
+      <a href="/#cardapio">Cardápio</a>
+      <a href="/#agenda">Agenda</a>
+      <a href="/#localizacao">Onde estamos</a>
+      <a href="/regras">Regras</a>
+      <a href="/blog">Blog</a>
+      <div class="nav-dropdown">
+        <a class="nav-dropdown-toggle" role="button" tabindex="0">Serviços <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5L6 7.5L9 4.5"/></svg></a>
+        <ul class="nav-dropdown-menu">
+          <li><a href="/convite">Convite personalizado</a></li>
+          <li><a href="/cotacao">Cotação de pacotes</a></li>
+          <li><a href="/fotos">Cobertura fotográfica</a></li>
+        </ul>
+      </div>
+      <a class="btn btn-primary magnetic" href="https://wa.me/+551120811544" target="_blank" rel="noopener">Reservar</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main>
+
+    <!-- ===== HERO ===== -->
+    <section class="blog-hero">
+      <div class="container">
+        <p class="section-eyebrow">Blog</p>
+        <h1 class="blog-hero-title">Do quintal pra você.</h1>
+        <p class="blog-hero-sub">Novidades, bastidores e dicas do rolê mais charmoso da Mooca.</p>
+      </div>
+    </section>
+
+    <!-- ===== POSTS GRID ===== -->
+    <section class="blog-listing">
+      <div class="container">
+        <div class="blog-grid" id="blog-grid">
+          <!-- Posts loaded via JS -->
+        </div>
+        <div class="blog-empty" id="blog-empty" style="display:none">
+          <p>Nenhum post encontrado.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer" id="contato">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="/assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="footer-logo" />
+        <p class="footer-tagline">SÓ VEM!</p>
+      </div>
+      <div class="footer-block">
+        <h4>Endereço</h4>
+        <p>Rua Javari, 112<br>Mooca · São Paulo</p>
+        <a class="link-underline" href="/#localizacao">Ver no mapa</a>
+      </div>
+      <div class="footer-block">
+        <h4>Contato</h4>
+        <ul class="footer-links">
+          <li><a href="https://wa.me/+551120811544" target="_blank" rel="noopener">WhatsApp · (11) 2081-1544</a></li>
+          <li><a href="https://instagram.com/javaripark" target="_blank" rel="noopener">Instagram · @javaripark</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>&copy; <span id="year"></span> Javari StrEat Park</span>
+      <span class="footer-spacer">&middot;</span>
+      <span>SÓ VEM!</span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Mobile nav toggle
+    const toggle = document.getElementById('nav-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        const nav = document.querySelector('.site-nav');
+        const open = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', !open);
+        nav.classList.toggle('open');
+      });
+    }
+
+    // Load blog posts
+    async function loadPosts() {
+      try {
+        const res = await fetch('/data/blog-posts.json');
+        const posts = await res.json();
+        const grid = document.getElementById('blog-grid');
+        const empty = document.getElementById('blog-empty');
+
+        if (!posts || posts.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        grid.innerHTML = posts.map(post => {
+          const dateObj = new Date(post.date + 'T12:00:00');
+          const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+          return `
+            <a href="/blog/${post.slug}" class="blog-card">
+              <div class="blog-card-img">
+                <img src="${post.featuredImage}" alt="${post.title}" loading="lazy" />
+              </div>
+              <div class="blog-card-body">
+                <time class="blog-card-date" datetime="${post.date}">${dateStr}</time>
+                <h2 class="blog-card-title">${post.title}</h2>
+                <p class="blog-card-excerpt">${post.excerpt}</p>
+                <span class="blog-card-link">Ler mais &rarr;</span>
+              </div>
+            </a>`;
+        }).join('');
+      } catch (e) {
+        console.warn('Erro ao carregar posts:', e);
+        document.getElementById('blog-empty').style.display = 'block';
+      }
+    }
+    loadPosts();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Reservas — Javari StrEat Park</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4a90e2; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 0; box-shadow: 0 4px 8px rgba(0,0,0,.1); position: relative; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+        .admin-nav { display: flex; background: white; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,.08); margin-bottom: 20px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        .admin-nav a { flex: 1; text-align: center; padding: 14px 8px; text-decoration: none; color: #666; font-weight: 600; font-size: 13px; border-bottom: 3px solid transparent; transition: all .2s; }
+        .admin-nav a:hover { background: #f8f9fa; }
+        .admin-nav a.active { color: #4a90e2; border-bottom-color: #4a90e2; background: #f0f7ff; }
+        .agenda-preview { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px; padding: 14px 16px; margin-top: 16px; }
+        .agenda-preview h4 { font-size: .9em; font-weight: 700; color: #92400e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .agenda-preview .agenda-event { font-size: .85em; color: #78350f; padding: 4px 0; display: flex; gap: 8px; }
+        .agenda-preview .agenda-event strong { min-width: 50px; }
+        .agenda-preview .agenda-empty { font-size: .85em; color: #b45309; font-style: italic; }
+        .header h1 { color: white !important; font-size: 1.4em; margin: 0; padding-right: 50px; }
+        .header p { color: white; font-size: 0.8em; margin-top: 4px; }
+        .header .logout-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.2); color: white; border: 1px solid rgba(255,255,255,.4); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: background .2s; }
+        .header .logout-btn:hover { background: rgba(255,255,255,.3); }
+        .map-container { position: relative; width: 100%; padding-top: 150%; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,.1); overflow: hidden; }
+        .map-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; object-position: center; border-radius: 12px; }
+        .sector { position: absolute; background-color: rgba(147,51,234,.2); border: 2px solid #9333ea; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: all .2s ease-in-out; padding: 5px; box-sizing: border-box; font-size: .8em; color: #4a0080; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .sector:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,.15); }
+        .sector.reserved { background-color: rgba(234,88,12,.8); border-color: #ea580c; color: white; box-shadow: 0 4px 8px rgba(0,0,0,.2); }
+        .sector.free { background-color: rgba(144,226,74,.8); border: 3px dashed #4CAF50; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,.2); }
+        .sector.free .sector-name { font-size: 2.2em !important; font-weight: bolder !important; color: white !important; display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
+        .sector-info { font-size: .9em; margin-top: 5px; }
+        .sector-name { font-size: 1.1em; font-weight: bold; }
+        #sector-1 { top: 80%; left: 45%; width: 15%; height: 8%; }
+        #sector-2 { top: 65%; left: 30%; width: 15%; height: 8%; }
+        #sector-3 { top: 65%; left: 50%; width: 15%; height: 8%; }
+        #sector-4 { top: 50%; left: 30%; width: 15%; height: 8%; }
+        #sector-5 { top: 50%; left: 50%; width: 15%; height: 8%; }
+        #sector-6 { top: 35%; left: 50%; width: 15%; height: 8%; }
+        #sector-7 { top: 25%; left: 50%; width: 15%; height: 8%; }
+        #sector-8 { top: 15%; left: 50%; width: 15%; height: 8%; }
+        #sector-9 { top: 15%; left: 30%; width: 15%; height: 8%; }
+        #bus-lounge { top: 35%; left: 70%; width: 15%; height: 8%; }
+        #sector-extras { top: 15%; left: 10%; width: 15%; height: 8%; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,.6); justify-content: center; align-items: center; }
+        .modal-content { background-color: #fefefe; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,.2); width: 90%; max-width: 500px; position: relative; transform: scale(.95); opacity: 0; animation: fadeInScale .3s forwards; }
+        @keyframes fadeInScale { to { transform: scale(1); opacity: 1; } }
+        .close-button { color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 28px; font-weight: bold; cursor: pointer; transition: color .2s; }
+        .close-button:hover { color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1em; transition: border-color .2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74,144,226,.2); }
+        .submit-button { background-color: #4a90e2; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: 600; transition: background-color .2s ease, transform .1s ease; width: 100%; }
+        .submit-button:hover { background-color: #357ABD; transform: translateY(-1px); }
+        .submit-button:active { transform: translateY(0); }
+        .message-box { display: none; position: fixed; z-index: 1001; left: 50%; top: 50%; transform: translate(-50%,-50%); background-color: #4CAF50; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,.2); font-size: 1.1em; text-align: center; opacity: 0; animation: fadeInOut 3s forwards; }
+        .message-box.error { background-color: #f44336; }
+        .message-box.info { background-color: #2196F3; }
+        @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; display: none; } }
+        #reservation-details-modal .modal-content { max-width: 400px; text-align: center; }
+        #reservation-details-modal .detail-item { margin-bottom: 10px; font-size: 1.1em; color: #444; }
+        #reservation-details-modal .detail-label { font-weight: 600; color: #222; }
+        #reservation-details-modal .modal-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        #reservation-details-modal .modal-buttons button { padding: 12px 20px; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: background-color .2s ease; border: none; }
+        #reservation-details-modal .modal-buttons .btn-whatsapp { background-color: #25D366; color: white; }
+        #reservation-details-modal .modal-buttons .btn-whatsapp:hover { background-color: #1DA851; }
+        #reservation-details-modal .modal-buttons .btn-edit { background-color: #4a90e2; color: white; }
+        #reservation-details-modal .modal-buttons .btn-edit:hover { background-color: #357ABD; }
+        #reservation-details-modal .modal-buttons .btn-delete { background-color: #EF4444; color: white; }
+        #reservation-details-modal .modal-buttons .btn-delete:hover { background-color: #DC2626; }
+        #confirmation-modal .modal-buttons { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
+        #confirmation-modal .modal-buttons button { padding: 12px 20px; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: background-color .2s ease; border: none; }
+        #confirmation-modal .modal-buttons .btn-delete { background-color: #EF4444; color: white; }
+        #confirmation-modal .modal-buttons .btn-delete:hover { background-color: #DC2626; }
+        #confirmation-modal .modal-buttons .submit-button { background-color: #6B7280; color: white; }
+        #confirmation-modal .modal-buttons .submit-button:hover { background-color: #4B5563; }
+        .calendar-indicator { margin-top: 10px; font-weight: 600; text-align: center; padding: 8px; border-radius: 8px; }
+        .calendar-indicator.has-reservations { background-color: #D1FAE5; color: #065F46; }
+        .calendar-indicator.no-reservations { background-color: #FEE2E2; color: #991B1B; }
+        #report-modal .modal-content { max-width: 550px; }
+        #report-modal .date-range-group { display: flex; gap: 15px; align-items: flex-end; }
+        #report-modal .date-range-group > div { flex: 1; }
+        #extras-list-modal .modal-content { max-width: 500px; }
+        #extras-list-content { max-height: 250px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 8px; background-color: #f9f9f9; }
+        #extras-list-content > div { padding: 8px; border-bottom: 1px dashed #ddd; }
+        #extras-list-content > div:last-child { border-bottom: none; }
+        .daily-status-panel { background-color: #e0f2f7; padding: 15px; border-radius: 12px; margin-top: 15px; box-shadow: 0 2px 4px rgba(0,0,0,.05); text-align: left; color: #2196F3; }
+        .daily-status-panel p { margin-bottom: 5px; font-size: .95em; font-weight: 500; }
+        .daily-status-panel strong { color: #0D47A1; }
+        .daily-status-panel button { background-color: #2196F3; color: white; padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-size: .9em; font-weight: 600; transition: background-color .2s ease; margin-top: 10px; }
+        .daily-status-panel button:hover { background-color: #1976D2; }
+        #capacity-config-modal .modal-content { max-width: 400px; }
+        .auth-loading { display: flex; align-items: center; justify-content: center; min-height: 100vh; font-size: 18px; color: #777; }
+        @media(max-width:480px){
+            .container{padding:12px}
+            .header{padding:16px 20px}
+        }
+        @media(min-width:640px){
+            .header h1{font-size:1.8em;padding-right:0}
+            .admin-nav a{font-size:14px}
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-loading" class="auth-loading">Verificando autenticação...</div>
+
+    <div class="container" id="app-container" style="display:none;">
+        <header class="header">
+            <h1 class="text-3xl font-bold">Central de Reservas</h1>
+            <p id="user-email-display"></p>
+            <button class="logout-btn" id="logoutBtn">Sair</button>
+        </header>
+
+        <nav class="admin-nav">
+            <a href="/admin/dashboard.html">Dashboard</a>
+            <a href="/admin/reservas.html" class="active">Reservas</a>
+            <a href="/admin/agenda.html">Agenda</a>
+            <a href="/admin/cardapio.html">Cardápio</a>
+        </nav>
+
+        <div class="flex flex-col md:flex-row gap-6 mb-6">
+            <div class="w-full bg-white p-6 rounded-xl shadow-md">
+                <label for="reservation-date" class="block text-lg font-semibold mb-3 text-gray-700">Selecione a Data:</label>
+                <input type="date" id="reservation-date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+                <p id="date-reservations-indicator" class="calendar-indicator mt-3"></p>
+                <div class="w-full bg-gray-200 rounded-full h-4 mt-2">
+                    <div id="occupancy-bar" class="bg-blue-500 h-4 rounded-full" style="width: 0%;"></div>
+                </div>
+                <p class="text-xs text-gray-600 mt-1" id="occupancy-percentage-display">0% de Ocupação</p>
+                <div class="daily-status-panel">
+                    <p>Total de Reservas: <strong id="total-reservations-display">0</strong></p>
+                    <p>Total de Pessoas: <strong id="total-people-display">0</strong></p>
+                    <p>Capacidade de Pessoas: <strong id="people-capacity-display">N/A</strong></p>
+                    <p>Mesas Disponíveis: <strong id="tables-available-display">N/A</strong></p>
+                    <p>Cadeiras Disponíveis: <strong id="chairs-available-display">N/A</strong></p>
+                    <p>Tambores Disponíveis: <strong id="drums-available-display">N/A</strong></p>
+                    <p>Banquinhos Disponíveis: <strong id="stools-available-display">N/A</strong></p>
+                    <button id="configure-capacity-btn">Configurar Capacidade</button>
+                </div>
+                <div class="agenda-preview" id="agenda-preview" style="display:none">
+                    <h4>&#127925; Atrações do Dia</h4>
+                    <div id="agenda-preview-list"></div>
+                </div>
+
+                <button id="export-report-btn" class="submit-button mt-4">Exportar Relatório</button>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <img id="seat-map-template" class="map-image" src="/assets/images/mapa-assentos.png" alt="Mapa de Assentos Javari Park">
+            <div id="sector-1" class="sector" data-sector="1"></div>
+            <div id="sector-2" class="sector" data-sector="2"></div>
+            <div id="sector-3" class="sector" data-sector="3"></div>
+            <div id="sector-4" class="sector" data-sector="4"></div>
+            <div id="sector-5" class="sector" data-sector="5"></div>
+            <div id="sector-6" class="sector" data-sector="6"></div>
+            <div id="sector-7" class="sector" data-sector="7"></div>
+            <div id="sector-8" class="sector" data-sector="8"></div>
+            <div id="sector-9" class="sector" data-sector="9"></div>
+            <div id="bus-lounge" class="sector" data-sector="Bus Lounge"></div>
+            <div id="sector-extras" class="sector" data-sector="Extras"></div>
+        </div>
+
+        <!-- Reservation Form Modal -->
+        <div id="reservation-form-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-form-modal">&times;</span>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800" id="form-modal-title">Registrar Nova Reserva</h2>
+                <form id="reservation-form">
+                    <input type="hidden" id="reservation-doc-id" name="docId">
+                    <div class="form-group">
+                        <label for="form-date">Data:</label>
+                        <input type="text" id="form-date" name="date" class="bg-gray-100 cursor-not-allowed" readonly required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-sector">Setor Desejado:</label>
+                        <input type="text" id="form-sector" name="sector" class="bg-gray-100 cursor-not-allowed" readonly required>
+                    </div>
+                    <div class="form-group">
+                        <label for="first-name">Nome:</label>
+                        <input type="text" id="first-name" name="firstName" placeholder="Seu nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last-name">Sobrenome:</label>
+                        <input type="text" id="last-name" name="lastName" placeholder="Seu sobrenome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="num-people">Quantidade de Pessoas:</label>
+                        <input type="number" id="num-people" name="numPeople" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="whatsapp">WhatsApp:</label>
+                        <input type="text" id="whatsapp" name="whatsapp" placeholder="Ex: (11) 98765-4321" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="observations">Observações:</label>
+                        <textarea id="observations" name="observations" rows="3" placeholder="Adicione quaisquer observações sobre a reserva..."></textarea>
+                    </div>
+                    <button type="submit" class="submit-button">Confirmar Reserva</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reservation Details Modal -->
+        <div id="reservation-details-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-details-modal">&times;</span>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Detalhes da Reserva</h2>
+                <div id="details-content">
+                    <p class="detail-item"><span class="detail-label">Setor:</span> <span id="detail-sector"></span></p>
+                    <p class="detail-item"><span class="detail-label">Nome:</span> <span id="detail-name"></span></p>
+                    <p class="detail-item"><span class="detail-label">Pessoas:</span> <span id="detail-num-people"></span></p>
+                    <p class="detail-item"><span class="detail-label">WhatsApp:</span> <span id="detail-whatsapp"></span></p>
+                    <p class="detail-item" id="detail-observations-container"><span class="detail-label">Observações:</span> <span id="detail-observations"></span></p>
+                    <p class="detail-item" id="detail-reconfirmed-container"><span class="detail-label">Reconfirmado em:</span> <span id="detail-reconfirmed"></span></p>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-whatsapp" id="btn-reconfirm-whatsapp">Reconfirmar WhatsApp</button>
+                    <button class="btn-edit" id="btn-edit-details">Editar Reserva</button>
+                    <button class="btn-delete" id="btn-delete-details">Excluir Reserva</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmation-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-confirmation-modal">&times;</span>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800" id="confirmation-title">Confirmação</h2>
+                <p id="confirmation-message" class="mb-6 text-gray-700"></p>
+                <div class="modal-buttons">
+                    <button id="confirm-action-btn" class="btn-delete">Confirmar</button>
+                    <button id="cancel-action-btn" class="submit-button">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Modal -->
+        <div id="report-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-report-modal">&times;</span>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Exportar Relatório de Reservas</h2>
+                <div class="date-range-group">
+                    <div class="form-group">
+                        <label for="report-start-date">Data de Início:</label>
+                        <input type="date" id="report-start-date" class="w-full p-3 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="form-group">
+                        <label for="report-end-date">Data de Fim:</label>
+                        <input type="date" id="report-end-date" class="w-full p-3 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div class="flex gap-4 mt-4">
+                    <button id="generate-pdf-report-btn" class="submit-button flex-1">Gerar Relatório PDF</button>
+                    <button id="generate-xls-report-btn" class="submit-button flex-1 bg-green-600 hover:bg-green-700">Gerar Relatório XLS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Extras List Modal -->
+        <div id="extras-list-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-extras-list-modal">&times;</span>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Reservas Extras para <span id="extras-list-date"></span></h2>
+                <div id="extras-list-content" class="max-h-60 overflow-y-auto mb-4"></div>
+                <button id="add-new-extra-btn" class="submit-button">Adicionar Nova Reserva Extra</button>
+            </div>
+        </div>
+
+        <!-- Capacity Config Modal -->
+        <div id="capacity-config-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-capacity-modal">&times;</span>
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Configurar Capacidade Global</h2>
+                <form id="capacity-form">
+                    <div class="form-group">
+                        <label for="num-tables">Quantidade de Mesas:</label>
+                        <input type="number" id="num-tables" name="numTables" min="0" value="0" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="num-chairs">Quantidade de Cadeiras da Casa:</label>
+                        <input type="number" id="num-chairs" name="numChairs" min="0" value="0" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="num-drums">Quantidade de Tambores:</label>
+                        <input type="number" id="num-drums" name="numDrums" min="0" value="0" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="num-stools">Quantidade de Banquinhos:</label>
+                        <input type="number" id="num-stools" name="numStools" min="0" value="0" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="num-people-capacity">Capacidade de Pessoas (Total):</label>
+                        <input type="number" id="num-people-capacity" name="numPeopleCapacity" min="0" value="0" class="w-full p-3 border border-gray-300 rounded-lg" required>
+                    </div>
+                    <button type="submit" class="submit-button">Salvar Capacidade</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="message-box" class="message-box"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
+            authDomain: "central-de-reservas-jsp.firebaseapp.com",
+            projectId: "central-de-reservas-jsp",
+            storageBucket: "central-de-reservas-jsp.firebasestorage.app",
+            appId: "1:574859111927:web:83df67ed1865a59c0392f2"
+        };
+
+        const appId = firebaseConfig.projectId;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const SECTORS = ['sector-1','sector-2','sector-3','sector-4','sector-5','sector-6','sector-7','sector-8','sector-9','bus-lounge','sector-extras'];
+
+        let currentReservations = [];
+        let selectedDate = new Date().toISOString().split('T')[0];
+        let globalCapacity = { Mesas: 0, Cadeiras: 0, Tambores: 0, Banquinhos: 0, CapacidadePessoas: 0 };
+        let currentReservationUnsubscribe = null;
+        let globalCapacityUnsubscribe = null;
+        let agendaUnsubscribe = null;
+
+        const dateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+
+        // DOM refs
+        const $ = id => document.getElementById(id);
+        const datePicker = $('reservation-date');
+        const messageBox = $('message-box');
+        const occupancyBar = $('occupancy-bar');
+        const occupancyPct = $('occupancy-percentage-display');
+
+        // Auth guard (sessionStorage)
+        const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
+        if (!session) { window.location.href = '/admin/index.html'; }
+        $('auth-loading').style.display = 'none';
+        $('app-container').style.display = 'block';
+        $('user-email-display').textContent = session ? session.email : '';
+        fetchAndRenderReservations(selectedDate);
+        fetchGlobalCapacity();
+        fetchAgendaPreview(selectedDate);
+
+        $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('javari_admin_auth'); window.location.href = '/admin/index.html'; });
+
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = 'message-box ' + type;
+            messageBox.style.display = 'block';
+            messageBox.style.animation = 'none';
+            void messageBox.offsetWidth;
+            messageBox.style.animation = 'fadeInOut 3s forwards';
+        }
+
+        function formatPhoneDisplay(raw) {
+            let v = String(raw).replace(/\D/g, '');
+            if (v.length === 0) return '';
+            let f = '(' + v.substring(0, 2);
+            if (v.length > 2) {
+                f += ') ';
+                if (v.length > 7) f += v.substring(2, 7) + '-' + v.substring(7, 11);
+                else if (v.length > 6) f += v.substring(2, 6) + '-' + v.substring(6, 10);
+                else f += v.substring(2);
+            }
+            return f;
+        }
+
+        function formatPhoneInput(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.substring(0, 11);
+            let f = '';
+            if (v.length > 0) {
+                f = '(' + v.substring(0, 2);
+                if (v.length > 2) {
+                    f += ') ';
+                    if (v.length > 6) { f += v.substring(2, 7); if (v.length > 7) f += '-' + v.substring(7, 11); }
+                    else { f += v.substring(2, 6); if (v.length > 6) f += '-' + v.substring(6, 10); }
+                }
+            }
+            input.value = f;
+        }
+
+        function updateOccupancy(totalPeople) {
+            let pct = 0;
+            if (globalCapacity.CapacidadePessoas > 0) {
+                pct = Math.min((totalPeople / globalCapacity.CapacidadePessoas) * 100, 100);
+            }
+            occupancyBar.style.width = pct + '%';
+            occupancyPct.textContent = pct.toFixed(0) + '% de Ocupação';
+        }
+
+        function updateDateIndicator(has) {
+            const el = $('date-reservations-indicator');
+            el.textContent = has ? 'Dia com reservas' : 'Dia sem reservas';
+            el.className = 'calendar-indicator mt-3 ' + (has ? 'has-reservations' : 'no-reservations');
+        }
+
+        // Firestore
+        function fetchAndRenderReservations(date) {
+            if (currentReservationUnsubscribe) currentReservationUnsubscribe();
+            const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
+            const q = query(ref, where("Data", "==", date));
+            currentReservationUnsubscribe = onSnapshot(q, (snap) => {
+                let totalPeople = 0;
+                currentReservations = [];
+                snap.forEach(d => { const r = { id: d.id, ...d.data() }; currentReservations.push(r); totalPeople += r['Quantidade de Pessoas'] || 0; });
+                renderMap(currentReservations);
+                updateDateIndicator(currentReservations.length > 0);
+                $('total-reservations-display').textContent = currentReservations.length;
+                $('total-people-display').textContent = totalPeople;
+                updateOccupancy(totalPeople);
+            }, (err) => {
+                console.error('Erro reservas:', err);
+                showMessage('Erro ao carregar reservas: ' + err.message, 'error');
+                renderMap([]);
+                updateDateIndicator(false);
+                $('total-reservations-display').textContent = 0;
+                $('total-people-display').textContent = 0;
+                updateOccupancy(0);
+            });
+        }
+
+        function fetchGlobalCapacity() {
+            if (globalCapacityUnsubscribe) globalCapacityUnsubscribe();
+            const ref = doc(db, `artifacts/${appId}/public/data/global_config`, 'capacity');
+            globalCapacityUnsubscribe = onSnapshot(ref, (snap) => {
+                if (snap.exists()) {
+                    globalCapacity = snap.data();
+                    $('tables-available-display').textContent = globalCapacity.Mesas || 0;
+                    $('chairs-available-display').textContent = globalCapacity.Cadeiras || 0;
+                    $('drums-available-display').textContent = globalCapacity.Tambores || 0;
+                    $('stools-available-display').textContent = globalCapacity.Banquinhos || 0;
+                    $('people-capacity-display').textContent = globalCapacity.CapacidadePessoas || 0;
+                } else {
+                    globalCapacity = { Mesas: 0, Cadeiras: 0, Tambores: 0, Banquinhos: 0, CapacidadePessoas: 0 };
+                    ['tables-available-display','chairs-available-display','drums-available-display','stools-available-display','people-capacity-display'].forEach(id => $(id).textContent = 'N/A');
+                }
+                updateOccupancy(parseInt($('total-people-display').textContent) || 0);
+            });
+        }
+
+        function fetchAgendaPreview(date) {
+            if (agendaUnsubscribe) agendaUnsubscribe();
+            const ref = doc(db, `artifacts/${appId}/public/data/agenda`, date);
+            agendaUnsubscribe = onSnapshot(ref, (snap) => {
+                const panel = $('agenda-preview');
+                const list = $('agenda-preview-list');
+                if (snap.exists() && (snap.data().events || []).length > 0) {
+                    const events = [...snap.data().events].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                    panel.style.display = 'block';
+                    list.innerHTML = events.map(ev =>
+                        `<div class="agenda-event"><strong>${ev.time || '--:--'}</strong><span>${ev.name}${ev.obs ? ' — ' + ev.obs : ''}</span></div>`
+                    ).join('');
+                } else {
+                    panel.style.display = 'none';
+                    list.innerHTML = '';
+                }
+            }, () => {
+                $('agenda-preview').style.display = 'none';
+            });
+        }
+
+        // Render map
+        function renderMap(reservations) {
+            SECTORS.forEach(sectorId => {
+                const el = document.getElementById(sectorId);
+                if (!el) return;
+                el.innerHTML = '';
+                el.className = 'sector';
+                const name = el.dataset.sector;
+
+                if (name === 'Extras') {
+                    const extras = reservations.filter(r => r.Setor === 'Extras');
+                    if (extras.length > 0) {
+                        el.classList.add('reserved');
+                        el.innerHTML = `<div class="sector-name">Extras</div><div class="sector-info">${extras.length} reservas.</div><div class="sector-info">Clique para detalhes</div>`;
+                        el.onclick = () => openExtrasListModal(extras);
+                    } else {
+                        el.classList.add('free');
+                        el.innerHTML = `<div class="sector-name">Extras</div><div class="sector-info">Disponível</div>`;
+                        el.onclick = () => openReservationForm(selectedDate, 'Extras');
+                    }
+                } else {
+                    const res = reservations.find(r => r.Setor === name);
+                    if (res) {
+                        el.classList.add('reserved');
+                        const reconf = res.ReconfirmadoEm ? '<div class="sector-info">Reserva reconfirmada</div>' : '';
+                        el.innerHTML = `<div class="sector-name">${name}</div><div class="sector-info">Nome: ${res.Nome||''} ${res.Sobrenome||''}</div><div class="sector-info">Pessoas: ${res['Quantidade de Pessoas']||''}</div>${reconf}`;
+                        el.onclick = () => openDetailsModal(res);
+                    } else {
+                        el.classList.add('free');
+                        el.innerHTML = `<div class="sector-name">${name}</div>`;
+                        el.onclick = () => openReservationForm(selectedDate, name);
+                    }
+                }
+            });
+        }
+
+        // Reservation form
+        function openReservationForm(date, sector, edit = null) {
+            const d = new Date(date + 'T00:00:00');
+            const dow = d.getDay();
+            if (dow === 1 || dow === 2) { showMessage('Reservas não são permitidas às segundas e terças-feiras.', 'error'); return; }
+
+            const form = $('reservation-form');
+            form.reset();
+            $('reservation-doc-id').value = '';
+            $('form-date').value = dateFormatter.format(d);
+            $('form-sector').value = sector;
+
+            if (sector === 'Extras') {
+                $('form-sector').readOnly = false;
+                $('form-sector').classList.remove('bg-gray-100', 'cursor-not-allowed');
+                $('form-sector').placeholder = 'Ex: Mesa 1, Área VIP';
+            } else {
+                $('form-sector').readOnly = true;
+                $('form-sector').classList.add('bg-gray-100', 'cursor-not-allowed');
+                $('form-sector').placeholder = '';
+            }
+
+            if (edit) {
+                $('form-modal-title').textContent = 'Editar Reserva';
+                $('reservation-doc-id').value = edit.id;
+                $('first-name').value = edit.Nome || '';
+                $('last-name').value = edit.Sobrenome || '';
+                $('num-people').value = edit['Quantidade de Pessoas'] || '';
+                $('whatsapp').value = edit.Whatsapp || '';
+                formatPhoneInput($('whatsapp'));
+                $('observations').value = edit.Observacoes || '';
+            } else {
+                $('form-modal-title').textContent = 'Registrar Nova Reserva';
+            }
+            $('reservation-form-modal').style.display = 'flex';
+        }
+
+        $('reservation-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const docId = $('reservation-doc-id').value;
+            const fd = new FormData($('reservation-form'));
+            const parts = fd.get('date').split('/');
+            const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            const data = {
+                Data: isoDate,
+                Setor: fd.get('sector'),
+                Nome: fd.get('firstName'),
+                Sobrenome: fd.get('lastName'),
+                'Quantidade de Pessoas': parseInt(fd.get('numPeople')),
+                Whatsapp: fd.get('whatsapp'),
+                Observacoes: fd.get('observations') || ''
+            };
+            try {
+                const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
+                if (docId) {
+                    await updateDoc(doc(ref, docId), data);
+                    showMessage('Reserva atualizada com sucesso!', 'success');
+                } else {
+                    if (data.Setor !== 'Extras') {
+                        const q2 = query(ref, where("Data", "==", data.Data), where("Setor", "==", data.Setor));
+                        const snap = await getDocs(q2);
+                        if (!snap.empty) { showMessage(`Setor ${data.Setor} já reservado para esta data.`, 'error'); return; }
+                    }
+                    await addDoc(ref, data);
+                    showMessage('Reserva registrada com sucesso!', 'success');
+                }
+                $('reservation-form-modal').style.display = 'none';
+            } catch (err) {
+                showMessage('Erro ao salvar: ' + err.message, 'error');
+            }
+        });
+
+        // Details modal
+        function openDetailsModal(res) {
+            $('detail-sector').textContent = res.Setor || 'N/A';
+            $('detail-name').textContent = `${res.Nome||''} ${res.Sobrenome||''}`;
+            $('detail-num-people').textContent = res['Quantidade de Pessoas'] || 'N/A';
+            $('detail-whatsapp').textContent = res.Whatsapp ? formatPhoneDisplay(res.Whatsapp) : 'N/A';
+
+            if (res.Observacoes) { $('detail-observations').textContent = res.Observacoes; $('detail-observations-container').style.display = 'block'; }
+            else { $('detail-observations-container').style.display = 'none'; }
+
+            if (res.ReconfirmadoEm) { $('detail-reconfirmed').textContent = dateTimeFormatter.format(new Date(res.ReconfirmadoEm)); $('detail-reconfirmed-container').style.display = 'block'; }
+            else { $('detail-reconfirmed-container').style.display = 'none'; }
+
+            $('btn-reconfirm-whatsapp').onclick = () => sendWhatsAppReconfirmation(res);
+            $('btn-edit-details').onclick = () => { $('reservation-details-modal').style.display = 'none'; openReservationForm(res.Data, res.Setor, res); };
+            $('btn-delete-details').onclick = () => {
+                showConfirmation('Tem certeza que deseja excluir esta reserva?', () => { deleteReservation(res.id); $('reservation-details-modal').style.display = 'none'; }, () => {});
+            };
+            $('reservation-details-modal').style.display = 'flex';
+        }
+
+        async function sendWhatsAppReconfirmation(res) {
+            const num = (res.Whatsapp || '').replace(/\D/g, '');
+            const msg = `Olá!%0A%0AEstamos enviando esta mensagem para reconfirmar a sua reserva conosco e atualizar a sua expectativa de convidados.%0A%0ATudo certo pra vivermos esse momento? O número de pessoas que você nos informou segue o mesmo? 🥰%0A%0AO seu retorno é importante e garante que a sua reserva não seja alterada por falta dessa reconfirmação.%0A%0AAbraços e até mais!%0A%0ARodrigo - Javari Park%0Ar. Javari, 112 - Mooca (SP)%0A@javaripark`;
+            window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+            try {
+                const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
+                await updateDoc(doc(ref, res.id), { ReconfirmadoEm: new Date().toISOString() });
+                showMessage('Reconfirmação enviada e registrada!', 'success');
+            } catch (err) { showMessage('Erro ao registrar reconfirmação: ' + err.message, 'error'); }
+        }
+
+        async function deleteReservation(docId) {
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/reservas`, docId));
+                showMessage('Reserva excluída com sucesso!', 'success');
+            } catch (err) { showMessage('Erro ao excluir: ' + err.message, 'error'); }
+        }
+
+        // Confirmation modal
+        function showConfirmation(message, onConfirm, onCancel) {
+            $('confirmation-message').textContent = message;
+            $('confirmation-modal').style.display = 'flex';
+            $('confirm-action-btn').onclick = () => { $('confirmation-modal').style.display = 'none'; onConfirm(); };
+            $('cancel-action-btn').onclick = () => { $('confirmation-modal').style.display = 'none'; onCancel(); };
+            $('close-confirmation-modal').onclick = () => { $('confirmation-modal').style.display = 'none'; onCancel(); };
+        }
+
+        // Extras list modal
+        function openExtrasListModal(reservations) {
+            $('extras-list-date').textContent = dateFormatter.format(new Date(selectedDate + 'T00:00:00'));
+            const content = $('extras-list-content');
+            content.innerHTML = '';
+            if (reservations.length === 0) {
+                content.innerHTML = '<p class="text-gray-600 text-center">Nenhuma reserva extra para este dia.</p>';
+            } else {
+                reservations.forEach(res => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-gray-100 p-3 mb-2 rounded-lg text-left cursor-pointer hover:bg-gray-200 transition-colors';
+                    item.innerHTML = `<p class="font-semibold">Setor Extra: ${res.Setor}</p><p>Nome: ${res.Nome} ${res.Sobrenome}</p><p>Pessoas: ${res['Quantidade de Pessoas']}</p>${res.ReconfirmadoEm ? '<p class="text-sm text-green-600">Reconfirmado</p>' : ''}`;
+                    item.onclick = () => { $('extras-list-modal').style.display = 'none'; openDetailsModal(res); };
+                    content.appendChild(item);
+                });
+            }
+            $('add-new-extra-btn').onclick = () => { $('extras-list-modal').style.display = 'none'; openReservationForm(selectedDate, 'Extras'); };
+            $('extras-list-modal').style.display = 'flex';
+        }
+
+        // Capacity config
+        $('configure-capacity-btn').addEventListener('click', () => {
+            $('num-tables').value = globalCapacity.Mesas || 0;
+            $('num-chairs').value = globalCapacity.Cadeiras || 0;
+            $('num-drums').value = globalCapacity.Tambores || 0;
+            $('num-stools').value = globalCapacity.Banquinhos || 0;
+            $('num-people-capacity').value = globalCapacity.CapacidadePessoas || 0;
+            $('capacity-config-modal').style.display = 'flex';
+        });
+
+        $('capacity-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const ref = doc(db, `artifacts/${appId}/public/data/global_config`, 'capacity');
+                await setDoc(ref, {
+                    Mesas: parseInt($('num-tables').value),
+                    Cadeiras: parseInt($('num-chairs').value),
+                    Tambores: parseInt($('num-drums').value),
+                    Banquinhos: parseInt($('num-stools').value),
+                    CapacidadePessoas: parseInt($('num-people-capacity').value)
+                }, { merge: true });
+                showMessage('Capacidade salva com sucesso!', 'success');
+                $('capacity-config-modal').style.display = 'none';
+            } catch (err) { showMessage('Erro ao salvar capacidade: ' + err.message, 'error'); }
+        });
+
+        // Report generation
+        $('export-report-btn').addEventListener('click', () => {
+            const today = new Date();
+            const ago = new Date(); ago.setDate(today.getDate() - 30);
+            $('report-start-date').value = ago.toISOString().split('T')[0];
+            $('report-end-date').value = today.toISOString().split('T')[0];
+            $('report-modal').style.display = 'flex';
+        });
+
+        $('generate-pdf-report-btn').addEventListener('click', async () => {
+            const start = $('report-start-date').value, end = $('report-end-date').value;
+            if (!start || !end) { showMessage('Selecione as datas.', 'error'); return; }
+            if (start > end) { showMessage('Data de início posterior à de fim.', 'error'); return; }
+            $('report-modal').style.display = 'none';
+            showMessage('Gerando PDF...', 'info');
+            try {
+                const snap = await getDocs(collection(db, `artifacts/${appId}/public/data/reservas`));
+                let all = []; snap.forEach(d => all.push({ id: d.id, ...d.data() }));
+                const filtered = all.filter(r => r.Data >= start && r.Data <= end).sort((a, b) => a.Data < b.Data ? -1 : a.Data > b.Data ? 1 : String(a.Setor).localeCompare(String(b.Setor)));
+                if (filtered.length === 0) { showMessage('Nenhuma reserva no período.', 'info'); return; }
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                let y = 10; const m = 10, lh = 7, ph = pdf.internal.pageSize.height;
+                pdf.setFontSize(16); pdf.text('Relatório de Reservas', m, y); y += lh * 2;
+                pdf.setFontSize(10); pdf.text(`Período: ${dateFormatter.format(new Date(start+'T00:00:00'))} a ${dateFormatter.format(new Date(end+'T00:00:00'))}`, m, y); y += lh * 2;
+
+                let curDay = '';
+                filtered.forEach(r => {
+                    if (r.Data !== curDay) {
+                        curDay = r.Data;
+                        if (y + lh * 4 > ph - m) { pdf.addPage(); y = 10; }
+                        pdf.setFontSize(12); pdf.text(`Reservas para ${dateFormatter.format(new Date(curDay+'T00:00:00'))}:`, m, y); y += lh * 1.5; pdf.setFontSize(10);
+                    }
+                    if (y + lh * 6 > ph - m) { pdf.addPage(); y = 10; pdf.setFontSize(12); pdf.text(`Reservas para ${dateFormatter.format(new Date(curDay+'T00:00:00'))} (continuação):`, m, y); y += lh * 1.5; pdf.setFontSize(10); }
+                    pdf.text(`  Setor: ${r.Setor}`, m + 5, y); y += lh;
+                    pdf.text(`  Nome: ${r.Nome} ${r.Sobrenome}`, m + 5, y); y += lh;
+                    pdf.text(`  Pessoas: ${r['Quantidade de Pessoas']}`, m + 5, y); y += lh;
+                    pdf.text(`  WhatsApp: ${formatPhoneDisplay(r.Whatsapp)}`, m + 5, y); y += lh;
+                    if (r.Observacoes) { pdf.text(`  Observações: ${r.Observacoes}`, m + 5, y); y += lh; }
+                    if (r.ReconfirmadoEm) { pdf.text(`  Reconfirmado em: ${dateTimeFormatter.format(new Date(r.ReconfirmadoEm))}`, m + 5, y); y += lh; }
+                    y += lh;
+                });
+                pdf.save(`Relatorio_Reservas_${start}_a_${end}.pdf`);
+                showMessage('Relatório PDF gerado!', 'success');
+            } catch (err) { showMessage('Erro ao gerar PDF: ' + err.message, 'error'); }
+        });
+
+        $('generate-xls-report-btn').addEventListener('click', async () => {
+            const start = $('report-start-date').value, end = $('report-end-date').value;
+            if (!start || !end) { showMessage('Selecione as datas.', 'error'); return; }
+            if (start > end) { showMessage('Data de início posterior à de fim.', 'error'); return; }
+            $('report-modal').style.display = 'none';
+            showMessage('Gerando XLS...', 'info');
+            try {
+                const snap = await getDocs(collection(db, `artifacts/${appId}/public/data/reservas`));
+                let all = []; snap.forEach(d => all.push({ id: d.id, ...d.data() }));
+                const filtered = all.filter(r => r.Data >= start && r.Data <= end);
+                if (filtered.length === 0) { showMessage('Nenhuma reserva no período.', 'info'); return; }
+
+                const headers = ["Data","Setor","Nome","Sobrenome","Quantidade de Pessoas","WhatsApp","Observacoes","Reconfirmado Em"];
+                let csv = headers.join("\t") + "\n";
+                filtered.forEach(r => {
+                    csv += [dateFormatter.format(new Date(r.Data+'T00:00:00')), r.Setor, r.Nome, r.Sobrenome, r['Quantidade de Pessoas'], formatPhoneDisplay(r.Whatsapp), r.Observacoes || '', r.ReconfirmadoEm ? dateTimeFormatter.format(new Date(r.ReconfirmadoEm)) : ''].map(v => `"${String(v).replace(/"/g,'""')}"`).join("\t") + "\n";
+                });
+                const blob = new Blob([csv], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Relatorio_Reservas_${start}_a_${end}.xls`;
+                link.click();
+                showMessage('Relatório XLS gerado!', 'success');
+            } catch (err) { showMessage('Erro ao gerar XLS: ' + err.message, 'error'); }
+        });
+
+        // WhatsApp input mask
+        $('whatsapp').addEventListener('input', (e) => formatPhoneInput(e.target));
+
+        // Date change
+        datePicker.addEventListener('change', (e) => {
+            selectedDate = e.target.value;
+            const d = new Date(selectedDate + 'T00:00:00');
+            const dow = d.getDay();
+            if (dow === 1 || dow === 2) {
+                showMessage('Não é possível visualizar reservas para segundas e terças-feiras.', 'error');
+                renderMap([]); updateDateIndicator(false);
+                $('total-reservations-display').textContent = 0; $('total-people-display').textContent = 0; updateOccupancy(0);
+                return;
+            }
+            fetchAndRenderReservations(selectedDate);
+            fetchAgendaPreview(selectedDate);
+        });
+
+        // Modal close handlers
+        ['close-form-modal','close-details-modal','close-report-modal','close-extras-list-modal','close-capacity-modal'].forEach(id => {
+            $(id).addEventListener('click', () => $(id).closest('.modal').style.display = 'none');
+        });
+        ['reservation-form-modal','reservation-details-modal','report-modal','extras-list-modal','capacity-config-modal'].forEach(id => {
+            $(id).addEventListener('click', (e) => { if (e.target === $(id)) $(id).style.display = 'none'; });
+        });
+
+        // Map aspect ratio
+        const mapImg = $('seat-map-template');
+        mapImg.onload = () => {
+            const ratio = mapImg.naturalHeight / mapImg.naturalWidth;
+            document.querySelector('.map-container').style.paddingTop = (ratio * 100) + '%';
+        };
+        window.addEventListener('resize', () => {
+            if (mapImg.naturalHeight && mapImg.naturalWidth) {
+                document.querySelector('.map-container').style.paddingTop = ((mapImg.naturalHeight / mapImg.naturalWidth) * 100) + '%';
+            }
+        });
+
+        // Init date picker
+        datePicker.value = selectedDate;
+    </script>
+</body>
+</html>

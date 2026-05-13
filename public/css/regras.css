@@ -1,0 +1,548 @@
+/* =================================================================
+   Regras da Casa — Javari StrEat Park
+   Página secundária com FAQ accordion
+   ================================================================= */
+
+.page-regras {
+  padding-bottom: 0;
+}
+
+/* ========== Hero Regras ========== */
+.regras-hero {
+  padding: 140px 0 60px;
+  background: linear-gradient(to bottom, rgba(0,0,0,.72), rgba(0,0,0,.55)), url('../assets/images/quintal/quintal-hero.jpg') center/cover no-repeat;
+  color: var(--cream);
+  text-align: center;
+  position: relative;
+}
+.mapa-wrap-inline {
+  max-width: 500px;
+  margin: 0 auto 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.mapa-wrap-inline .mapa-svg {
+  display: block;
+  width: 100%;
+  min-width: 360px;
+  height: auto;
+}
+.regras-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 8vw, 96px);
+  line-height: .95;
+  margin: 0 0 20px;
+  font-weight: 400;
+  color: var(--white);
+}
+.regras-hero-title em {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-style: italic;
+  color: var(--violet-glow);
+  letter-spacing: -1px;
+}
+.regras-hero-lead {
+  font-size: 15px;
+  color: rgba(255,255,255,.75);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ========== Search ========== */
+.regras-search-section {
+  background: var(--cream-light);
+  padding: 32px 0 0;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.regras-search-wrap {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.regras-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  stroke: var(--violet-soft);
+  pointer-events: none;
+}
+.regras-search-input {
+  width: 100%;
+  padding: 14px 48px 14px 48px;
+  border: 2px solid rgba(0,0,0,.08);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  background: var(--white);
+  color: var(--text-dark);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.regras-search-input::placeholder {
+  color: rgba(0,0,0,.35);
+}
+.regras-search-input:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 4px rgba(79, 25, 100, .1);
+}
+.regras-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  stroke: var(--text-muted);
+  opacity: .6;
+  transition: opacity var(--transition);
+}
+.regras-search-clear:hover {
+  opacity: 1;
+}
+.regras-search-status {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 12px 0 0;
+  padding-bottom: 8px;
+}
+.regras-highlight {
+  background: rgba(79, 25, 100, .15);
+  color: var(--violet);
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* ========== Content ========== */
+.regras-content {
+  padding: 60px 0 80px;
+  background: var(--cream-light);
+}
+
+/* ========== Localização bar ========== */
+.regras-localizacao {
+  background: var(--cream-light);
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+
+/* ========== Tema blocks ========== */
+.regras-tema {
+  margin-bottom: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.regras-tema:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.tema-title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4vw, 36px);
+  letter-spacing: 1px;
+  margin: 0 0 24px;
+  color: var(--violet);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tema-title svg {
+  flex-shrink: 0;
+  stroke: var(--violet);
+}
+
+/* ========== FAQ accordion ========== */
+.faq-item {
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: box-shadow var(--transition);
+}
+.faq-item[open] {
+  box-shadow: 0 4px 20px rgba(0,0,0,.06);
+}
+
+.faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transition);
+}
+.faq-q:hover {
+  background: rgba(79, 25, 100, .04);
+}
+.faq-q::-webkit-details-marker { display: none; }
+.faq-q::marker { display: none; content: ''; }
+
+.faq-q::after {
+  content: '+';
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--violet);
+  flex-shrink: 0;
+  margin-left: 16px;
+  transition: transform var(--transition);
+}
+.faq-item[open] .faq-q::after {
+  content: '\2212';
+  transform: rotate(180deg);
+}
+
+.faq-a {
+  padding: 0 20px 20px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.faq-a p {
+  margin: 0 0 12px;
+}
+.faq-a p:last-child {
+  margin-bottom: 0;
+}
+.faq-a a {
+  color: var(--violet);
+  border-bottom: 1px solid currentColor;
+  font-weight: 500;
+}
+
+.regras-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.regras-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,.05);
+  font-size: 14px;
+}
+.regras-list li:last-child {
+  border-bottom: none;
+}
+.regras-list strong {
+  color: var(--text-dark);
+}
+
+.regras-note {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--violet-soft);
+  margin: 8px 0 0;
+}
+
+.regras-alerta {
+  background: rgba(79, 25, 100, .06);
+  border-left: 3px solid var(--violet);
+  padding: 14px 16px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+/* ========== CTA ========== */
+.regras-cta {
+  text-align: center;
+  padding-top: 48px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  margin-top: 48px;
+}
+.regras-cta p {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 28px);
+  letter-spacing: 1px;
+  margin: 0 0 20px;
+  color: var(--black);
+}
+
+/* ========== Birthday Benefits Banner ========== */
+.niver-destaque {
+  background: linear-gradient(135deg, #2d0a3e 0%, #4f1964 50%, #6b2980 100%);
+  padding: 60px 0;
+  position: relative;
+  overflow: hidden;
+}
+.niver-destaque::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.niver-card {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.niver-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.niver-emoji {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+  line-height: 1;
+}
+.niver-eyebrow {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--violet-glow);
+  margin: 0 0 8px;
+}
+.niver-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 6vw, 56px);
+  letter-spacing: 1px;
+  color: var(--white);
+  margin: 0;
+  line-height: 1;
+}
+.niver-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.niver-perk {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px;
+}
+.niver-perk-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--violet-glow);
+  line-height: 1;
+  margin-bottom: 10px;
+  display: block;
+}
+.niver-perk h3 {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--white);
+  margin: 0 0 6px;
+}
+.niver-perk p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin: 0;
+  line-height: 1.55;
+}
+.niver-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.niver-actions .btn-primary {
+  background: var(--white);
+  color: #2d0a3e;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 16px 36px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(255,255,255,0.25);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.niver-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(255,255,255,0.35);
+}
+.niver-link {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--white);
+  text-decoration: none;
+  border: 2px solid rgba(255,255,255,0.4);
+  padding: 14px 32px;
+  border-radius: 999px;
+  transition: background var(--transition), border-color var(--transition);
+}
+.niver-link:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.7);
+}
+
+@media (min-width: 480px) {
+  .niver-actions { flex-direction: row; justify-content: center; gap: 24px; }
+}
+@media (min-width: 640px) {
+  .niver-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .niver-destaque { padding: 80px 0; }
+}
+
+/* ========== Sector Map ========== */
+.mapa-section {
+  background: var(--cream-light);
+  padding: 60px 0 80px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.mapa-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 44px);
+  letter-spacing: 1px;
+  color: var(--violet);
+  text-align: center;
+  margin: 0 0 40px;
+}
+.mapa-wrap {
+  max-width: 520px;
+  margin: 0 auto 36px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+.mapa-wrap::-webkit-scrollbar { height: 6px; }
+.mapa-wrap::-webkit-scrollbar-track { background: transparent; }
+.mapa-wrap::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+.mapa-svg {
+  display: block;
+  width: 100%;
+  min-width: 380px;
+  height: auto;
+}
+.mapa-fotos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.mapa-foto-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 16/10;
+}
+.mapa-foto-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.mapa-foto-card span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 14px 10px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.65));
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+.mapa-regras {
+  max-width: 520px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+.mapa-regras p { margin: 0 0 8px; }
+.mapa-regras p:last-child { margin-bottom: 0; }
+.mapa-regras strong { color: var(--text-dark); }
+
+/* ========== Photo grid ========== */
+.mapa-fotos {
+  max-width: 680px;
+}
+.mapa-foto-card { cursor: zoom-in; }
+
+/* ========== Photo lightbox ========== */
+.foto-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+.foto-lightbox[hidden] { display: none; }
+.foto-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 36px;
+  cursor: pointer;
+  opacity: .7;
+  transition: opacity .2s;
+  line-height: 1;
+  z-index: 1;
+}
+.foto-lightbox-close:hover { opacity: 1; }
+.foto-lightbox-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.foto-lightbox-caption {
+  color: rgba(255,255,255,0.8);
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 1px;
+  margin: 16px 0 0;
+}
+
+@media (min-width: 640px) {
+  .mapa-section { padding: 80px 0 100px; }
+  .mapa-fotos { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+}
+
+/* ========== Responsive ========== */
+@media (min-width: 600px) {
+  .regras-hero { padding: 160px 0 80px; }
+  .regras-hero-lead { font-size: 17px; }
+  .regras-content { padding: 80px 0 120px; }
+  .faq-q { padding: 20px 24px; font-size: 16px; }
+  .faq-a { padding: 0 24px 24px; font-size: 15px; }
+}
+
+@media (min-width: 880px) {
+  .regras-hero { padding: 180px 0 100px; }
+  .regras-content { padding: 100px 0 140px; }
+  .regras-tema { max-width: 800px; margin-left: auto; margin-right: auto; }
+  .regras-cta { max-width: 800px; margin-left: auto; margin-right: auto; }
+}

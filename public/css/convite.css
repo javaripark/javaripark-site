@@ -1,0 +1,370 @@
+/* =================================================================
+   Convite Personalizado — Javari StrEat Park
+   Birthday invitation generator page
+   ================================================================= */
+
+.page-convite {
+  padding-bottom: 0;
+}
+
+/* ========== Hero Convite ========== */
+.convite-hero {
+  position: relative;
+  padding: 140px 0 60px;
+  background: var(--black);
+  color: var(--cream);
+  text-align: center;
+  overflow: hidden;
+}
+.convite-hero-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+.convite-hero-photo img {
+  position: absolute;
+  inset: -6% -6%;
+  width: 112%;
+  height: 112%;
+  object-fit: cover;
+  filter: brightness(.38) saturate(.85);
+}
+.convite-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center 60%, rgba(0,0,0,.15) 0%, rgba(0,0,0,.85) 100%),
+    linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.1) 35%, rgba(0,0,0,.7) 100%);
+}
+.convite-hero .container {
+  position: relative;
+  z-index: 3;
+}
+.convite-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 8vw, 96px);
+  line-height: .95;
+  margin: 0 0 20px;
+  font-weight: 400;
+  color: var(--white);
+}
+.convite-hero-title em {
+  font-family: var(--font-script);
+  font-weight: 700;
+  font-style: italic;
+  color: var(--violet-glow);
+  letter-spacing: -1px;
+}
+.convite-hero-lead {
+  font-size: 15px;
+  color: rgba(255,255,255,.75);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ========== App Container ========== */
+#app-container {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto 0;
+    box-sizing: border-box;
+}
+
+.step-container {
+    display: none;
+}
+
+.step-container.active {
+    display: block;
+}
+
+.convite-app h2 {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.convite-app .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.convite-app .btn-primary {
+    background-color: #4f46e5;
+    color: #ffffff;
+}
+
+.convite-app .btn-primary:hover {
+    background-color: #4338ca;
+    transform: translateY(-2px);
+}
+
+.convite-app .btn-secondary {
+    background-color: #e5e7eb;
+    color: #4b5563;
+}
+
+.convite-app .btn-secondary:hover {
+    background-color: #d1d5db;
+    transform: translateY(-2px);
+}
+
+.convite-app .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.convite-app input[type="file"] {
+    display: none;
+}
+
+.custom-file-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    color: #6b7280;
+    font-weight: 500;
+    min-height: 150px;
+}
+
+.custom-file-upload:hover {
+    border-color: #9ca3af;
+    background-color: #f9fafb;
+}
+
+.custom-file-upload .icon {
+    margin-bottom: 0.5rem;
+}
+
+.custom-file-upload .text {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.preview-container {
+    margin-top: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #f9fafb;
+    position: relative;
+}
+
+.preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 0.5rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.preview-container .silhouette-icon {
+    position: absolute;
+    z-index: 1;
+    width: 80px;
+    height: 80px;
+    color: #cbd5e1;
+}
+
+.convite-app .hidden {
+    display: none !important;
+}
+
+#crop-canvas-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    margin-top: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background-color: #f9fafb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#cropCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+}
+
+#crop-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px dashed #4f46e5;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 10;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.convite-app input[type="date"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    color: #374151;
+    margin-top: 1rem;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    line-height: 1.5;
+}
+
+.convite-app input[type="date"]:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+#final-invitation-container {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f9fafb;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    padding: 1rem;
+}
+
+#finalInvitationCanvas, #finalInvitationImage {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.custom-alert {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+}
+
+.custom-alert-content {
+    background-color: #fff;
+    margin: auto;
+    padding: 20px;
+    border-radius: 1rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+}
+
+.custom-alert-content p {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.custom-alert-content .close-btn {
+    background-color: #4f46e5;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.custom-alert-content .close-btn:hover {
+    background-color: #4338ca;
+}
+
+/* ========== Convite content section ========== */
+.convite-content {
+    padding: 40px 0 80px;
+    background: var(--cream-light);
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+    #app-container {
+        padding: 1.5rem;
+    }
+
+    .convite-app h2 {
+        font-size: 1.5rem;
+    }
+
+    .convite-app .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+
+    .custom-file-upload {
+        padding: 1.5rem;
+    }
+
+    .preview-container, #crop-canvas-container {
+        min-height: 180px;
+        height: 250px;
+    }
+}
+
+@media (min-width: 600px) {
+    .convite-hero { padding: 160px 0 80px; }
+    .convite-hero-lead { font-size: 17px; }
+    .convite-content { padding: 60px 0 120px; }
+}
+
+@media (min-width: 880px) {
+    .convite-hero { padding: 180px 0 100px; }
+    .convite-content { padding: 80px 0 140px; }
+}

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Cobertura Fotográfica — Javari StrEat Park</title>
+  <meta name="description" content="Cobertura fotográfica profissional para aniversários e eventos no Javari StrEat Park. Fotógrafo Thiago Monteiro. 15 fotos editadas com entrega em até 48h." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ===== FOTOS PAGE ===== */
+    .fotos-hero {
+      padding: clamp(120px, 20vh, 200px) 0 60px;
+      background: var(--black);
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+    .fotos-hero-photo {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .fotos-hero-photo img {
+      position: absolute;
+      inset: -6% -6%;
+      width: 112%;
+      height: 112%;
+      object-fit: cover;
+      filter: brightness(.38) saturate(.85);
+    }
+    .fotos-hero-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at center 60%, rgba(0,0,0,.15) 0%, rgba(0,0,0,.85) 100%),
+        linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.1) 35%, rgba(0,0,0,.7) 100%);
+    }
+    .fotos-hero .container {
+      position: relative;
+      z-index: 3;
+    }
+    .fotos-hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 120px;
+      background: linear-gradient(to top, var(--black), transparent);
+      pointer-events: none;
+    }
+    .fotos-hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(36px, 8vw, 72px);
+      line-height: 1;
+      margin: 0 0 20px;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+    }
+    .fotos-hero-title em {
+      font-family: var(--font-script);
+      font-weight: 700;
+      font-style: italic;
+      color: var(--violet-glow);
+      letter-spacing: -1px;
+    }
+    .fotos-hero-lead {
+      font-size: clamp(16px, 2.5vw, 20px);
+      line-height: 1.6;
+      color: rgba(255,255,255,.7);
+      max-width: 520px;
+      margin: 0 0 8px;
+      font-weight: 300;
+    }
+    .fotos-hero .section-eyebrow {
+      color: var(--violet-glow);
+    }
+
+    /* ===== GALLERY MOSAIC ===== */
+    .fotos-galeria {
+      background: var(--cream-light);
+      padding: clamp(60px, 12vh, 120px) 0;
+      overflow: hidden;
+    }
+    .fotos-galeria .mosaic-item:nth-child(1) {
+      aspect-ratio: unset;
+    }
+    .fotos-galeria .mosaic-item img {
+      cursor: pointer;
+    }
+
+    /* ===== HOW IT WORKS ===== */
+    .fotos-como {
+      padding: 70px 0 80px;
+      background: var(--cream-light);
+    }
+    .fotos-como-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1.05;
+      margin: 0 0 40px;
+      text-align: center;
+    }
+    .fotos-como-title em {
+      color: var(--violet);
+      font-style: normal;
+    }
+    .fotos-steps {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .fotos-step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .fotos-step-num {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--violet);
+      color: var(--white);
+      font-family: var(--font-display);
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .fotos-step-body h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: var(--text-dark);
+    }
+    .fotos-step-body p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* ===== PHOTOGRAPHER ===== */
+    .fotos-fotografo {
+      padding: 70px 0;
+      background: var(--black);
+      color: var(--white);
+    }
+    .fotos-fotografo-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      align-items: center;
+      text-align: center;
+    }
+    .fotos-fotografo-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--violet-glow);
+      object-fit: cover;
+      background: var(--violet-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .fotos-fotografo-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .fotos-fotografo-name {
+      font-family: var(--font-display);
+      font-size: 32px;
+      margin: 0 0 4px;
+      letter-spacing: 1px;
+    }
+    .fotos-fotografo-role {
+      font-size: 13px;
+      color: var(--violet-glow);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+    .fotos-fotografo-bio {
+      font-size: 15px;
+      line-height: 1.7;
+      color: rgba(255,255,255,.65);
+      max-width: 480px;
+    }
+
+    /* ===== INCLUDES ===== */
+    .fotos-inclui {
+      padding: 70px 0;
+      background: var(--cream-light);
+    }
+    .fotos-inclui-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 44px);
+      text-align: center;
+      margin: 0 0 32px;
+    }
+    .fotos-inclui-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .fotos-inclui-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--white);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .fotos-inclui-item svg {
+      flex-shrink: 0;
+      color: var(--violet);
+    }
+    .fotos-inclui-item strong {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 2px;
+    }
+    .fotos-inclui-item span {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ===== CTA ===== */
+    .fotos-cta {
+      padding: clamp(80px, 16vh, 160px) 0;
+      background: var(--violet-deep);
+      text-align: center;
+      color: var(--white);
+      position: relative;
+    }
+    .fotos-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(200,157,216,.12), transparent 70%);
+      pointer-events: none;
+    }
+    .fotos-cta-tagline {
+      font-family: var(--font-script);
+      font-size: clamp(24px, 5vw, 40px);
+      color: var(--violet-glow);
+      margin: 0 0 12px;
+    }
+    .fotos-cta-title {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 7vw, 56px);
+      line-height: 1;
+      margin: 0 0 24px;
+    }
+    .fotos-cta-text {
+      font-size: 15px;
+      color: rgba(255,255,255,.6);
+      max-width: 420px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    /* ===== LIGHTBOX ===== */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.92);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 92vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+      line-height: 1;
+      opacity: .7;
+      transition: opacity .2s;
+    }
+    .lightbox-close:hover { opacity: 1; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (min-width: 640px) {
+      .fotos-steps {
+        grid-template-columns: 1fr 1fr;
+      }
+      .fotos-inclui-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (min-width: 1024px) {
+      .fotos-fotografo-grid {
+        flex-direction: row;
+        text-align: left;
+        gap: 40px;
+      }
+      .fotos-steps {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body class="page-fotos">
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header scrolled" id="header">
+    <a href="/" class="brand" aria-label="Javari StrEat Park">
+      <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="brand-logo brand-logo--white" />
+      <img src="assets/images/logo-horizontal-black.png" alt="Javari StrEat Park" class="brand-logo brand-logo--black" />
+    </a>
+    <nav class="site-nav" aria-label="Navegação principal">
+      <a href="/">Início</a>
+      <a href="/#cardapio">Cardápio</a>
+      <a href="/#agenda">Agenda</a>
+      <a href="/#localizacao">Onde estamos</a>
+      <a href="/regras">Regras</a>
+      <a href="/blog">Blog</a>
+      <div class="nav-dropdown">
+        <a class="nav-dropdown-toggle" role="button" tabindex="0">Serviços <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4.5L6 7.5L9 4.5"/></svg></a>
+        <ul class="nav-dropdown-menu">
+          <li><a href="/convite">Convite personalizado</a></li>
+          <li><a href="/cotacao">Cotação de pacotes</a></li>
+          <li><a href="/fotos">Cobertura fotográfica</a></li>
+        </ul>
+      </div>
+      <a class="btn btn-primary magnetic" href="/#reservas">Reservar</a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main>
+
+    <!-- ===== HERO ===== -->
+    <section class="fotos-hero">
+      <div class="fotos-hero-photo">
+        <img src="assets/images/fotos-hero.webp" alt="" />
+      </div>
+      <div class="fotos-hero-overlay"></div>
+      <div class="container">
+        <p class="section-eyebrow">Cobertura fotográfica</p>
+        <h1 class="fotos-hero-title">
+          Você <em>curte.</em><br>
+          A gente <em>registra.</em>
+        </h1>
+        <p class="fotos-hero-lead">
+          Fotógrafo profissional dedicado ao seu aniversário ou evento. Você só precisa se preocupar em se divertir.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== GALLERY ===== -->
+    <section class="fotos-galeria">
+      <div class="container">
+        <div class="galeria-mosaic">
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-01.webp" alt="Aniversário no Javari StrEat Park" loading="lazy" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-02.webp" alt="Amigos curtindo no Javari" loading="lazy" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-03.webp" alt="Galera reunida no quintal" loading="lazy" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-04.webp" alt="Comemoração no Javari StrEat Park" loading="lazy" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-05.webp" alt="Momentos espontâneos no Javari" loading="lazy" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-06.webp" alt="Grupo celebrando no Javari" loading="lazy" /></div>
+          <div class="mosaic-item"><img src="assets/images/clientes/fotos-07.webp" alt="Evento no Javari StrEat Park" loading="lazy" /></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== COMO FUNCIONA ===== -->
+    <section class="fotos-como">
+      <div class="container">
+        <h2 class="fotos-como-title">Como <em>funciona</em></h2>
+        <div class="fotos-steps">
+          <div class="fotos-step">
+            <div class="fotos-step-num">1</div>
+            <div class="fotos-step-body">
+              <h3>Contrate junto com a reserva</h3>
+              <p>Ao reservar sua mesa ou pacote, adicione a cobertura fotográfica. Simples assim.</p>
+            </div>
+          </div>
+          <div class="fotos-step">
+            <div class="fotos-step-num">2</div>
+            <div class="fotos-step-body">
+              <h3>Curta sem se preocupar</h3>
+              <p>O fotógrafo Thiago Monteiro estará presente durante o evento registrando os melhores momentos — de forma natural e espontânea.</p>
+            </div>
+          </div>
+          <div class="fotos-step">
+            <div class="fotos-step-num">3</div>
+            <div class="fotos-step-body">
+              <h3>Receba suas fotos</h3>
+              <p>Uma seleção com as 15 melhores fotos é entregue em até 48h direto no seu celular.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== O QUE ESTÁ INCLUSO ===== -->
+    <section class="fotos-inclui">
+      <div class="container">
+        <h2 class="fotos-inclui-title">O que está incluso</h2>
+        <div class="fotos-inclui-grid">
+          <div class="fotos-inclui-item">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <div>
+              <strong>15 fotos editadas</strong>
+              <span>Seleção curada e tratamento profissional de cor e luz</span>
+            </div>
+          </div>
+          <div class="fotos-inclui-item">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div>
+              <strong>Entrega em 48h</strong>
+              <span>As fotos são tratadas e encaminhadas direto no seu Whatsapp</span>
+            </div>
+          </div>
+          <div class="fotos-inclui-item">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            <div>
+              <strong>Fotógrafo dedicado</strong>
+              <span>Thiago Monteiro presente durante os melhores momentos do seu evento</span>
+            </div>
+          </div>
+          <div class="fotos-inclui-item">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <div>
+              <strong>Qualidade profissional</strong>
+              <span>Fotos em alta resolução, feitas por quem entende do assunto.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FOTÓGRAFO ===== -->
+    <section class="fotos-fotografo">
+      <div class="container">
+        <div class="fotos-fotografo-grid">
+          <div class="fotos-fotografo-avatar">
+            <img src="assets/images/clientes/thiago-fotografo.webp" alt="Thiago Monteiro" />
+          </div>
+          <div>
+            <h2 class="fotos-fotografo-name">Thiago Monteiro</h2>
+            <p class="fotos-fotografo-role">Fotógrafo oficial</p>
+            <p class="fotos-fotografo-bio">
+              Especialista em coberturas de eventos e fotografia de momentos espontâneos. Thiago registra a energia real da sua comemoração — os sorrisos, os brindes, a galera cantando junto. Sem poses forçadas, só a verdade do momento.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="fotos-cta">
+      <div class="container">
+        <p class="fotos-cta-tagline">Só curtir.</p>
+        <h2 class="fotos-cta-title">A gente registra tudo pra você.</h2>
+        <p class="fotos-cta-text">
+          Adicione a cobertura fotográfica à sua reserva ou evento. Fale com a gente pelo WhatsApp.
+        </p>
+        <a class="btn btn-primary btn-lg magnetic" href="https://wa.me/+551120811544?text=Quero%20saber%20sobre%20a%20cobertura%20fotogr%C3%A1fica%20do%20Javari!" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Quero cobertura fotográfica
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer" id="contato">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="assets/images/logo-horizontal-white.png" alt="Javari StrEat Park" class="footer-logo" />
+        <p class="footer-tagline">SÓ VEM!</p>
+      </div>
+      <div class="footer-block">
+        <h4>Endereço</h4>
+        <p>Rua Javari, 112<br>Mooca · São Paulo</p>
+        <a class="link-underline" href="/#localizacao">Ver no mapa</a>
+      </div>
+      <div class="footer-block">
+        <h4>Contato</h4>
+        <ul class="footer-links">
+          <li><a href="https://wa.me/+551120811544" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:6px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>WhatsApp · (11) 2081-1544</a></li>
+          <li><a href="https://instagram.com/javaripark" target="_blank" rel="noopener">Instagram · @javaripark</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>© <span id="year"></span> Javari StrEat Park</span>
+      <span class="footer-spacer">·</span>
+      <span>SÓ VEM!</span>
+    </div>
+  </footer>
+
+  <!-- ===== LIGHTBOX ===== -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" aria-label="Fechar">&times;</button>
+    <img src="" alt="" id="lightbox-img" />
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.querySelectorAll('.fotos-galeria .mosaic-item img').forEach(img => {
+      img.addEventListener('click', () => {
+        const lb = document.getElementById('lightbox');
+        document.getElementById('lightbox-img').src = img.src;
+        document.getElementById('lightbox-img').alt = img.alt;
+        lb.classList.add('open');
+      });
+    });
+    document.getElementById('lightbox').addEventListener('click', (e) => {
+      if (e.target !== document.getElementById('lightbox-img')) {
+        document.getElementById('lightbox').classList.remove('open');
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('open');
+    });
+  </script>
+</body>
+</html>
