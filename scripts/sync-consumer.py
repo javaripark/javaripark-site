@@ -104,11 +104,21 @@ def restore_firebird_backup(backup_path, dest_dir):
     print(f"Backup header (hex): {header[:32].hex()}")
     print(f"Backup header (ascii): {header[:64]}")
 
-    # Try gbak restore — first with Firebird 3 page size compatibility
+    # Find gbak binary (Firebird 4 installs to /opt/firebird/bin/)
+    gbak_bin = "gbak"
+    for candidate in ["/opt/firebird/bin/gbak", "/usr/bin/gbak", "gbak"]:
+        try:
+            subprocess.run([candidate, "-z"], capture_output=True, timeout=5)
+            gbak_bin = candidate
+            break
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+
+    # Try gbak restore
     for extra_args in [[], ["-page_size", "16384"]]:
         try:
             result = subprocess.run(
-                ["gbak", "-c", "-user", "SYSDBA", "-password", "masterkey",
+                [gbak_bin, "-c", "-user", "SYSDBA", "-password", "masterkey",
                  *extra_args, backup_path, db_path],
                 capture_output=True, text=True, timeout=300
             )
@@ -116,6 +126,8 @@ def restore_firebird_backup(backup_path, dest_dir):
                 print(f"Restored backup to: {db_path}")
                 return db_path
             print(f"gbak stderr: {result.stderr[:500]}")
+            if os.path.exists(db_path):
+                os.remove(db_path)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             print(f"gbak failed: {e}")
 
@@ -143,6 +155,11 @@ def query_sales_data(db_path):
     The script will try multiple known schema variants.
     """
     import firebird.driver as fdb
+
+    # Point firebird-driver to Firebird 4 client library if available
+    fb_lib = "/opt/firebird/lib/libfbclient.so"
+    if os.path.exists(fb_lib):
+        fdb.driver_config.fb_client_library.value = fb_lib
 
     con = fdb.connect(
         database=db_path,

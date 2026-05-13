@@ -15,11 +15,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Firebird utilities
+      - name: Install Firebird 4.0
         run: |
-          sudo apt-get update
-          sudo apt-get install -y firebird3.0-utils firebird3.0-server-core || true
-          gbak -z 2>&1 | head -3 || true
+          wget -q https://github.com/FirebirdSQL/firebird/releases/download/v4.0.6/Firebird-4.0.6.3075-0.amd64.tar.gz -O /tmp/fb4.tar.gz
+          tar xzf /tmp/fb4.tar.gz -C /tmp
+          cd /tmp/Firebird-4.0.6.3075-0.amd64 && sudo ./install.sh -silent
+          gbak -z 2>&1 | head -3 || /opt/firebird/bin/gbak -z 2>&1 | head -3 || true
 
       - name: Install Python dependencies
         run: pip install google-api-python-client google-auth firebase-admin firebird-driver
