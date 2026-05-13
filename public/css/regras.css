@@ -10,7 +10,7 @@
 /* ========== Hero Regras ========== */
 .regras-hero {
   padding: 140px 0 60px;
-  background: linear-gradient(to bottom, rgba(0,0,0,.72), rgba(0,0,0,.55)), url('../assets/images/quintal/quintal-hero.jpg') center/cover no-repeat;
+  background: linear-gradient(to bottom, rgba(0,0,0,.72), rgba(0,0,0,.55)), url('../assets/images/quintal/quintal-hero.webp') center/cover no-repeat;
   color: var(--cream);
   text-align: center;
   position: relative;
