@@ -167,6 +167,12 @@ def query_sales_data(db_path):
     if os.path.exists(fb_lib):
         fdb.driver_config.fb_client_library.value = fb_lib
 
+    # Set Firebird env vars for embedded mode
+    db_dir = os.path.dirname(db_path)
+    os.environ.setdefault("FIREBIRD_TMP", db_dir)
+    os.environ.setdefault("FIREBIRD_LOCK", db_dir)
+    os.environ.setdefault("FIREBIRD", "/opt/firebird")
+
     con = fdb.connect(
         database=db_path,
         user="SYSDBA",
