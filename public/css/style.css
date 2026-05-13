@@ -44,7 +44,7 @@ body {
   color: var(--text-dark);
   line-height: 1.6;
   overflow-x: hidden;
-  padding-bottom: 0;
+  padding-bottom: var(--bottom-nav-h);
 }
 img { display: block; max-width: 100%; height: auto; }
 a { color: inherit; text-decoration: none; }
@@ -1042,15 +1042,13 @@ button, input, textarea { font: inherit; }
   background: var(--violet);
   color: var(--white);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: clamp(10px, 2.5vw, 12px);
   font-weight: 600;
   letter-spacing: .3px;
   box-shadow: 0 8px 28px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.12) inset;
   transition: transform var(--transition), background var(--transition);
   white-space: nowrap;
   max-width: calc(100% - 32px);
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .map-pin:hover {
   background: var(--violet-deep);
@@ -1434,10 +1432,9 @@ button, input, textarea { font: inherit; }
   color: rgba(255,255,255,.4);
 }
 .copa-knockout {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin-bottom: 40px;
 }
 .copa-ko-item {
@@ -1446,8 +1443,6 @@ button, input, textarea { font: inherit; }
   border-radius: 10px;
   padding: 12px 16px;
   text-align: center;
-  flex: 1;
-  min-width: 70px;
 }
 .copa-ko-final {
   border-color: rgba(255,215,0,.3);
@@ -1468,6 +1463,7 @@ button, input, textarea { font: inherit; }
   white-space: nowrap;
 }
 .copa-ko-arrow {
+  display: none;
   color: rgba(255,215,0,.3);
   flex-shrink: 0;
 }
@@ -1495,6 +1491,9 @@ button, input, textarea { font: inherit; }
   .copa-lead { font-size: 15px; }
   .copa-matches { flex-direction: row; }
   .copa-match { flex: 1; }
+  .copa-knockout { display: flex; align-items: center; gap: 8px; }
+  .copa-ko-item { flex: 1; }
+  .copa-ko-arrow { display: block; }
 }
 @media (min-width: 1024px) {
   .copa { padding: 100px 0 120px; }
