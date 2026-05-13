@@ -187,7 +187,9 @@ def query_sales_data(db_path):
         ORDER BY RDB$RELATION_NAME
     """)
     tables = [row[0].strip() for row in cur.fetchall()]
-    print(f"Found {len(tables)} tables: {', '.join(tables[:20])}...")
+    print(f"Found {len(tables)} tables:")
+    for i in range(0, len(tables), 10):
+        print(f"  {', '.join(tables[i:i+10])}")
 
     # Try to identify the sales table
     sales_table = find_table(tables, ["VENDA", "VENDAS", "MOVIMENTO", "MOV_VENDA"])
