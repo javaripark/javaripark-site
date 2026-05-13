@@ -191,12 +191,14 @@ def query_sales_data(db_path):
     for i in range(0, len(tables), 10):
         print(f"  {', '.join(tables[i:i+10])}")
 
-    # Try to identify the sales table
-    sales_table = find_table(tables, ["VENDA", "VENDAS", "MOVIMENTO", "MOV_VENDA"])
-    items_table = find_table(tables, ["ITEM_VENDA", "ITENS_VENDA", "ITEM_MOV", "MOV_ITEM"])
-    products_table = find_table(tables, ["PRODUTO", "PRODUTOS", "ITEM", "ITENS"])
-    groups_table = find_table(tables, ["GRUPO", "GRUPOS", "CATEGORIA", "CATEGORIAS", "GRUPO_PRODUTO"])
-    payment_table = find_table(tables, ["VENDA_PAGAMENTO", "PAGAMENTO", "FORMA_PGTO",
+    # Try to identify the sales table (Consumer uses PEDIDOS, not VENDA)
+    sales_table = find_table(tables, ["PEDIDOS", "PEDIDO", "VENDA", "VENDAS", "MOVIMENTO", "MOV_VENDA"])
+    items_table = find_table(tables, ["ITENSPEDIDO", "ITEMPEDIDO", "ITEM_VENDA", "ITENS_VENDA",
+                                       "ITEM_MOV", "MOV_ITEM"])
+    products_table = find_table(tables, ["PRODUTODETALHE", "PRODUTO", "PRODUTOS", "ITEM", "ITENS"])
+    groups_table = find_table(tables, ["PRODUTOTIPO", "GRUPO", "GRUPOS", "CATEGORIA", "CATEGORIAS",
+                                        "GRUPO_PRODUTO"])
+    payment_table = find_table(tables, ["PAGAMENTOS", "PAGAMENTO", "VENDA_PAGAMENTO", "FORMA_PGTO",
                                          "MOV_PAGAMENTO", "RECEBIMENTO", "VENDA_FORMA_PGTO"])
 
     if not sales_table:
@@ -215,16 +217,23 @@ def query_sales_data(db_path):
     sales_cols = get_columns(cur, sales_table)
     print(f"Sales columns: {sales_cols}")
 
-    date_col = find_column(sales_cols, ["DATA", "DATA_VENDA", "DT_VENDA", "DATA_MOV", "DATAVENDA"])
-    total_col = find_column(sales_cols, ["TOTAL", "VALOR_TOTAL", "VLR_TOTAL", "TOTAL_VENDA", "TOTALVENDA"])
-    time_col = find_column(sales_cols, ["HORA", "HORA_VENDA", "HR_VENDA"])
-    status_col = find_column(sales_cols, ["STATUS", "SITUACAO", "SIT"])
+    date_col = find_column(sales_cols, ["DATA", "DATAPEDIDO", "DATA_VENDA", "DT_VENDA", "DATA_MOV",
+                                         "DATAVENDA", "DATAHORAPEDIDO", "DATAHORA"])
+    total_col = find_column(sales_cols, ["TOTAL", "VALORTOTAL", "TOTALFINAL", "TOTALPEDIDO",
+                                          "VALOR_TOTAL", "VLR_TOTAL", "TOTAL_VENDA", "TOTALVENDA"])
+    time_col = find_column(sales_cols, ["HORA", "HORAPEDIDO", "HORA_VENDA", "HR_VENDA",
+                                          "DATAHORAPEDIDO", "DATAHORA"])
+    status_col = find_column(sales_cols, ["STATUS", "SITUACAO", "SIT", "STATUSPEDIDO"])
+
+    sales_pk = find_column(sales_cols, ["ID", "IDPEDIDO", "CODIGO"])
 
     if not date_col or not total_col:
         print(f"ERROR: Could not identify date/total columns in {sales_table}")
         print(f"  Available: {sales_cols}")
         con.close()
         return None
+
+    print(f"Mapped: date={date_col}, total={total_col}, time={time_col}, status={status_col}, pk={sales_pk}")
 
     # Query daily aggregates
     status_filter = f"AND {status_col} NOT IN ('C', 'CANCELADA', 'CANCELADO')" if status_col else ""
@@ -265,27 +274,49 @@ def query_sales_data(db_path):
     # 2. Payment methods per day
     if payment_table:
         pay_cols = get_columns(cur, payment_table)
-        pay_value_col = find_column(pay_cols, ["VALOR", "VLR", "TOTAL", "VALOR_PAGO"])
+        print(f"Payment columns: {pay_cols}")
+        pay_value_col = find_column(pay_cols, ["VALOR", "VALORPAGO", "VLR", "TOTAL", "VALOR_PAGO"])
+        pay_form_fk = find_column(pay_cols, ["IDFORMAPAGAMENTO"])
         pay_form_col = find_column(pay_cols, ["FORMA", "DESCRICAO", "NOME", "TIPO",
                                                "FORMA_PGTO", "BANDEIRA", "FORMA_PAGAMENTO"])
-        pay_sale_col = find_column(pay_cols, ["VENDA_ID", "ID_VENDA", "COD_VENDA", "MOVIMENTO_ID"])
-        pay_date_col = find_column(pay_cols, ["DATA", "DATA_VENDA", "DT_VENDA"])
+        pay_sale_col = find_column(pay_cols, ["IDPEDIDO", "VENDA_ID", "ID_VENDA", "COD_VENDA",
+                                               "MOVIMENTO_ID"])
+        pay_date_col = find_column(pay_cols, ["DATA", "DATAPAGAMENTO", "DATA_VENDA", "DT_VENDA"])
 
-        if pay_value_col and pay_form_col:
-            if pay_date_col:
+        # Build payment method name lookup if FORMASPAGAMENTO table exists
+        formas_map = {}
+        formas_table = find_table(tables, ["FORMASPAGAMENTO", "FORMAPAGAMENTO", "FORMA_PAGAMENTO"])
+        if formas_table and pay_form_fk:
+            f_cols = get_columns(cur, formas_table)
+            f_name = find_column(f_cols, ["DESCRICAO", "NOME", "FORMA", "TIPO"])
+            f_id = find_column(f_cols, ["ID", "IDFORMAPAGAMENTO", "CODIGO"])
+            if f_name and f_id:
+                try:
+                    cur.execute(f"SELECT {f_id}, {f_name} FROM {formas_table}")
+                    for row in cur.fetchall():
+                        formas_map[row[0]] = str(row[1] or "").strip()
+                    print(f"  Payment methods: {formas_map}")
+                except Exception as e:
+                    print(f"  Failed to load payment methods: {e}")
+
+        form_col_or_fk = pay_form_fk or pay_form_col
+        if pay_value_col and form_col_or_fk:
+            # Determine the sales table PK column
+            sales_pk = find_column(sales_cols, ["ID", "IDPEDIDO", "CODIGO"])
+            if pay_sale_col and sales_pk:
                 sql = f"""
-                    SELECT {pay_date_col}, {pay_form_col}, SUM({pay_value_col})
+                    SELECT v.{date_col}, p.{form_col_or_fk}, SUM(p.{pay_value_col})
+                    FROM {payment_table} p
+                    JOIN {sales_table} v ON v.{sales_pk} = p.{pay_sale_col}
+                    WHERE p.{pay_value_col} > 0
+                    GROUP BY v.{date_col}, p.{form_col_or_fk}
+                """
+            elif pay_date_col:
+                sql = f"""
+                    SELECT {pay_date_col}, {form_col_or_fk}, SUM({pay_value_col})
                     FROM {payment_table}
                     WHERE {pay_value_col} > 0
-                    GROUP BY {pay_date_col}, {pay_form_col}
-                """
-            elif pay_sale_col:
-                sql = f"""
-                    SELECT v.{date_col}, p.{pay_form_col}, SUM(p.{pay_value_col})
-                    FROM {payment_table} p
-                    JOIN {sales_table} v ON v.ID = p.{pay_sale_col}
-                    WHERE p.{pay_value_col} > 0
-                    GROUP BY v.{date_col}, p.{pay_form_col}
+                    GROUP BY {pay_date_col}, {form_col_or_fk}
                 """
             else:
                 sql = None
@@ -301,7 +332,11 @@ def query_sales_data(db_path):
                         date_str = dt.strftime("%Y-%m-%d") if isinstance(dt, datetime) else str(dt)[:10]
                         if date_str not in daily_data:
                             continue
-                        form_name = (str(row[1] or "")).strip().upper()
+                        raw_form = row[1]
+                        if pay_form_fk and formas_map:
+                            form_name = formas_map.get(raw_form, str(raw_form or "")).upper()
+                        else:
+                            form_name = str(raw_form or "").strip().upper()
                         value = float(row[2] or 0)
                         key = classify_payment(form_name)
                         daily_data[date_str]["formasPagamento"][key] += value
@@ -337,32 +372,41 @@ def query_sales_data(db_path):
     # 4. Top products per day
     if items_table and products_table:
         item_cols = get_columns(cur, items_table)
+        print(f"Item columns: {item_cols}")
         item_qty_col = find_column(item_cols, ["QUANTIDADE", "QTD", "QTDE"])
-        item_total_col = find_column(item_cols, ["VALOR_TOTAL", "VLR_TOTAL", "TOTAL", "SUBTOTAL"])
-        item_prod_col = find_column(item_cols, ["PRODUTO_ID", "ID_PRODUTO", "COD_PRODUTO"])
-        item_sale_col = find_column(item_cols, ["VENDA_ID", "ID_VENDA", "COD_VENDA", "MOVIMENTO_ID"])
+        item_total_col = find_column(item_cols, ["VALORTOTAL", "VALOR_TOTAL", "VLR_TOTAL", "TOTAL",
+                                                   "SUBTOTAL", "VALORFINAL"])
+        item_prod_col = find_column(item_cols, ["IDPRODUTODETALHE", "IDPRODUTO", "PRODUTO_ID",
+                                                  "ID_PRODUTO", "COD_PRODUTO"])
+        item_sale_col = find_column(item_cols, ["IDPEDIDO", "VENDA_ID", "ID_VENDA", "COD_VENDA",
+                                                  "MOVIMENTO_ID"])
 
         prod_cols = get_columns(cur, products_table)
-        prod_name_col = find_column(prod_cols, ["NOME", "DESCRICAO", "NOME_PRODUTO", "PRODUTO"])
-        prod_group_col = find_column(prod_cols, ["GRUPO_ID", "ID_GRUPO", "COD_GRUPO", "CATEGORIA_ID"])
+        print(f"Product columns: {prod_cols}")
+        prod_name_col = find_column(prod_cols, ["NOME", "DESCRICAO", "NOME_PRODUTO", "PRODUTO",
+                                                  "NOMEPRODUTO"])
+        prod_id_col = find_column(prod_cols, ["ID", "IDPRODUTODETALHE", "IDPRODUTO", "CODIGO"])
+        prod_group_col = find_column(prod_cols, ["IDPRODUTOTIPO", "GRUPO_ID", "ID_GRUPO",
+                                                   "COD_GRUPO", "CATEGORIA_ID"])
 
-        if item_qty_col and item_total_col and item_prod_col and prod_name_col:
+        if item_qty_col and item_total_col and item_prod_col and prod_name_col and prod_id_col:
             print("Querying product sales...")
             group_join = ""
             group_select = "'Sem categoria'"
             if groups_table and prod_group_col:
                 grp_cols = get_columns(cur, groups_table)
-                grp_name_col = find_column(grp_cols, ["NOME", "DESCRICAO", "GRUPO"])
-                if grp_name_col:
-                    group_join = f"LEFT JOIN {groups_table} g ON g.ID = p.{prod_group_col}"
+                grp_name_col = find_column(grp_cols, ["NOME", "DESCRICAO", "GRUPO", "TIPO"])
+                grp_id_col = find_column(grp_cols, ["ID", "IDPRODUTOTIPO", "CODIGO"])
+                if grp_name_col and grp_id_col:
+                    group_join = f"LEFT JOIN {groups_table} g ON g.{grp_id_col} = p.{prod_group_col}"
                     group_select = f"g.{grp_name_col}"
 
             sql = f"""
                 SELECT v.{date_col}, p.{prod_name_col}, {group_select},
                        SUM(i.{item_qty_col}), SUM(i.{item_total_col})
                 FROM {items_table} i
-                JOIN {sales_table} v ON v.ID = i.{item_sale_col}
-                JOIN {products_table} p ON p.ID = i.{item_prod_col}
+                JOIN {sales_table} v ON v.{sales_pk or 'ID'} = i.{item_sale_col}
+                JOIN {products_table} p ON p.{prod_id_col} = i.{item_prod_col}
                 {group_join}
                 WHERE i.{item_total_col} > 0 {status_filter.replace(status_col, 'v.' + status_col) if status_col else ''}
                 GROUP BY v.{date_col}, p.{prod_name_col}, {group_select}
@@ -430,17 +474,20 @@ def query_financial_data(db_path):
 
     # ── Fornecedores ──
     forn_table = find_table(tables, [
-        "FORNECEDOR", "FORNECEDORES", "CLIENTE_FORNECEDOR", "CADASTRO_FORNECEDOR",
-        "PESSOA_FORNECEDOR"
+        "FORNECEDORES", "FORNECEDOR", "CONTATOS", "CLIENTE_FORNECEDOR",
+        "CADASTRO_FORNECEDOR", "PESSOA_FORNECEDOR"
     ])
     forn_map = {}
     if forn_table:
         cols = get_columns(cur, forn_table)
-        name_col = find_column(cols, ["NOME", "RAZAO_SOCIAL", "RAZAO", "NOME_FANTASIA", "FANTASIA", "DESCRICAO"])
-        cnpj_col = find_column(cols, ["CNPJ", "CNPJ_CPF", "CPF_CNPJ", "CGC", "DOCUMENTO"])
-        tel_col = find_column(cols, ["TELEFONE", "FONE", "TEL", "TELEFONE1"])
+        print(f"Fornecedores columns: {cols}")
+        name_col = find_column(cols, ["NOME", "RAZAOSOCIAL", "RAZAO_SOCIAL", "RAZAO",
+                                       "NOMEFANTASIA", "NOME_FANTASIA", "FANTASIA", "DESCRICAO"])
+        cnpj_col = find_column(cols, ["CNPJ", "CNPJCPF", "CNPJ_CPF", "CPF_CNPJ", "CGC", "DOCUMENTO"])
+        tel_col = find_column(cols, ["TELEFONE", "FONE", "TEL", "TELEFONE1", "CELULAR"])
         email_col = find_column(cols, ["EMAIL", "E_MAIL", "CORREIO"])
-        id_col = find_column(cols, ["ID", "CODIGO", "COD", "ID_FORNECEDOR"])
+        id_col = find_column(cols, ["ID", "IDCONTATO", "IDFORNECEDOR", "CODIGO", "COD",
+                                     "ID_FORNECEDOR"])
 
         if name_col and id_col:
             select_parts = [f"{id_col}", f"{name_col}"]
@@ -474,20 +521,24 @@ def query_financial_data(db_path):
 
     # ── Contas a Pagar ──
     cp_table = find_table(tables, [
-        "CONTA_PAGAR", "CONTAS_PAGAR", "CONTAS_A_PAGAR", "CONTA",
+        "CONTASPAGAR", "CONTA_PAGAR", "CONTAS_PAGAR", "CONTAS_A_PAGAR", "CONTA",
         "TITULO_PAGAR", "TITULO", "FINANCEIRO", "FIN_PAGAR",
         "LANCAMENTO", "LANCAMENTO_PAGAR"
     ])
     if cp_table:
         cols = get_columns(cur, cp_table)
-        desc_col = find_column(cols, ["DESCRICAO", "HISTORICO", "OBSERVACAO", "OBS", "COMPLEMENTO", "DOCUMENTO"])
-        valor_col = find_column(cols, ["VALOR", "VLR", "VALOR_TITULO", "VALOR_ORIGINAL"])
-        venc_col = find_column(cols, ["VENCIMENTO", "DT_VENCIMENTO", "DATA_VENCIMENTO", "VENCTO"])
+        print(f"Contas a pagar columns: {cols}")
+        desc_col = find_column(cols, ["DESCRICAO", "HISTORICO", "OBSERVACAO", "OBS", "COMPLEMENTO",
+                                       "DOCUMENTO", "NOMEFORNECEDOR"])
+        valor_col = find_column(cols, ["VALOR", "VALORTOTAL", "VLR", "VALOR_TITULO", "VALOR_ORIGINAL"])
+        venc_col = find_column(cols, ["VENCIMENTO", "DATAVENCIMENTO", "DT_VENCIMENTO",
+                                       "DATA_VENCIMENTO", "VENCTO"])
         status_col = find_column(cols, ["STATUS", "SITUACAO", "SIT", "PAGO", "QUITADO"])
-        forn_col = find_column(cols, ["FORNECEDOR_ID", "ID_FORNECEDOR", "COD_FORNECEDOR",
-                                       "PESSOA_ID", "CLIENTE_ID", "CREDOR_ID"])
-        data_col = find_column(cols, ["DATA", "DATA_EMISSAO", "DT_EMISSAO", "DATA_LANCAMENTO"])
-        valor_pago_col = find_column(cols, ["VALOR_PAGO", "VLR_PAGO", "VALOR_QUITADO"])
+        forn_col = find_column(cols, ["IDFORNECEDOR", "IDCONTATO", "FORNECEDOR_ID", "ID_FORNECEDOR",
+                                       "COD_FORNECEDOR", "PESSOA_ID", "CLIENTE_ID", "CREDOR_ID"])
+        data_col = find_column(cols, ["DATA", "DATAEMISSAO", "DATA_EMISSAO", "DT_EMISSAO",
+                                       "DATA_LANCAMENTO", "DATALANCAMENTO"])
+        valor_pago_col = find_column(cols, ["VALORPAGO", "VALOR_PAGO", "VLR_PAGO", "VALOR_QUITADO"])
 
         if valor_col and venc_col:
             select = [desc_col or f"'{cp_table}'"]
@@ -558,8 +609,8 @@ def query_financial_data(db_path):
 
     # ── Compras / Notas de Entrada ──
     compra_table = find_table(tables, [
-        "COMPRA", "COMPRAS", "ENTRADA", "NOTA_ENTRADA", "ENTRADA_MERCADORIA",
-        "NFE_ENTRADA", "NOTA_FISCAL_ENTRADA", "PEDIDO_COMPRA"
+        "ESTOQUEMOVIMENTACAO", "COMPRA", "COMPRAS", "ENTRADA", "NOTA_ENTRADA",
+        "ENTRADA_MERCADORIA", "NFE_ENTRADA", "NOTA_FISCAL_ENTRADA", "PEDIDO_COMPRA"
     ])
     if compra_table:
         cols = get_columns(cur, compra_table)
