@@ -67,7 +67,7 @@ button, input, textarea { font: inherit; }
   display: flex;
   align-items: stretch;
   justify-content: space-around;
-  height: var(--bottom-nav-h);
+  height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
   background: rgba(0, 0, 0, .96);
   border-top: 1px solid rgba(245, 237, 220, .1);
   padding-bottom: env(safe-area-inset-bottom, 0);
@@ -1049,6 +1049,7 @@ button, input, textarea { font: inherit; }
   transition: transform var(--transition), background var(--transition);
   white-space: nowrap;
   max-width: calc(100% - 32px);
+  overflow: hidden;
 }
 .map-pin:hover {
   background: var(--violet-deep);
