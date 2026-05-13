@@ -17,10 +17,10 @@ jobs:
 
       - name: Install Firebird 4.0
         run: |
-          wget -q https://github.com/FirebirdSQL/firebird/releases/download/v4.0.6/Firebird-4.0.6.3075-0.amd64.tar.gz -O /tmp/fb4.tar.gz
+          wget -q https://github.com/FirebirdSQL/firebird/releases/download/v4.0.7/Firebird-4.0.7.3271-0.amd64.tar.gz -O /tmp/fb4.tar.gz
           tar xzf /tmp/fb4.tar.gz -C /tmp
-          cd /tmp/Firebird-4.0.6.3075-0.amd64 && sudo ./install.sh -silent
-          gbak -z 2>&1 | head -3 || /opt/firebird/bin/gbak -z 2>&1 | head -3 || true
+          cd /tmp/Firebird-4.0.7.3271-0.amd64 && sudo ./install.sh -silent
+          /opt/firebird/bin/gbak -z 2>&1 | head -3 || true
 
       - name: Install Python dependencies
         run: pip install google-api-python-client google-auth firebase-admin firebird-driver
