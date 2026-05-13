@@ -21,7 +21,7 @@ jobs:
           tar xzf /tmp/fb4.tar.gz -C /tmp
           cd /tmp/Firebird-4.0.7.3271-0.amd64 && sudo ./install.sh -silent
           sudo mkdir -p /tmp/firebird && sudo chmod 777 /tmp/firebird
-          sudo sed -i 's|^#TmpDirectory.*|TmpDirectory = /tmp/firebird|' /opt/firebird/firebird.conf || true
+          sudo chmod -R 777 /opt/firebird
           /opt/firebird/bin/gbak -z 2>&1 | head -3 || true
 
       - name: Install Python dependencies
