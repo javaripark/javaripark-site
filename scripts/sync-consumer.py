@@ -40,8 +40,21 @@ FIRESTORE_PATH_FAT = f"artifacts/{FIREBASE_PROJECT_ID}/public/data/faturamento"
 FIRESTORE_PATH_FIN = f"artifacts/{FIREBASE_PROJECT_ID}/public/data/financeiro"
 
 # ---------------------------------------------------------------------------
-# Google Drive: download most recent .fbconsumer backup
+# Google Drive: download backup by day-of-week strategy
 # ---------------------------------------------------------------------------
+DIAS_SEMANA = {
+    0: "segunda-feira",
+    1: "terça-feira",
+    2: "quarta-feira",
+    3: "quinta-feira",
+    4: "sexta-feira",
+    5: "sábado",
+    6: "domingo",
+}
+
+# BRT = UTC-3
+BRT_OFFSET = timedelta(hours=-3)
+
 def get_drive_service():
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
@@ -57,27 +70,91 @@ def get_drive_service():
     return build("drive", "v3", credentials=creds)
 
 
-def download_latest_backup(drive_service, dest_dir):
-    """Download the most recently modified .fbconsumer file from Drive."""
+def list_drive_backups(drive_service):
+    """List all .fbconsumer files in the Drive folder."""
     results = drive_service.files().list(
         q=f"'{DRIVE_FOLDER_ID}' in parents and name contains '.fbconsumer'",
         orderBy="modifiedTime desc",
-        pageSize=10,
+        pageSize=20,
         fields="files(id, name, modifiedTime, size)"
     ).execute()
+    return results.get("files", [])
 
-    files = results.get("files", [])
-    if not files:
-        raise RuntimeError("No .fbconsumer files found in Drive folder")
 
-    latest = files[0]
-    print(f"Downloading: {latest['name']} (modified: {latest['modifiedTime']}, size: {latest.get('size', '?')} bytes)")
+def pick_backup(files, now_brt):
+    """
+    Select which .fbconsumer to download based on day-of-week.
 
-    dest_path = os.path.join(dest_dir, latest["name"])
+    Strategy:
+      - Files are named by day: segunda-feira.fbconsumer ... domingo.fbconsumer
+      - domingo.fbconsumer condenses the whole week (weekly close)
+      - On Sunday/Monday, prioritize domingo for weekly close
+      - Other days: look for yesterday's file (backup generated overnight)
+      - Fallback: most recently modified file
+      - Stale check: warn if selected file hasn't been modified in >48h
+    """
+    by_name = {}
+    for f in files:
+        key = f["name"].replace(".fbconsumer", "").lower().strip()
+        by_name[key] = f
+
+    weekday = now_brt.weekday()  # 0=Mon, 6=Sun
+    today_name = DIAS_SEMANA[weekday]
+    yesterday_name = DIAS_SEMANA[(weekday - 1) % 7]
+
+    print(f"Hoje (BRT): {now_brt.strftime('%A %Y-%m-%d')} → {today_name}")
+    print(f"Arquivos no Drive: {[f['name'] for f in files]}")
+
+    chosen = None
+    reason = ""
+
+    # Sunday or Monday morning → prioritize domingo (weekly close)
+    if weekday in (6, 0):
+        if "domingo" in by_name:
+            chosen = by_name["domingo"]
+            reason = "fechamento semanal (domingo condensa a semana)"
+        elif yesterday_name in by_name:
+            chosen = by_name[yesterday_name]
+            reason = f"fallback para {yesterday_name} (domingo não encontrado)"
+
+    # Other days: look for yesterday's file first, then today's
+    if not chosen:
+        if yesterday_name in by_name:
+            chosen = by_name[yesterday_name]
+            reason = f"backup diário de {yesterday_name}"
+        elif today_name in by_name:
+            chosen = by_name[today_name]
+            reason = f"backup diário de {today_name}"
+
+    # Final fallback: most recently modified
+    if not chosen:
+        if files:
+            chosen = files[0]
+            reason = f"fallback: arquivo mais recente ({chosen['name']})"
+        else:
+            return None, "Nenhum arquivo .fbconsumer encontrado no Drive"
+
+    # Stale check
+    mod_time = datetime.fromisoformat(chosen["modifiedTime"].replace("Z", "+00:00"))
+    age_hours = (now_brt.astimezone(mod_time.tzinfo) - mod_time).total_seconds() / 3600
+    stale_warning = ""
+    if age_hours > 48:
+        stale_warning = f" ⚠ ATENÇÃO: arquivo não atualizado há {age_hours:.0f}h"
+
+    size_mb = int(chosen.get("size", 0)) / (1024 * 1024)
+    print(f"Selecionado: {chosen['name']} ({reason})")
+    print(f"  Modificado: {chosen['modifiedTime']} ({age_hours:.0f}h atrás, {size_mb:.0f}MB){stale_warning}")
+
+    return chosen, stale_warning
+
+
+def download_file(drive_service, file_info, dest_dir):
+    """Download a specific file from Drive."""
     from googleapiclient.http import MediaIoBaseDownload
     import io
 
-    request = drive_service.files().get_media(fileId=latest["id"])
+    dest_path = os.path.join(dest_dir, file_info["name"])
+    request = drive_service.files().get_media(fileId=file_info["id"])
     fh = io.FileIO(dest_path, "wb")
     downloader = MediaIoBaseDownload(fh, request)
     done = False
@@ -86,8 +163,7 @@ def download_latest_backup(drive_service, dest_dir):
         if status:
             print(f"  Download {int(status.progress() * 100)}%")
     fh.close()
-
-    print(f"Saved to: {dest_path}")
+    print(f"Salvo em: {dest_path}")
     return dest_path
 
 
@@ -730,7 +806,7 @@ def save_table_schema(cur, tables):
 # ---------------------------------------------------------------------------
 # Firestore upload
 # ---------------------------------------------------------------------------
-def upload_to_firestore(daily_data, financial_data=None):
+def upload_to_firestore(daily_data, financial_data=None, sync_meta=None):
     import firebase_admin
     from firebase_admin import credentials, firestore
 
@@ -770,20 +846,42 @@ def upload_to_firestore(daily_data, financial_data=None):
             print(f"  Uploaded financeiro/{key}")
         print(f"Uploaded {len(financial_data)} financial documents to Firestore ({FIRESTORE_PATH_FIN})")
 
+    # Upload sync metadata
+    if sync_meta:
+        db.document(f"{FIRESTORE_PATH_FIN}/sync_status").set(sync_meta)
+        print(f"  Uploaded sync_status: {sync_meta['arquivo']}")
+
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
+    from datetime import timezone
+
+    now_brt = datetime.now(timezone.utc) + BRT_OFFSET
+    now_brt = now_brt.replace(tzinfo=timezone(BRT_OFFSET))
+
     print("=" * 60)
-    print("Consumer Backup → Firestore Sync")
+    print(f"Consumer Backup → Firestore Sync ({now_brt.strftime('%Y-%m-%d %H:%M BRT')})")
     print("=" * 60)
 
     with tempfile.TemporaryDirectory() as tmp:
-        # 1. Download from Google Drive
-        print("\n[1/5] Downloading backup from Google Drive...")
+        # 1. Select and download from Google Drive
+        print("\n[1/5] Selecting backup from Google Drive...")
         drive = get_drive_service()
-        backup_path = download_latest_backup(drive, tmp)
+        files = list_drive_backups(drive)
+
+        if not files:
+            print("Nenhum arquivo .fbconsumer encontrado no Drive. Nada a sincronizar.")
+            sys.exit(0)
+
+        chosen, stale_warning = pick_backup(files, now_brt)
+        if not chosen:
+            print(f"Backup não encontrado: {stale_warning}")
+            sys.exit(0)
+
+        print(f"\nBaixando {chosen['name']}...")
+        backup_path = download_file(drive, chosen, tmp)
 
         # 2. Restore Firebird database
         print("\n[2/5] Restoring Firebird database...")
@@ -812,7 +910,16 @@ def main():
 
         # 5. Upload to Firestore
         print("\n[5/5] Uploading to Firestore...")
-        upload_to_firestore(daily_data, financial_data)
+        sync_meta = {
+            "arquivo": chosen["name"],
+            "modificado": chosen["modifiedTime"],
+            "syncedAt": datetime.utcnow().isoformat(),
+            "dias": len(daily_data),
+            "faturamentoTotal": total,
+        }
+        if stale_warning:
+            sync_meta["aviso"] = stale_warning.strip()
+        upload_to_firestore(daily_data, financial_data, sync_meta)
 
     print("\nDone!")
 
