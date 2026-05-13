@@ -98,17 +98,28 @@ def restore_firebird_backup(backup_path, dest_dir):
     """Restore .fbconsumer (Firebird backup) to a .fdb database file."""
     db_path = os.path.join(dest_dir, "consumer.fdb")
 
-    # Try gbak restore first (backup format)
-    try:
-        subprocess.run(
-            ["gbak", "-c", "-user", "SYSDBA", "-password", "masterkey",
-             backup_path, db_path],
-            check=True, capture_output=True, text=True, timeout=300
-        )
-        print(f"Restored backup to: {db_path}")
-        return db_path
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        print(f"gbak restore failed ({e}), trying as raw .fdb file...")
+    # Detect Firebird version from backup header
+    with open(backup_path, "rb") as f:
+        header = f.read(128)
+    print(f"Backup header (hex): {header[:32].hex()}")
+    print(f"Backup header (ascii): {header[:64]}")
+
+    # Try gbak restore — first with Firebird 3 page size compatibility
+    for extra_args in [[], ["-page_size", "16384"]]:
+        try:
+            result = subprocess.run(
+                ["gbak", "-c", "-user", "SYSDBA", "-password", "masterkey",
+                 *extra_args, backup_path, db_path],
+                capture_output=True, text=True, timeout=300
+            )
+            if result.returncode == 0:
+                print(f"Restored backup to: {db_path}")
+                return db_path
+            print(f"gbak stderr: {result.stderr[:500]}")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            print(f"gbak failed: {e}")
+
+    print("gbak restore failed, trying as raw .fdb file...")
 
     # If gbak fails, the file might already be a .fdb database
     import shutil

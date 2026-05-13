@@ -18,7 +18,8 @@ jobs:
       - name: Install Firebird utilities
         run: |
           sudo apt-get update
-          sudo apt-get install -y firebird3.0-utils firebird3.0-server-core
+          sudo apt-get install -y firebird3.0-utils firebird3.0-server-core || true
+          gbak -z 2>&1 | head -3 || true
 
       - name: Install Python dependencies
         run: pip install google-api-python-client google-auth firebase-admin firebird-driver
