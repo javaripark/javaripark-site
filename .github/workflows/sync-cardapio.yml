@@ -1,9 +1,10 @@
 name: Sync Cardápio
 
+# Menudino uses Cloudflare which blocks data center IPs.
+# Run locally: node scripts/sync-cardapio.js
+# Then commit and push — GitHub Pages deploys automatically.
 on:
-  schedule:
-    - cron: '0 10 * * *'   # Every day at 10:00 UTC (07:00 BRT)
-  workflow_dispatch:        # Manual trigger
+  workflow_dispatch:        # Manual trigger only (scraper must run locally)
 
 jobs:
   sync:
@@ -15,7 +16,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Puppeteer
+      - name: Install dependencies
         run: npm install puppeteer puppeteer-extra puppeteer-extra-plugin-stealth
 
       - name: Scrape menu
