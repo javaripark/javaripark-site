@@ -22,10 +22,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   await page.setViewport({ width: 1280, height: 900 });
 
   console.log('Navigating to', MENU_URL);
-  await page.goto(MENU_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+  await page.goto(MENU_URL, { waitUntil: 'networkidle0', timeout: 60000 });
+  await sleep(3000);
 
-  // Wait for category nav to render
-  await page.waitForSelector('span.category-nav, [class*="category__"]', { timeout: 15000 });
+  // Wait for category nav to render (CI runners are slower)
+  await page.waitForSelector('span.category-nav, [class*="category__"]', { timeout: 30000 });
 
   // Get all category names from nav (skip DESTAQUES DO DIA)
   const catNames = await page.evaluate(() => {
