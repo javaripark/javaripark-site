@@ -44,7 +44,8 @@ body {
   color: var(--text-dark);
   line-height: 1.6;
   overflow-x: hidden;
-  padding-bottom: var(--bottom-nav-h);
+  min-height: 100dvh;
+  padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
 }
 img { display: block; max-width: 100%; height: auto; }
 a { color: inherit; text-decoration: none; }
@@ -65,12 +66,13 @@ button, input, textarea { font: inherit; }
   right: 0;
   z-index: 200;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: space-around;
-  height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
-  background: rgba(0, 0, 0, .96);
+  height: var(--bottom-nav-h);
+  background: #000;
   border-top: 1px solid rgba(245, 237, 220, .1);
   padding-bottom: env(safe-area-inset-bottom, 0);
+  box-sizing: content-box;
   transition: transform .3s ease;
 }
 .bottom-nav.hidden {
