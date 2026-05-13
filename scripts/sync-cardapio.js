@@ -16,17 +16,35 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   console.log('Launching browser…');
   const browser = await puppeteer.launch({
     headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-blink-features=AutomationControlled',
+    ],
   });
   const page = await browser.newPage();
+  await page.setUserAgent(
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36'
+  );
   await page.setViewport({ width: 1280, height: 900 });
 
   console.log('Navigating to', MENU_URL);
-  await page.goto(MENU_URL, { waitUntil: 'networkidle0', timeout: 60000 });
-  await sleep(3000);
+  await page.goto(MENU_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await sleep(5000);
+
+  // Dump page title for debugging
+  const title = await page.title();
+  console.log('Page title:', title);
 
   // Wait for category nav to render (CI runners are slower)
-  await page.waitForSelector('span.category-nav, [class*="category__"]', { timeout: 30000 });
+  try {
+    await page.waitForSelector('span.category-nav, [class*="category__"]', { timeout: 30000 });
+  } catch (e) {
+    const html = await page.content();
+    console.error('Page HTML preview:', html.substring(0, 1000));
+    throw e;
+  }
 
   // Get all category names from nav (skip DESTAQUES DO DIA)
   const catNames = await page.evaluate(() => {
