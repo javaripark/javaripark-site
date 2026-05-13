@@ -9,15 +9,15 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#333}
         .container{max-width:1100px;margin:0 auto;padding:16px}
-        .header{background:#4a90e2;padding:20px;border-radius:12px 12px 0 0;text-align:center;position:relative}
-        .header h1{color:#fff;font-size:1.4em;margin:0}
-        .header p{color:#fff;font-size:.8em;margin-top:4px}
-        .header .logout-btn{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:background .2s}
-        .header .logout-btn:hover{background:rgba(255,255,255,.3)}
+        .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0;box-shadow:0 4px 12px rgba(79,25,100,.2)}
+        .header h1{color:#fff;font-size:1.3em;font-weight:700;letter-spacing:.5px}
+        .header p{color:rgba(255,255,255,.6);font-size:.75em;margin-top:3px}
+        .header .logout-btn{position:absolute;top:50%;right:16px;transform:translateY(-50%);background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:background .2s}
+        .header .logout-btn:hover{background:rgba(255,255,255,.18)}
         .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 8px rgba(0,0,0,.06);border-radius:0 0 12px 12px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
-        .admin-nav a{flex:1;min-width:0;text-align:center;padding:14px 8px;text-decoration:none;color:#666;font-weight:600;font-size:13px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+        .admin-nav a{flex:1;min-width:0;text-align:center;padding:12px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
         .admin-nav a:hover{background:#f8f9fa}
-        .admin-nav a.active{color:#4a90e2;border-bottom-color:#4a90e2;background:#f0f7ff}
+        .admin-nav a.active{color:#4f1964;border-bottom-color:#4f1964;background:#f5f0f8}
 
         .toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
         .month-nav{display:flex;align-items:center;gap:10px}
@@ -125,7 +125,7 @@
 
     <div class="container" id="app-container" style="display:none;">
         <header class="header">
-            <h1>Central de Reservas</h1>
+            <h1>Agenda de Atrações</h1>
             <p id="user-email-display"></p>
             <button class="logout-btn" id="logoutBtn">Sair</button>
         </header>
