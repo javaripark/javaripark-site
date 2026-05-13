@@ -217,13 +217,16 @@ def query_sales_data(db_path):
     sales_cols = get_columns(cur, sales_table)
     print(f"Sales columns: {sales_cols}")
 
-    date_col = find_column(sales_cols, ["DATA", "DATAPEDIDO", "DATA_VENDA", "DT_VENDA", "DATA_MOV",
-                                         "DATAVENDA", "DATAHORAPEDIDO", "DATAHORA"])
-    total_col = find_column(sales_cols, ["TOTAL", "VALORTOTAL", "TOTALFINAL", "TOTALPEDIDO",
-                                          "VALOR_TOTAL", "VLR_TOTAL", "TOTAL_VENDA", "TOTALVENDA"])
-    time_col = find_column(sales_cols, ["HORA", "HORAPEDIDO", "HORA_VENDA", "HR_VENDA",
-                                          "DATAHORAPEDIDO", "DATAHORA"])
+    date_col = find_column(sales_cols, ["DATA", "DATAABERTURA", "DATAFECHAMENTO", "DATAPEDIDO",
+                                         "DATA_VENDA", "DT_VENDA", "DATA_MOV", "DATAVENDA",
+                                         "DATAHORAPEDIDO", "DATAHORA"])
+    total_col = find_column(sales_cols, ["VALORTOTAL", "TOTAL", "TOTALFINAL", "TOTALPEDIDO",
+                                          "VALOR_TOTAL", "VLR_TOTAL", "TOTAL_VENDA", "TOTALVENDA",
+                                          "SUBTOTALPAGO"])
+    time_col = find_column(sales_cols, ["HORA", "DATAABERTURA", "DATAFECHAMENTO", "HORAPEDIDO",
+                                          "HORA_VENDA", "HR_VENDA", "DATAHORAPEDIDO", "DATAHORA"])
     status_col = find_column(sales_cols, ["STATUS", "SITUACAO", "SIT", "STATUSPEDIDO"])
+    delete_col = find_column(sales_cols, ["DATADELETE"])
 
     sales_pk = find_column(sales_cols, ["ID", "IDPEDIDO", "CODIGO"])
 
@@ -233,20 +236,29 @@ def query_sales_data(db_path):
         con.close()
         return None
 
-    print(f"Mapped: date={date_col}, total={total_col}, time={time_col}, status={status_col}, pk={sales_pk}")
+    print(f"Mapped: date={date_col}, total={total_col}, time={time_col}, status={status_col}, "
+          f"delete={delete_col}, pk={sales_pk}")
 
-    # Query daily aggregates
-    status_filter = f"AND {status_col} NOT IN ('C', 'CANCELADA', 'CANCELADO')" if status_col else ""
+    # Query daily aggregates — filter cancelled orders
+    if delete_col:
+        status_filter = f"AND {delete_col} IS NULL"
+    elif status_col:
+        status_filter = f"AND {status_col} NOT IN ('C', 'CANCELADA', 'CANCELADO')"
+    else:
+        status_filter = ""
 
     daily_data = {}
 
+    # Use CAST(x AS DATE) for TIMESTAMP columns so we aggregate by day
+    date_expr = f"CAST({date_col} AS DATE)"
+
     # 1. Daily revenue and order count
     sql = f"""
-        SELECT {date_col}, COUNT(*), SUM({total_col})
+        SELECT {date_expr}, COUNT(*), SUM({total_col})
         FROM {sales_table}
         WHERE {total_col} > 0 {status_filter}
-        GROUP BY {date_col}
-        ORDER BY {date_col}
+        GROUP BY {date_expr}
+        ORDER BY {date_expr}
     """
     print(f"Querying daily revenue...")
     cur.execute(sql)
@@ -301,22 +313,20 @@ def query_sales_data(db_path):
 
         form_col_or_fk = pay_form_fk or pay_form_col
         if pay_value_col and form_col_or_fk:
-            # Determine the sales table PK column
-            sales_pk = find_column(sales_cols, ["ID", "IDPEDIDO", "CODIGO"])
             if pay_sale_col and sales_pk:
                 sql = f"""
-                    SELECT v.{date_col}, p.{form_col_or_fk}, SUM(p.{pay_value_col})
+                    SELECT CAST(v.{date_col} AS DATE), p.{form_col_or_fk}, SUM(p.{pay_value_col})
                     FROM {payment_table} p
                     JOIN {sales_table} v ON v.{sales_pk} = p.{pay_sale_col}
                     WHERE p.{pay_value_col} > 0
-                    GROUP BY v.{date_col}, p.{form_col_or_fk}
+                    GROUP BY CAST(v.{date_col} AS DATE), p.{form_col_or_fk}
                 """
             elif pay_date_col:
                 sql = f"""
-                    SELECT {pay_date_col}, {form_col_or_fk}, SUM({pay_value_col})
+                    SELECT CAST({pay_date_col} AS DATE), {form_col_or_fk}, SUM({pay_value_col})
                     FROM {payment_table}
                     WHERE {pay_value_col} > 0
-                    GROUP BY {pay_date_col}, {form_col_or_fk}
+                    GROUP BY CAST({pay_date_col} AS DATE), {form_col_or_fk}
                 """
             else:
                 sql = None
@@ -347,10 +357,10 @@ def query_sales_data(db_path):
     if time_col:
         print("Querying hourly revenue...")
         sql = f"""
-            SELECT {date_col}, EXTRACT(HOUR FROM {time_col}), COUNT(*), SUM({total_col})
+            SELECT {date_expr}, EXTRACT(HOUR FROM {time_col}), COUNT(*), SUM({total_col})
             FROM {sales_table}
             WHERE {total_col} > 0 {status_filter}
-            GROUP BY {date_col}, EXTRACT(HOUR FROM {time_col})
+            GROUP BY {date_expr}, EXTRACT(HOUR FROM {time_col})
         """
         try:
             cur.execute(sql)
@@ -401,16 +411,23 @@ def query_sales_data(db_path):
                     group_join = f"LEFT JOIN {groups_table} g ON g.{grp_id_col} = p.{prod_group_col}"
                     group_select = f"g.{grp_name_col}"
 
+            # Build status filter for joined queries
+            joined_status = ""
+            if delete_col:
+                joined_status = f"AND v.{delete_col} IS NULL"
+            elif status_col:
+                joined_status = f"AND v.{status_col} NOT IN ('C', 'CANCELADA', 'CANCELADO')"
+
             sql = f"""
-                SELECT v.{date_col}, p.{prod_name_col}, {group_select},
+                SELECT CAST(v.{date_col} AS DATE), p.{prod_name_col}, {group_select},
                        SUM(i.{item_qty_col}), SUM(i.{item_total_col})
                 FROM {items_table} i
-                JOIN {sales_table} v ON v.{sales_pk or 'ID'} = i.{item_sale_col}
+                JOIN {sales_table} v ON v.{sales_pk or 'CODIGO'} = i.{item_sale_col}
                 JOIN {products_table} p ON p.{prod_id_col} = i.{item_prod_col}
                 {group_join}
-                WHERE i.{item_total_col} > 0 {status_filter.replace(status_col, 'v.' + status_col) if status_col else ''}
-                GROUP BY v.{date_col}, p.{prod_name_col}, {group_select}
-                ORDER BY v.{date_col}, SUM(i.{item_total_col}) DESC
+                WHERE i.{item_total_col} > 0 {joined_status}
+                GROUP BY CAST(v.{date_col} AS DATE), p.{prod_name_col}, {group_select}
+                ORDER BY CAST(v.{date_col} AS DATE), SUM(i.{item_total_col}) DESC
             """
             try:
                 cur.execute(sql)
