@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog — Javari StrEat Park Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#333}
+        .container{max-width:1200px;margin:0 auto;padding:12px}
+        .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0;box-shadow:0 4px 12px rgba(79,25,100,.2)}
+        .header h1{color:#fff;font-size:1.3em;font-weight:700;letter-spacing:.5px}
+        .header p{color:rgba(255,255,255,.6);font-size:.75em;margin-top:3px}
+        .header .logout-btn{position:absolute;top:50%;right:16px;transform:translateY(-50%);background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:background .2s}
+        .header .logout-btn:hover{background:rgba(255,255,255,.18)}
+        .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 8px rgba(0,0,0,.06);border-radius:0 0 12px 12px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+        .admin-nav a{flex:1;min-width:0;text-align:center;padding:12px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+        .admin-nav a:hover{background:#f8f9fa}
+        .admin-nav a.active{color:#4f1964;border-bottom-color:#4f1964;background:#f5f0f8}
+
+        .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+        .toolbar-left{display:flex;gap:8px;align-items:center;flex:1;min-width:0}
+        .toolbar-left input{flex:1;min-width:150px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit}
+        .toolbar-left input:focus{outline:none;border-color:#4a90e2;box-shadow:0 0 0 3px rgba(74,144,226,.15)}
+        .add-btn{display:inline-flex;align-items:center;gap:6px;background:#4a90e2;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+        .add-btn:hover{background:#357abd}
+        .add-btn.secondary{background:#6b7280}
+        .add-btn.secondary:hover{background:#4b5563}
+
+        .post-list{display:flex;flex-direction:column;gap:10px}
+        .post-card{background:#fff;border-radius:10px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:border-color .2s;border:1px solid transparent}
+        .post-card:hover{border-color:#4a90e2}
+        .post-thumb{width:80px;height:60px;border-radius:6px;object-fit:cover;background:#e5e7eb;flex-shrink:0}
+        .post-thumb-placeholder{width:80px;height:60px;border-radius:6px;background:#e5e7eb;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:10px}
+        .post-info{flex:1;min-width:0}
+        .post-info-title{font-weight:700;font-size:.9em;color:#222;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .post-info-meta{font-size:11px;color:#999;margin-bottom:4px}
+        .post-info-excerpt{font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+        .post-actions{display:flex;gap:6px;flex-shrink:0;align-self:center}
+        .post-actions button{background:none;border:1px solid #ddd;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:11px;transition:all .2s}
+        .post-actions .edit-btn:hover{border-color:#4a90e2;color:#4a90e2}
+        .post-actions .delete-btn:hover{border-color:#e53e3e;color:#e53e3e}
+
+        .empty-state{text-align:center;padding:40px 20px;color:#999;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+        .empty-state p{font-size:.9em}
+
+        .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+        .kpi-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+        .kpi-label{font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px}
+        .kpi-value{font-size:1.2em;font-weight:700;color:#222;margin-top:2px}
+
+        .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.6);justify-content:center;align-items:flex-start;overflow-y:auto;padding:20px}
+        .modal.active{display:flex}
+        .modal-content{background:#fff;padding:24px;border-radius:15px;box-shadow:0 8px 16px rgba(0,0,0,.2);width:100%;max-width:640px;position:relative;margin:auto;transform:scale(.95);opacity:0;animation:fadeInScale .3s forwards}
+        @keyframes fadeInScale{to{transform:scale(1);opacity:1}}
+        .close-button{color:#aaa;position:absolute;top:12px;right:18px;font-size:26px;font-weight:bold;cursor:pointer;transition:color .2s}
+        .close-button:hover{color:#333}
+        .modal-title{font-size:1.15em;font-weight:700;margin-bottom:16px;color:#333}
+        .form-group{margin-bottom:14px}
+        .form-group label{display:block;margin-bottom:6px;font-weight:600;color:#555;font-size:13px}
+        .form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s}
+        .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:#4a90e2;box-shadow:0 0 0 3px rgba(74,144,226,.15)}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .form-hint{font-size:11px;color:#aaa;margin-top:4px}
+        .submit-button{background:#4a90e2;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:600;width:100%;transition:background .2s}
+        .submit-button:hover{background:#357abd}
+
+        .preview-img{max-width:100%;max-height:200px;border-radius:8px;margin-top:8px;object-fit:cover}
+
+        .confirm-modal .modal-content{max-width:380px;text-align:center}
+        .confirm-modal p{margin-bottom:20px;font-size:.95em;color:#555}
+        .confirm-actions{display:flex;gap:12px}
+        .confirm-actions button{flex:1;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;font-size:.9em;border:none}
+        .confirm-cancel{background:#e5e7eb;color:#333}
+        .confirm-delete{background:#e53e3e;color:#fff}
+
+        .message-box{display:none;position:fixed;z-index:1001;left:50%;top:50%;transform:translate(-50%,-50%);background:#4CAF50;color:#fff;padding:15px 25px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.2);font-size:1.1em;text-align:center;opacity:0;animation:fadeInOut 3s forwards}
+        .message-box.error{background:#e53e3e}
+        @keyframes fadeInOut{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0;display:none}}
+
+        .auth-loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:18px;color:#777}
+
+        @media(min-width:640px){
+            .container{padding:20px}
+            .header h1{font-size:1.6em}
+            .admin-nav a{font-size:13px;padding:13px 8px}
+            .kpi-grid{grid-template-columns:repeat(4,1fr)}
+            .kpi-label{font-size:10px}
+            .kpi-value{font-size:1.5em}
+            .post-thumb{width:120px;height:80px}
+            .post-thumb-placeholder{width:120px;height:80px}
+            .post-info-title{white-space:normal}
+            .form-row{grid-template-columns:1fr 1fr}
+        }
+        @media(min-width:1000px){
+            .kpi-value{font-size:1.7em}
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-loading" class="auth-loading">Verificando autenticação...</div>
+
+    <div class="container" id="app-container" style="display:none;">
+        <header class="header">
+            <h1>Blog</h1>
+            <p id="user-email-display"></p>
+            <button class="logout-btn" id="logoutBtn">Sair</button>
+        </header>
+
+        <nav class="admin-nav">
+            <a href="/admin/dashboard.html">Dashboard</a>
+            <a href="/admin/reservas.html">Reservas</a>
+            <a href="/admin/agenda.html">Agenda</a>
+            <a href="/admin/cardapio.html">Cardápio</a>
+            <a href="/admin/blog.html" class="active">Blog</a>
+        </nav>
+
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Posts</div><div class="kpi-value" id="kpi-total">0</div></div>
+            <div class="kpi-card"><div class="kpi-label">Último Post</div><div class="kpi-value" id="kpi-last">—</div></div>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <input type="text" id="search-input" placeholder="Buscar posts..." />
+            </div>
+            <button class="add-btn" id="new-post-btn">+ Novo Post</button>
+            <button class="add-btn secondary" id="export-json-btn">Exportar JSON</button>
+        </div>
+
+        <div class="post-list" id="post-list">
+            <div class="empty-state"><p>Nenhum post encontrado.</p></div>
+        </div>
+    </div>
+
+    <!-- Post Modal -->
+    <div class="modal" id="post-modal">
+        <div class="modal-content">
+            <span class="close-button" data-close="post-modal">&times;</span>
+            <h2 id="post-modal-title" class="modal-title">Novo Post</h2>
+            <form id="post-form">
+                <input type="hidden" id="post-id" />
+                <div class="form-group">
+                    <label for="post-title-input">Título *</label>
+                    <input type="text" id="post-title-input" placeholder="Título do post" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="post-date-input">Data *</label>
+                        <input type="date" id="post-date-input" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="post-category">Categoria</label>
+                        <input type="text" id="post-category" placeholder="Ex: Javari Park" value="Javari Park" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="post-slug">Slug</label>
+                    <input type="text" id="post-slug" placeholder="gerado-automaticamente-do-titulo" />
+                    <p class="form-hint">Gerado automaticamente a partir do título. Edite se quiser.</p>
+                </div>
+                <div class="form-group">
+                    <label for="post-image">Imagem de Capa (URL)</label>
+                    <input type="url" id="post-image" placeholder="https://..." />
+                    <img id="image-preview" class="preview-img" style="display:none" />
+                </div>
+                <div class="form-group">
+                    <label for="post-excerpt">Resumo</label>
+                    <textarea id="post-excerpt" rows="2" placeholder="Breve resumo do post (exibido na listagem)"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="post-content">Conteúdo *</label>
+                    <textarea id="post-content" rows="12" placeholder="Conteúdo do post. Use ## para títulos e **texto** para negrito." required></textarea>
+                    <p class="form-hint">Markdown simplificado: ## Título, ### Subtítulo, **negrito**</p>
+                </div>
+                <button type="submit" class="submit-button" id="post-submit-btn">Publicar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation -->
+    <div class="modal confirm-modal" id="confirm-modal">
+        <div class="modal-content">
+            <h2 class="modal-title">Confirmar Exclusão</h2>
+            <p id="confirm-message">Deseja realmente excluir este post?</p>
+            <div class="confirm-actions">
+                <button class="confirm-cancel" data-close="confirm-modal">Cancelar</button>
+                <button class="confirm-delete" id="confirm-delete-btn">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-box" class="message-box"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
+            authDomain: "central-de-reservas-jsp.firebaseapp.com",
+            projectId: "central-de-reservas-jsp",
+            storageBucket: "central-de-reservas-jsp.firebasestorage.app",
+            appId: "1:574859111927:web:83df67ed1865a59c0392f2"
+        };
+
+        const appId = firebaseConfig.projectId;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const $ = id => document.getElementById(id);
+        const messageBox = $('message-box');
+
+        let posts = [];
+        let deleteTarget = null;
+        let unsubscribe = null;
+
+        const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
+        if (!session) { window.location.href = '/admin/index.html'; }
+        $('auth-loading').style.display = 'none';
+        $('app-container').style.display = 'block';
+        $('user-email-display').textContent = session ? session.email : '';
+
+        $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('javari_admin_auth'); window.location.href = '/admin/index.html'; });
+
+        function showMessage(msg, type = 'info') {
+            messageBox.textContent = msg;
+            messageBox.className = 'message-box' + (type === 'error' ? ' error' : '');
+            messageBox.style.display = 'block';
+            messageBox.style.animation = 'none';
+            void messageBox.offsetWidth;
+            messageBox.style.animation = 'fadeInOut 3s forwards';
+        }
+
+        function escapeHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str || '';
+            return d.innerHTML;
+        }
+
+        function slugify(str) {
+            return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+
+        function fmtDateBR(s) {
+            if (!s) return '—';
+            const p = s.split('-');
+            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : '—';
+        }
+
+        function blogCol() {
+            return collection(db, `artifacts/${appId}/public/data/blog`);
+        }
+
+        function listenToPosts() {
+            if (unsubscribe) unsubscribe();
+            unsubscribe = onSnapshot(blogCol(), (snap) => {
+                posts = [];
+                snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
+                posts.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+                updateKPIs();
+                renderPosts();
+            });
+        }
+
+        function updateKPIs() {
+            $('kpi-total').textContent = posts.length;
+            if (posts.length > 0) {
+                $('kpi-last').textContent = fmtDateBR(posts[0].date);
+            } else {
+                $('kpi-last').textContent = '—';
+            }
+        }
+
+        function renderPosts() {
+            const search = ($('search-input')?.value || '').toLowerCase();
+            const filtered = search
+                ? posts.filter(p => (p.title || '').toLowerCase().includes(search) || (p.excerpt || '').toLowerCase().includes(search))
+                : posts;
+
+            const list = $('post-list');
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state"><p>Nenhum post encontrado.</p></div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(p => {
+                const thumb = p.featuredImage
+                    ? `<img class="post-thumb" src="${escapeHtml(p.featuredImage)}" alt="" loading="lazy" />`
+                    : '<div class="post-thumb-placeholder">Sem foto</div>';
+                return `
+                    <div class="post-card" data-id="${p.id}">
+                        ${thumb}
+                        <div class="post-info">
+                            <div class="post-info-title">${escapeHtml(p.title)}</div>
+                            <div class="post-info-meta">${fmtDateBR(p.date)} · ${escapeHtml(p.category || 'Sem categoria')}</div>
+                            <div class="post-info-excerpt">${escapeHtml(p.excerpt || '')}</div>
+                        </div>
+                        <div class="post-actions">
+                            <button class="edit-btn" data-action="edit" data-id="${p.id}">Editar</button>
+                            <button class="delete-btn" data-action="delete" data-id="${p.id}">Excluir</button>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            list.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', (e) => { e.stopPropagation(); editPost(btn.dataset.id); });
+            });
+            list.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', (e) => { e.stopPropagation(); confirmDelete(btn.dataset.id); });
+            });
+        }
+
+        // Auto-generate slug from title
+        $('post-title-input').addEventListener('input', () => {
+            const editId = $('post-id').value;
+            if (!editId) {
+                $('post-slug').value = slugify($('post-title-input').value);
+            }
+        });
+
+        // Image preview
+        $('post-image').addEventListener('input', () => {
+            const url = $('post-image').value.trim();
+            const preview = $('image-preview');
+            if (url) {
+                preview.src = url;
+                preview.style.display = 'block';
+                preview.onerror = () => { preview.style.display = 'none'; };
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+
+        // New post
+        $('new-post-btn').addEventListener('click', () => {
+            $('post-modal-title').textContent = 'Novo Post';
+            $('post-form').reset();
+            $('post-id').value = '';
+            $('post-date-input').value = new Date().toISOString().split('T')[0];
+            $('post-category').value = 'Javari Park';
+            $('image-preview').style.display = 'none';
+            $('post-submit-btn').textContent = 'Publicar';
+            openModal('post-modal');
+        });
+
+        // Edit post
+        function editPost(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+            $('post-modal-title').textContent = 'Editar Post';
+            $('post-id').value = post.id;
+            $('post-title-input').value = post.title || '';
+            $('post-date-input').value = post.date || '';
+            $('post-category').value = post.category || '';
+            $('post-slug').value = post.slug || '';
+            $('post-image').value = post.featuredImage || '';
+            $('post-excerpt').value = post.excerpt || '';
+            $('post-content').value = post.content || '';
+            $('post-submit-btn').textContent = 'Atualizar';
+
+            const preview = $('image-preview');
+            if (post.featuredImage) {
+                preview.src = post.featuredImage;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+
+            openModal('post-modal');
+        }
+
+        // Save post
+        $('post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = $('post-id').value;
+            const title = $('post-title-input').value.trim();
+            const date = $('post-date-input').value;
+            const category = $('post-category').value.trim();
+            const slug = $('post-slug').value.trim() || slugify(title);
+            const featuredImage = $('post-image').value.trim();
+            const excerpt = $('post-excerpt').value.trim();
+            const content = $('post-content').value.trim();
+
+            if (!title || !date || !content) return;
+
+            const autoExcerpt = excerpt || content.replace(/##?\s*/g, '').substring(0, 150);
+
+            const data = {
+                title,
+                slug,
+                date,
+                category: category || 'Javari Park',
+                author: session.name || 'rene',
+                featuredImage: featuredImage || '',
+                images: featuredImage ? [featuredImage] : [],
+                content,
+                excerpt: autoExcerpt,
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                const docId = editId || slug;
+                const ref = doc(db, `artifacts/${appId}/public/data/blog`, docId);
+                await setDoc(ref, data, { merge: true });
+                showMessage(editId ? 'Post atualizado!' : 'Post publicado!');
+                closeModal('post-modal');
+            } catch (err) {
+                console.error(err);
+                showMessage('Erro ao salvar: ' + err.message, 'error');
+            }
+        });
+
+        // Delete
+        function confirmDelete(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+            deleteTarget = id;
+            $('confirm-message').textContent = `Excluir "${post.title}"?`;
+            openModal('confirm-modal');
+        }
+
+        $('confirm-delete-btn').addEventListener('click', async () => {
+            if (!deleteTarget) return;
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/public/data/blog`, deleteTarget));
+                showMessage('Post excluído.');
+            } catch (err) {
+                showMessage('Erro ao excluir: ' + err.message, 'error');
+            }
+            deleteTarget = null;
+            closeModal('confirm-modal');
+        });
+
+        // Export JSON
+        $('export-json-btn').addEventListener('click', () => {
+            if (posts.length === 0) { showMessage('Nenhum post para exportar.', 'error'); return; }
+            const exportData = posts.map(p => ({
+                slug: p.slug,
+                title: p.title,
+                date: p.date,
+                category: p.category,
+                author: p.author,
+                featuredImage: p.featuredImage,
+                images: p.images || [],
+                content: p.content,
+                excerpt: p.excerpt
+            }));
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'blog-posts.json';
+            link.click();
+            showMessage('JSON exportado!');
+        });
+
+        // Search
+        let searchTimer;
+        $('search-input').addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(renderPosts, 300);
+        });
+
+        // Modal helpers
+        function openModal(id) { $(id).classList.add('active'); }
+        function closeModal(id) { $(id).classList.remove('active'); }
+
+        document.querySelectorAll('[data-close]').forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.close));
+        });
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); });
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id));
+        });
+
+        // Init
+        listenToPosts();
+    </script>
+</body>
+</html>
