@@ -112,6 +112,10 @@
         .cons-kpi-card{background:#f8f9fa;border-radius:10px;padding:12px 14px}
         .cons-kpi-label{font-size:9px;font-weight:700;color:#999;text-transform:uppercase}
         .cons-kpi-value{font-size:1.2em;font-weight:700;color:#222;margin-top:2px}
+        .stock-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+        .stock-baixo{background:#fee2e2;color:#991b1b}
+        .stock-atencao{background:#fef3c7;color:#92400e}
+        .stock-ok{background:#d1fae5;color:#065f46}
 
         @media(min-width:640px){
             .cons-kpi{grid-template-columns:repeat(4,1fr)}
@@ -147,7 +151,7 @@
             <div class="sub-tab active" data-sub="cardapio">Cardápio</div>
             <div class="sub-tab" data-sub="produtos">Produtos Consumer</div>
             <div class="sub-tab" data-sub="insumos">Insumos</div>
-            <div class="sub-tab" data-sub="compras">Compras</div>
+            <div class="sub-tab" data-sub="estoque">Estoque</div>
         </div>
 
         <!-- SUB: Cardápio (existing) -->
@@ -210,18 +214,25 @@
             </div>
         </div>
 
-        <!-- SUB: Compras -->
-        <div class="sub-panel" id="sub-compras">
+        <!-- SUB: Estoque -->
+        <div class="sub-panel" id="sub-estoque">
             <div class="section-card">
-                <div class="cons-kpi" id="compras-kpis"></div>
+                <div class="cons-kpi" id="estoque-kpis"></div>
                 <div class="cons-filter">
-                    <input type="text" id="compras-search" placeholder="Buscar fornecedor ou descrição…">
-                    <span class="cons-count" id="compras-count"></span>
+                    <input type="text" id="estoque-search" placeholder="Buscar produto ou insumo…">
+                    <select id="estoque-status-filter">
+                        <option value="">Todos</option>
+                        <option value="baixo">Estoque baixo</option>
+                        <option value="atencao">Atenção</option>
+                        <option value="ok">OK</option>
+                    </select>
+                    <select id="estoque-cat-filter"><option value="">Todas categorias</option></select>
+                    <span class="cons-count" id="estoque-count"></span>
                 </div>
                 <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:600px;overflow-y:auto">
-                    <table class="cons-table" id="tbl-compras-card">
-                        <thead><tr><th>Data</th><th>Fornecedor</th><th>Descrição</th><th style="text-align:right">Total</th></tr></thead>
-                        <tbody id="compras-tbody"></tbody>
+                    <table class="cons-table" id="tbl-estoque">
+                        <thead><tr><th>Produto/Insumo</th><th>Categoria</th><th style="text-align:right">Atual</th><th style="text-align:right">Mínimo</th><th>Status</th></tr></thead>
+                        <tbody id="estoque-tbody"></tbody>
                     </table>
                 </div>
             </div>
@@ -608,24 +619,24 @@
         // ── Consumer data ──
         let consumerProdutos = [];
         let consumerInsumos = [];
-        let comprasData = [];
+        let estoqueData = [];
 
         async function loadConsumerData() {
             try {
-                const [prodRes, finRes] = await Promise.all([
+                const [prodRes, estRes] = await Promise.all([
                     fetch('/data/produtos-consumer.json'),
-                    fetch('/data/financeiro.json')
+                    fetch('/data/estoque.json')
                 ]);
                 const prodData = await prodRes.json();
                 consumerProdutos = prodData.produtos || [];
                 consumerInsumos = prodData.insumos || [];
 
-                const finData = await finRes.json();
-                comprasData = (finData.compras?.items || []);
+                const estData = await estRes.json();
+                estoqueData = estData.itens || [];
 
                 renderConsumerProdutos();
                 renderConsumerInsumos();
-                renderCompras();
+                renderEstoque(estData);
             } catch (e) {
                 console.warn('Erro ao carregar dados Consumer:', e);
             }
@@ -692,29 +703,48 @@
             sel.addEventListener('change', render);
         }
 
-        function renderCompras() {
-            const total = comprasData.reduce((s, c) => s + (parseFloat(c.total)||0), 0);
+        function renderEstoque(estData) {
+            const total = estoqueData.length;
+            const comMinimo = estData.comMinimo || 0;
+            const baixo = estData.estoqueBaixo || 0;
+            const atencao = estData.estoqueAtencao || 0;
 
-            $('compras-kpis').innerHTML = `
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Total Compras</div><div class="cons-kpi-value">${fmtBRLFull(total)}</div></div>
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Registros</div><div class="cons-kpi-value">${comprasData.length}</div></div>
+            $('estoque-kpis').innerHTML = `
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Itens com Estoque</div><div class="cons-kpi-value">${total}</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Com Mínimo Definido</div><div class="cons-kpi-value">${comMinimo}</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Estoque Baixo</div><div class="cons-kpi-value" style="color:#ef4444">${baixo}</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Atenção</div><div class="cons-kpi-value" style="color:#f59e0b">${atencao}</div></div>
             `;
 
-            function render() {
-                const search = ($('compras-search')?.value || '').toLowerCase();
-                let filtered = comprasData;
-                if (search) filtered = filtered.filter(c =>
-                    (c.fornecedor||'').toLowerCase().includes(search) || (c.descricao||c.nota||'').toLowerCase().includes(search)
-                );
-                filtered = filtered.sort((a,b) => (b.data||'').localeCompare(a.data||''));
+            const cats = [...new Set(estoqueData.map(i => i.categoria).filter(Boolean))].sort();
+            const catSel = $('estoque-cat-filter');
+            catSel.innerHTML = '<option value="">Todas categorias</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
 
-                $('compras-count').textContent = `${filtered.length} compra${filtered.length!==1?'s':''}`;
-                $('compras-tbody').innerHTML = filtered.map(c =>
-                    `<tr><td>${fmtDateBR(c.data)}</td><td>${escapeHtml(c.fornecedor||'—')}</td><td>${escapeHtml(c.descricao||c.nota||'—')}</td><td style="text-align:right;font-weight:600">${fmtBRLFull(parseFloat(c.total)||0)}</td></tr>`
-                ).join('');
+            function render() {
+                const search = ($('estoque-search')?.value || '').toLowerCase();
+                const statusFilter = $('estoque-status-filter')?.value || '';
+                const catFilter = $('estoque-cat-filter')?.value || '';
+                let filtered = estoqueData;
+                if (search) filtered = filtered.filter(i => (i.nome||'').toLowerCase().includes(search));
+                if (statusFilter) filtered = filtered.filter(i => i.status === statusFilter);
+                if (catFilter) filtered = filtered.filter(i => i.categoria === catFilter);
+
+                filtered = filtered.sort((a,b) => {
+                    const order = {baixo:0, atencao:1, ok:2};
+                    return (order[a.status]||9) - (order[b.status]||9) || (a.nome||'').localeCompare(b.nome||'','pt-BR');
+                });
+
+                $('estoque-count').textContent = `${filtered.length} ite${filtered.length!==1?'ns':'m'}`;
+                const statusLabels = {baixo:'Baixo', atencao:'Atenção', ok:'OK'};
+                $('estoque-tbody').innerHTML = filtered.map(i => {
+                    const badge = `<span class="stock-badge stock-${i.status}">${statusLabels[i.status]||'—'}</span>`;
+                    return `<tr><td>${escapeHtml(i.nome)}</td><td>${escapeHtml(i.categoria||'—')}</td><td style="text-align:right;font-weight:600">${i.estoqueAtual}</td><td style="text-align:right">${i.estoqueMinimo > 0 ? i.estoqueMinimo : '—'}</td><td>${i.estoqueMinimo > 0 ? badge : '—'}</td></tr>`;
+                }).join('');
             }
             render();
-            $('compras-search')?.addEventListener('input', render);
+            $('estoque-search')?.addEventListener('input', render);
+            $('estoque-status-filter')?.addEventListener('change', render);
+            catSel.addEventListener('change', render);
         }
 
         $('run-import-btn').addEventListener('click', async () => {
