@@ -119,10 +119,12 @@
     </div>
   </footer>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Mobile nav toggle
     const toggle = document.getElementById('nav-toggle');
     if (toggle) {
       toggle.addEventListener('click', () => {
@@ -133,38 +135,73 @@
       });
     }
 
-    // Load blog posts
-    async function loadPosts() {
-      try {
-        const res = await fetch('/data/blog-posts.json');
-        const posts = await res.json();
-        const grid = document.getElementById('blog-grid');
-        const empty = document.getElementById('blog-empty');
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
+      authDomain: "central-de-reservas-jsp.firebaseapp.com",
+      projectId: "central-de-reservas-jsp",
+      storageBucket: "central-de-reservas-jsp.firebasestorage.app",
+      appId: "1:574859111927:web:83df67ed1865a59c0392f2"
+    };
 
-        if (!posts || posts.length === 0) {
-          empty.style.display = 'block';
-          return;
-        }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const appId = firebaseConfig.projectId;
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+    async function loadPosts() {
+      const grid = document.getElementById('blog-grid');
+      const empty = document.getElementById('blog-empty');
+
+      try {
+        const snap = await getDocs(collection(db, `artifacts/${appId}/public/data/blog`));
+        const posts = [];
+        snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
+        posts.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+        if (posts.length === 0) { empty.style.display = 'block'; return; }
 
         grid.innerHTML = posts.map(post => {
           const dateObj = new Date(post.date + 'T12:00:00');
           const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+          const imgTag = post.featuredImage
+            ? `<img src="${esc(post.featuredImage)}" alt="${esc(post.title)}" loading="lazy" />`
+            : `<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px">Sem foto</div>`;
           return `
-            <a href="/blog/${post.slug}" class="blog-card">
-              <div class="blog-card-img">
-                <img src="${post.featuredImage}" alt="${post.title}" loading="lazy" />
-              </div>
+            <a href="/blog/${esc(post.slug)}" class="blog-card">
+              <div class="blog-card-img">${imgTag}</div>
               <div class="blog-card-body">
                 <time class="blog-card-date" datetime="${post.date}">${dateStr}</time>
-                <h2 class="blog-card-title">${post.title}</h2>
-                <p class="blog-card-excerpt">${post.excerpt}</p>
+                <h2 class="blog-card-title">${esc(post.title)}</h2>
+                <p class="blog-card-excerpt">${esc(post.excerpt)}</p>
                 <span class="blog-card-link">Ler mais &rarr;</span>
               </div>
             </a>`;
         }).join('');
       } catch (e) {
-        console.warn('Erro ao carregar posts:', e);
-        document.getElementById('blog-empty').style.display = 'block';
+        console.warn('Erro Firestore, tentando JSON estático:', e);
+        try {
+          const res = await fetch('/data/blog-posts.json');
+          const posts = await res.json();
+          if (!posts || posts.length === 0) { empty.style.display = 'block'; return; }
+          grid.innerHTML = posts.map(post => {
+            const dateObj = new Date(post.date + 'T12:00:00');
+            const dateStr = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+            return `
+              <a href="/blog/${post.slug}" class="blog-card">
+                <div class="blog-card-img"><img src="${post.featuredImage}" alt="${post.title}" loading="lazy" /></div>
+                <div class="blog-card-body">
+                  <time class="blog-card-date" datetime="${post.date}">${dateStr}</time>
+                  <h2 class="blog-card-title">${post.title}</h2>
+                  <p class="blog-card-excerpt">${post.excerpt}</p>
+                  <span class="blog-card-link">Ler mais &rarr;</span>
+                </div>
+              </a>`;
+          }).join('');
+        } catch (e2) {
+          console.warn('Erro ao carregar posts:', e2);
+          empty.style.display = 'block';
+        }
       }
     }
     loadPosts();
