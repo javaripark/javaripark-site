@@ -6,6 +6,7 @@
     <title>Cardápio — Javari StrEat Park</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        *{box-sizing:border-box;margin:0;padding:0}
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; padding: 12px; }
         .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0;box-shadow:0 4px 12px rgba(79,25,100,.2)}
@@ -18,7 +19,7 @@
         .admin-nav a:hover{background:#f8f9fa}
         .admin-nav a.active{color:#4f1964;border-bottom-color:#4f1964;background:#f5f0f8}
 
-        .section-card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 20px; }
+        .section-card { background: white; padding: 12px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 14px; }
 
         .cat-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
         .cat-tabs::-webkit-scrollbar { height: 4px; }
@@ -90,8 +91,10 @@
         .import-status{font-size:13px;text-align:center;margin-top:10px}
         .items-actions{display:flex;gap:8px}
         @media(min-width:640px){
-            .header h1{font-size:1.6em;padding-right:0}
-            .admin-nav a{font-size:13px}
+            .container{padding:20px}
+            .header h1{font-size:1.6em}
+            .admin-nav a{font-size:13px;padding:13px 8px}
+            .section-card{padding:16px}
         }
     </style>
 </head>
@@ -240,7 +243,6 @@
             messageBox.style.animation = 'none';
             void messageBox.offsetWidth;
             messageBox.style.animation = 'fadeInOut 3s forwards';
-            setTimeout(() => { messageBox.style.display = 'none'; }, 3100);
         }
 
         function escapeHtml(str) {

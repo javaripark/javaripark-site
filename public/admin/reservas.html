@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
+        *{box-sizing:border-box;margin:0;padding:0}
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; padding: 12px; }
         .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0;box-shadow:0 4px 12px rgba(79,25,100,.2)}
@@ -93,12 +94,12 @@
             .header{padding:16px 20px}
         }
         .card{background:#fff;border-radius:10px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
-        .card h3{font-size:.8em;font-weight:700;color:#555;margin:0 0 10px;text-transform:uppercase;letter-spacing:.3px}
+        .card h3{font-size:.7em;font-weight:700;color:#555;margin:0 0 8px;text-transform:uppercase;letter-spacing:.3px}
         .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
         .kpi-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-        .kpi-label{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px}
-        .kpi-value{font-size:1.35em;font-weight:700;color:#222;margin-top:2px}
-        .kpi-sub{font-size:11px;color:#aaa;margin-top:2px}
+        .kpi-label{font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px}
+        .kpi-value{font-size:1.2em;font-weight:700;color:#222;margin-top:2px}
+        .kpi-sub{font-size:10px;color:#aaa;margin-top:2px}
         .field-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#555}
         .field-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s}
         .field-input:focus{outline:none;border-color:#4a90e2;box-shadow:0 0 0 3px rgba(74,144,226,.15)}
@@ -124,12 +125,18 @@
         .empty-text{color:#666;text-align:center;font-size:14px;padding:12px 0}
         .confirm-text{margin-bottom:16px;color:#555}
         @media(min-width:640px){
-            .header h1{font-size:1.6em;padding-right:0}
-            .admin-nav a{font-size:13px}
+            .container{padding:20px}
+            .header h1{font-size:1.6em}
+            .admin-nav a{font-size:13px;padding:13px 8px}
             .kpi-grid{grid-template-columns:repeat(4,1fr)}
+            .kpi-label{font-size:10px}
             .kpi-value{font-size:1.5em}
             .card{padding:16px}
+            .card h3{font-size:.8em;margin-bottom:10px}
             .resource-grid{grid-template-columns:repeat(4,1fr)}
+        }
+        @media(min-width:1000px){
+            .kpi-value{font-size:1.7em}
         }
     </style>
 </head>
