@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardápio — Javari StrEat Park</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 12px; }
         .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0;box-shadow:0 4px 12px rgba(79,25,100,.2)}
         .header h1{color:#fff;font-size:1.3em;font-weight:700;letter-spacing:.5px}
         .header p{color:rgba(255,255,255,.6);font-size:.75em;margin-top:3px}
@@ -86,9 +85,13 @@
             .container{padding:12px}
             .header{padding:16px 20px}
         }
+        .modal-title{font-size:1.15em;font-weight:700;margin-bottom:16px;color:#333}
+        .import-note{font-size:13px;color:#888;margin-bottom:14px}
+        .import-status{font-size:13px;text-align:center;margin-top:10px}
+        .items-actions{display:flex;gap:8px}
         @media(min-width:640px){
-            .header h1{font-size:1.8em;padding-right:0}
-            .admin-nav a{font-size:14px}
+            .header h1{font-size:1.6em;padding-right:0}
+            .admin-nav a{font-size:13px}
         }
     </style>
 </head>
@@ -120,7 +123,7 @@
         <div class="section-card" id="items-section">
             <div class="items-header">
                 <h3 id="items-section-title">Selecione uma categoria</h3>
-                <div class="flex gap-2">
+                <div class="items-actions">
                     <button class="add-btn" id="add-item-btn" style="display:none">+ Item</button>
                     <button class="add-btn danger" id="delete-category-btn" style="display:none;font-size:12px;padding:8px 12px">Excluir Categoria</button>
                 </div>
@@ -135,7 +138,7 @@
     <div class="modal" id="category-modal">
         <div class="modal-content">
             <span class="close-button" data-close="category-modal">&times;</span>
-            <h2 id="category-modal-title" class="text-xl font-bold mb-4">Nova Categoria</h2>
+            <h2 id="category-modal-title" class="modal-title">Nova Categoria</h2>
             <form id="category-form">
                 <input type="hidden" id="cat-edit-id" />
                 <div class="form-group">
@@ -151,7 +154,7 @@
     <div class="modal" id="item-modal">
         <div class="modal-content">
             <span class="close-button" data-close="item-modal">&times;</span>
-            <h2 id="item-modal-title" class="text-xl font-bold mb-4">Novo Item</h2>
+            <h2 id="item-modal-title" class="modal-title">Novo Item</h2>
             <form id="item-form">
                 <input type="hidden" id="item-edit-id" />
                 <div class="form-group">
@@ -174,7 +177,7 @@
     <!-- Confirm Delete Modal -->
     <div class="modal confirm-modal" id="confirm-modal">
         <div class="modal-content">
-            <h2 class="text-lg font-bold mb-2">Confirmar Exclusão</h2>
+            <h2 class="modal-title">Confirmar Exclusão</h2>
             <p id="confirm-message">Deseja realmente excluir?</p>
             <div class="confirm-actions">
                 <button class="confirm-cancel" data-close="confirm-modal">Cancelar</button>
@@ -187,10 +190,10 @@
     <div class="modal" id="import-modal">
         <div class="modal-content">
             <span class="close-button" data-close="import-modal">&times;</span>
-            <h2 class="text-xl font-bold mb-4">Importar Cardápio (JSON)</h2>
-            <p class="text-sm text-gray-500 mb-4">Importa os dados do arquivo <code>cardapio.json</code> público. Categorias existentes serão mantidas; novas serão adicionadas.</p>
+            <h2 class="modal-title">Importar Cardápio (JSON)</h2>
+            <p class="import-note">Importa os dados do arquivo <code>cardapio.json</code> público. Categorias existentes serão mantidas; novas serão adicionadas.</p>
             <button class="submit-button" id="run-import-btn">Importar de /data/cardapio.json</button>
-            <p id="import-status" class="text-sm text-center mt-3" style="display:none"></p>
+            <p id="import-status" class="import-status" style="display:none"></p>
         </div>
     </div>
 
