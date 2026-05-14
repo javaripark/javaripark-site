@@ -75,6 +75,29 @@
         .table-controls input{flex:1;min-width:150px}
         .table-count{font-size:11px;color:#999;margin-left:auto}
 
+        /* WhatsApp link */
+        .wa-link{color:#25d366;text-decoration:none;font-weight:600;white-space:nowrap}
+        .wa-link:hover{text-decoration:underline}
+        .wa-icon{width:14px;height:14px;vertical-align:middle;margin-left:3px}
+
+        /* Client row clickable */
+        .fin-table tr.clickable{cursor:pointer}
+        .fin-table tr.clickable:hover td{background:#f0e8f5}
+
+        /* Popup modal */
+        .popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:16px}
+        .popup-overlay.open{display:flex}
+        .popup-box{background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+        .popup-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #eee}
+        .popup-header h3{font-size:14px;font-weight:700;color:#222;margin:0}
+        .popup-close{background:none;border:none;font-size:20px;cursor:pointer;color:#999;padding:0 4px}
+        .popup-close:hover{color:#333}
+        .popup-body{padding:20px}
+        .popup-stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5}
+        .popup-stat:last-child{border-bottom:none}
+        .popup-stat-label{font-size:12px;color:#888;font-weight:600}
+        .popup-stat-value{font-size:13px;color:#222;font-weight:700}
+
         /* Empty state */
         .empty{text-align:center;padding:24px 16px;color:#bbb}
         .empty p{font-size:13px}
@@ -237,10 +260,18 @@
             <div class="card">
                 <h3>Contas a Pagar</h3>
                 <div class="table-controls">
-                    <input type="text" id="cp-search" placeholder="Buscar descrição ou fornecedor…">
+                    <input type="text" id="cp-search" placeholder="Buscar descrição, fornecedor ou categoria…">
+                    <input type="date" id="cp-date-from" title="De">
+                    <input type="date" id="cp-date-to" title="Até">
                     <span class="table-count" id="cp-count"></span>
                 </div>
                 <div id="contas-pagar-table" class="table-wrap"></div>
+            </div>
+
+            <div class="card">
+                <h3>Resumo Financeiro Mensal</h3>
+                <div id="resumo-empty" class="empty" style="display:none"><p>Sem dados de resumo mensal.</p></div>
+                <div class="chart-box"><canvas id="chart-resumo"></canvas></div>
             </div>
 
             <div class="card">
@@ -287,6 +318,15 @@
                 <div id="aniv-table" class="table-wrap"></div>
             </div>
 
+            <div class="card">
+                <h3>Buscar Cliente</h3>
+                <div class="table-controls">
+                    <input type="text" id="cli-search" placeholder="Buscar por nome ou telefone…">
+                    <span class="table-count" id="cli-search-count"></span>
+                </div>
+                <div id="cli-search-table" class="table-wrap"></div>
+            </div>
+
             <div class="chart-grid">
                 <div class="card">
                     <h3>Top Gastadores</h3>
@@ -299,13 +339,23 @@
             </div>
         </div>
 
+        <!-- Client popup -->
+        <div class="popup-overlay" id="client-popup">
+            <div class="popup-box">
+                <div class="popup-header">
+                    <h3 id="popup-name">Cliente</h3>
+                    <button class="popup-close" id="popup-close">&times;</button>
+                </div>
+                <div class="popup-body" id="popup-body"></div>
+            </div>
+        </div>
+
         <div class="sync-info" id="sync-info">
             <span class="sync-badge">Sem dados</span>
         </div>
     </div>
 
     <script>
-        // ── Auth check ──
         const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
         if (!session) { window.location.href = '/admin/index.html'; }
 
@@ -314,6 +364,7 @@
         let allDailyData = [];
         let financialData = null;
         let clientData = null;
+        let allContatos = [];
         let currentFinFilter = 'todos';
 
         $('user-email-display').textContent = session ? session.email : '';
@@ -330,7 +381,7 @@
             });
         });
 
-        // ── Period filters ──
+        // ── Period filters (Vendas) ──
         document.querySelectorAll('#filter-bar .filter-pill[data-range]').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (btn.dataset.range === 'custom') { $('custom-range').classList.toggle('open'); return; }
@@ -350,7 +401,7 @@
             }
         });
 
-        // ── Financial filters ──
+        // ── Financial status filters ──
         document.querySelectorAll('.fin-filter').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.fin-filter').forEach(b => b.classList.remove('active'));
@@ -359,6 +410,10 @@
                 renderFinancialData();
             });
         });
+
+        // ── Popup ──
+        $('popup-close').addEventListener('click', () => $('client-popup').classList.remove('open'));
+        $('client-popup').addEventListener('click', e => { if (e.target === $('client-popup')) $('client-popup').classList.remove('open'); });
 
         function applyPresetRange(range) {
             const now = new Date(), today = fmt(now);
@@ -392,9 +447,11 @@
                 allDailyData = await salesRes.json();
                 financialData = await finRes.json();
                 clientData = await cliRes.json();
+                allContatos = clientData.contatos || [];
+
                 if (allDailyData.length > 0) {
                     const lastDate = allDailyData[allDailyData.length - 1].date;
-                    $('sync-info').innerHTML = `<span class="sync-badge ok">Dados reais Consumer</span> — Último dado: ${fmtDateBR(lastDate)}`;
+                    $('sync-info').innerHTML = `<span class="sync-badge ok">Dados reais Consumer</span> — Último dado: ${fmtDateBR(lastDate)} — ${(clientData.totalContatos||0).toLocaleString('pt-BR')} clientes`;
                 }
                 applyPresetRange('month');
                 renderFinancialData();
@@ -414,6 +471,28 @@
         function fmtShort(s) { if(!s) return ''; const p=s.split('-'); return `${p[2]}/${p[1]}`; }
         function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
+        function fmtWhatsApp(tel) {
+            if (!tel) return '—';
+            const clean = tel.replace(/\D/g, '');
+            if (clean.length < 10) return esc(tel);
+            const num = clean.startsWith('55') ? clean : '55' + clean;
+            return `<a class="wa-link" href="https://wa.me/${num}" target="_blank" rel="noopener" title="Abrir WhatsApp">${esc(tel)} <svg class="wa-icon" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg></a>`;
+        }
+
+        function calcDiasAte(nascimento) {
+            if (!nascimento || nascimento === 'None') return null;
+            const parts = nascimento.split('-');
+            if (parts.length !== 3) return null;
+            const m = parseInt(parts[1]), d = parseInt(parts[2]);
+            if (isNaN(m) || isNaN(d)) return null;
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let next = new Date(today.getFullYear(), m - 1, d);
+            next.setHours(0,0,0,0);
+            if (next < today) next = new Date(today.getFullYear() + 1, m - 1, d);
+            return Math.round((next - today) / 86400000);
+        }
+
         // ── Sortable tables ──
         function makeSortable(tableEl) {
             if (!tableEl) return;
@@ -426,19 +505,16 @@
                     const tbody = tableEl.querySelector('tbody');
                     if (!tbody) return;
                     const rows = Array.from(tbody.querySelectorAll('tr'));
-                    const isAmount = th.classList.contains('amount');
-
                     headers.forEach(h => h.classList.remove('sorted'));
                     const currentDir = th.dataset.sortDir || 'none';
                     const newDir = currentDir === 'asc' ? 'desc' : 'asc';
                     th.dataset.sortDir = newDir;
                     th.classList.add('sorted');
                     th.querySelector('.sort-icon').textContent = newDir === 'asc' ? '▲' : '▼';
-
                     rows.sort((a, b) => {
                         let va = a.cells[colIdx]?.textContent?.trim() || '';
                         let vb = b.cells[colIdx]?.textContent?.trim() || '';
-                        if (isAmount || va.startsWith('R$') || /^[\d.,]+$/.test(va.replace(/[R$\s]/g,''))) {
+                        if (th.classList.contains('amount') || va.startsWith('R$') || /^[\d.,]+$/.test(va.replace(/[R$\s]/g,''))) {
                             const na = parseFloat(va.replace(/[R$.\s]/g,'').replace(',','.')) || 0;
                             const nb = parseFloat(vb.replace(/[R$.\s]/g,'').replace(',','.')) || 0;
                             return newDir === 'asc' ? na - nb : nb - na;
@@ -587,8 +663,8 @@
                     return {...i, _status: status};
                 });
 
-                const totalPagar = items.filter(i=>i._status!=='pago').reduce((s,i)=>s+(i.valor||0),0);
-                const totalVencido = items.filter(i=>i._status==='vencido').reduce((s,i)=>s+(i.valor||0),0);
+                const totalPagar = items.filter(i=>i._status!=='pago').reduce((s,i)=>s+(parseFloat(i.valor)||0),0);
+                const totalVencido = items.filter(i=>i._status==='vencido').reduce((s,i)=>s+(parseFloat(i.valor)||0),0);
                 $('fin-total-pagar').textContent = fmtBRL(totalPagar);
                 $('fin-vencido').textContent = fmtBRL(totalVencido);
                 $('fin-pagar-sub').textContent = `${items.length} contas`;
@@ -599,19 +675,30 @@
                 }
 
                 const search = ($('cp-search')?.value||'').toLowerCase();
-                if (search) items = items.filter(i => (i.descricao||'').toLowerCase().includes(search) || (i.fornecedor||'').toLowerCase().includes(search));
+                if (search) items = items.filter(i =>
+                    (i.descricao||'').toLowerCase().includes(search) ||
+                    (i.fornecedor||'').toLowerCase().includes(search) ||
+                    (i.categoria||'').toLowerCase().includes(search)
+                );
+
+                const dfrom = $('cp-date-from')?.value;
+                const dto = $('cp-date-to')?.value;
+                if (dfrom) items = items.filter(i => (i.vencimento||'') >= dfrom);
+                if (dto) items = items.filter(i => (i.vencimento||'') <= dto);
 
                 $('cp-count').textContent = `${items.length} registro${items.length!==1?'s':''}`;
 
                 const el = $('contas-pagar-table');
                 el.innerHTML = items.length === 0 ? '<p class="empty"><p>Nenhum registro encontrado.</p></p>' :
-                    `<table class="fin-table" id="tbl-cp"><thead><tr><th>Descrição</th><th>Fornecedor</th><th>Vencimento</th><th class="amount">Valor</th><th>Status</th></tr></thead><tbody>${
+                    `<table class="fin-table" id="tbl-cp"><thead><tr><th>Descrição</th><th>Fornecedor</th><th>Categoria</th><th>Vencimento</th><th class="amount">Valor</th><th>Status</th></tr></thead><tbody>${
                     items.sort((a,b)=>(a.vencimento||'').localeCompare(b.vencimento||'')).map(i => {
                         const label = {pago:'Pago',vencido:'Vencido',pendente:'Pendente'}[i._status];
-                        return `<tr><td>${esc(i.descricao||'—')}</td><td>${esc(i.fornecedor||'—')}</td><td>${fmtDateBR(i.vencimento)}</td><td class="amount">${fmtBRLFull(i.valor)}</td><td><span class="status-badge status-${i._status}">${label}</span></td></tr>`;
+                        return `<tr><td>${esc(i.descricao||'—')}</td><td>${esc(i.fornecedor||'—')}</td><td>${esc((i.categoria||'—').replace(/\s*Inativo$/i,''))}</td><td>${fmtDateBR(i.vencimento)}</td><td class="amount">${fmtBRLFull(parseFloat(i.valor)||0)}</td><td><span class="status-badge status-${i._status}">${label}</span></td></tr>`;
                     }).join('')}</tbody></table>`;
                 makeSortable($('tbl-cp'));
             }
+
+            renderResumoMensal();
 
             if (financialData.fornecedores) {
                 let items = financialData.fornecedores.items || [];
@@ -628,98 +715,224 @@
 
             if (financialData.compras) {
                 const items = financialData.compras.items || [];
-                const totalCompras = items.reduce((s,i)=>s+(i.total||0),0);
+                const totalCompras = items.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
                 $('fin-compras').textContent = fmtBRL(totalCompras);
                 $('fin-compras-sub').textContent = `${items.length} compra${items.length!==1?'s':''}`;
                 const el = $('compras-table');
                 el.innerHTML = `<table class="fin-table" id="tbl-compras"><thead><tr><th>Data</th><th>Fornecedor</th><th>Descrição</th><th class="amount">Total</th></tr></thead><tbody>${
-                    items.sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(i=>`<tr><td>${fmtDateBR(i.data)}</td><td>${esc(i.fornecedor||'—')}</td><td>${esc(i.descricao||i.nota||'—')}</td><td class="amount">${fmtBRLFull(i.total)}</td></tr>`).join('')}</tbody></table>`;
+                    items.sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(i=>`<tr><td>${fmtDateBR(i.data)}</td><td>${esc(i.fornecedor||'—')}</td><td>${esc(i.descricao||i.nota||'—')}</td><td class="amount">${fmtBRLFull(parseFloat(i.total)||0)}</td></tr>`).join('')}</tbody></table>`;
                 makeSortable($('tbl-compras'));
             }
+        }
 
-            if (financialData.resumo) {
-                const r = financialData.resumo;
-                if (r.totalAPagar!=null) $('fin-total-pagar').textContent = fmtBRL(r.totalAPagar);
-                if (r.totalVencido!=null) $('fin-vencido').textContent = fmtBRL(r.totalVencido);
-            }
+        function renderResumoMensal() {
+            destroyChart('resumo');
+            const rm = financialData?.resumoMensal || [];
+            if (rm.length === 0) { $('resumo-empty').style.display = 'block'; $('chart-resumo').style.display = 'none'; return; }
+            $('resumo-empty').style.display = 'none';
+            $('chart-resumo').style.display = 'block';
+
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            const relevant = rm.filter(m => m.mes <= currentMonth);
+            const labels = relevant.map(m => {
+                const [y, mo] = m.mes.split('-');
+                const names = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+                return names[parseInt(mo)-1] + '/' + y.substring(2);
+            });
+
+            charts.resumo = new Chart($('chart-resumo'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Receita', data: relevant.map(m => m.receita), backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 3 },
+                        { label: 'Despesa', data: relevant.map(m => m.despesa), backgroundColor: 'rgba(239,68,68,0.6)', borderRadius: 3 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true, aspectRatio: relevant.length > 18 ? 2.5 : 2,
+                    plugins: {
+                        legend: { position: 'top', labels: { padding: 10, font: { size: 11 } } },
+                        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtBRLFull(c.raw)}` } }
+                    },
+                    scales: {
+                        y: { ticks: { callback: v => fmtBRL(v) }, grid: { color: '#f0f0f0' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 60 } }
+                    }
+                }
+            });
         }
 
         // ── Client/CRM rendering ──
         function renderClientData() {
             if (!clientData) return;
-            const r = clientData.resumo || {};
-            $('cli-total').textContent = (r.totalContatos||0).toLocaleString('pt-BR');
-            $('cli-total-sub').textContent = `${(r.comAniversario||0).toLocaleString('pt-BR')} com aniversário`;
 
-            const mesAtual = new Date().getMonth()+1;
-            const meses = clientData.aniversariosPorMes||[];
-            const mesObj = meses.find(m=>m.mesNum===mesAtual);
-            $('cli-aniv-mes').textContent = mesObj?mesObj.quantidade.toLocaleString('pt-BR'):'0';
-            $('cli-aniv-sub').textContent = mesObj?mesObj.mes:'';
-            $('cli-vip').textContent = (r.clientesVIP||0).toString();
-            $('cli-telefone').textContent = (r.comTelefone||0).toLocaleString('pt-BR');
-            $('cli-tel-sub').textContent = r.totalContatos?Math.round(r.comTelefone/r.totalContatos*100)+'%':'';
+            const total = clientData.totalContatos || allContatos.length;
+            const comTel = clientData.comTelefone || allContatos.filter(c => c.telefone).length;
+            const comNasc = clientData.comNascimento || 0;
 
+            $('cli-total').textContent = total.toLocaleString('pt-BR');
+            $('cli-total-sub').textContent = `${comNasc.toLocaleString('pt-BR')} com aniversário`;
+            $('cli-telefone').textContent = comTel.toLocaleString('pt-BR');
+            $('cli-tel-sub').textContent = total ? Math.round(comTel/total*100)+'%' : '';
+
+            const mesAtual = new Date().getMonth();
+            const mesNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            const anivPorMes = clientData.aniversariosPorMes || [];
+
+            $('cli-aniv-mes').textContent = (anivPorMes[mesAtual] || 0).toLocaleString('pt-BR');
+            $('cli-aniv-sub').textContent = mesNames[mesAtual];
+
+            const vipCount = allContatos.filter(c => (c.pedidos||0) >= 10).length;
+            $('cli-vip').textContent = vipCount.toLocaleString('pt-BR');
+
+            // Birthday chart
             destroyChart('birthdays');
-            if (meses.length>0) {
+            if (anivPorMes.length === 12) {
+                const shortNames = mesNames.map(m => m.substring(0,3));
                 charts.birthdays = new Chart($('chart-birthdays'), {
-                    type:'bar',data:{labels:meses.map(m=>m.mes.substring(0,3)),datasets:[{data:meses.map(m=>m.quantidade),backgroundColor:meses.map(m=>m.mesNum===mesAtual?'#f59e0b':'rgba(99,102,241,0.5)'),borderRadius:4}]},
+                    type:'bar', data:{labels:shortNames, datasets:[{data:anivPorMes, backgroundColor:anivPorMes.map((_,i)=>i===mesAtual?'#f59e0b':'rgba(99,102,241,0.5)'), borderRadius:4}]},
                     options:{responsive:true,maintainAspectRatio:true,aspectRatio:1.4,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+' aniversariantes'}}},scales:{y:{grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}}
                 });
             }
 
+            // Loyalty chart
             destroyChart('loyalty');
-            const fid = clientData.fidelidade;
-            if (fid) {
-                const labels=[fid.vip.label,fid.regular.label,fid.ocasional.label,fid.semCompra.label];
-                const vals=[fid.vip.qtd,fid.regular.qtd,fid.ocasional.qtd,fid.semCompra.qtd];
-                const total=vals.reduce((s,v)=>s+v,0);
+            const vip = allContatos.filter(c=>(c.pedidos||0)>=10).length;
+            const regular = allContatos.filter(c=>(c.pedidos||0)>=3 && (c.pedidos||0)<10).length;
+            const ocasional = allContatos.filter(c=>(c.pedidos||0)>=1 && (c.pedidos||0)<3).length;
+            const semCompra = allContatos.filter(c=>(c.pedidos||0)===0).length;
+            const fidLabels = [`VIP (10+): ${vip}`, `Regular (3-9): ${regular}`, `Ocasional (1-2): ${ocasional}`, `Sem compra: ${semCompra}`];
+            const fidVals = [vip, regular, ocasional, semCompra];
+            const fidTotal = fidVals.reduce((s,v)=>s+v,0);
+            if (fidTotal > 0) {
                 charts.loyalty = new Chart($('chart-loyalty'), {
-                    type:'doughnut',data:{labels,datasets:[{data:vals,backgroundColor:['#10b981','#6366f1','#f59e0b','#94a3b8'],borderWidth:2,borderColor:'#fff'}]},
-                    options:{responsive:true,maintainAspectRatio:true,aspectRatio:1.2,cutout:'55%',plugins:{tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw.toLocaleString('pt-BR')} (${Math.round(c.raw/total*100)}%)`}},legend:{position:'bottom',labels:{padding:10,font:{size:10}}}}}
+                    type:'doughnut',data:{labels:fidLabels,datasets:[{data:fidVals,backgroundColor:['#10b981','#6366f1','#f59e0b','#94a3b8'],borderWidth:2,borderColor:'#fff'}]},
+                    options:{responsive:true,maintainAspectRatio:true,aspectRatio:1.2,cutout:'55%',plugins:{tooltip:{callbacks:{label:c=>`${c.label} (${Math.round(c.raw/fidTotal*100)}%)`}},legend:{position:'bottom',labels:{padding:10,font:{size:10}}}}}
                 });
             }
 
             renderAnivTable();
-
-            const spenders = clientData.topGastadores||[];
-            if (spenders.length>0) {
-                $('top-spenders-table').innerHTML = `<table class="fin-table" id="tbl-spenders"><thead><tr><th>#</th><th>Nome</th><th class="amount">Total</th><th>Visitas</th></tr></thead><tbody>${
-                    spenders.slice(0,20).map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.nome)}</td><td class="amount">${fmtBRLFull(s.totalGasto)}</td><td>${s.totalVisitas}</td></tr>`).join('')}</tbody></table>`;
-                makeSortable($('tbl-spenders'));
-            }
-
-            const freq = clientData.maisFrequentes||[];
-            if (freq.length>0) {
-                $('most-frequent-table').innerHTML = `<table class="fin-table" id="tbl-freq"><thead><tr><th>#</th><th>Nome</th><th>Visitas</th><th class="amount">Total</th></tr></thead><tbody>${
-                    freq.slice(0,20).map((f,i)=>`<tr><td>${i+1}</td><td>${esc(f.nome)}</td><td>${f.totalVisitas}</td><td class="amount">${fmtBRLFull(f.totalGasto)}</td></tr>`).join('')}</tbody></table>`;
-                makeSortable($('tbl-freq'));
-            }
+            renderTopSpenders();
+            renderMostFrequent();
         }
 
         function renderAnivTable() {
-            let anivs = clientData?.aniversariosProximos||[];
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let anivs = allContatos
+                .map(c => {
+                    const dias = calcDiasAte(c.nascimento);
+                    if (dias === null || dias > 30) return null;
+                    const parts = c.nascimento.split('-');
+                    return { ...c, dia: parseInt(parts[2]), mes: parseInt(parts[1]), diasAte: dias };
+                })
+                .filter(Boolean)
+                .sort((a,b) => a.diasAte - b.diasAte);
+
             const search = ($('aniv-search')?.value||'').toLowerCase();
             if (search) anivs = anivs.filter(a=>(a.nome||'').toLowerCase().includes(search));
             $('aniv-count').textContent = `${anivs.length} aniversariante${anivs.length!==1?'s':''}`;
-            if (anivs.length>0) {
+
+            if (anivs.length > 0) {
                 $('aniv-table').innerHTML = `<table class="fin-table" id="tbl-aniv"><thead><tr><th>Nome</th><th>Aniversário</th><th>Dias</th><th>Telefone</th><th class="amount">Gasto Total</th><th>Visitas</th></tr></thead><tbody>${
-                    anivs.map(a=>{
-                        const badge = a.diasAte===0?'<span class="status-badge status-vencido">HOJE!</span>':a.diasAte<=7?'<span class="status-badge status-pendente">'+a.diasAte+'d</span>':a.diasAte+'d';
-                        return `<tr><td>${esc(a.nome)}</td><td>${String(a.dia).padStart(2,'0')}/${String(a.mes).padStart(2,'0')}</td><td>${badge}</td><td>${esc(a.telefone||'—')}</td><td class="amount">${a.totalGasto>0?fmtBRLFull(a.totalGasto):'—'}</td><td>${a.totalVisitas||'—'}</td></tr>`;
+                    anivs.map(a => {
+                        const badge = a.diasAte===0 ? '<span class="status-badge status-vencido">HOJE!</span>' : a.diasAte<=7 ? '<span class="status-badge status-pendente">'+a.diasAte+'d</span>' : a.diasAte+'d';
+                        return `<tr class="clickable" data-nome="${esc(a.nome)}"><td>${esc(a.nome)}</td><td>${String(a.dia).padStart(2,'0')}/${String(a.mes).padStart(2,'0')}</td><td>${badge}</td><td>${fmtWhatsApp(a.telefone)}</td><td class="amount">${(a.totalGasto||0)>0?fmtBRLFull(a.totalGasto):'—'}</td><td>${a.pedidos||'—'}</td></tr>`;
                     }).join('')}</tbody></table>`;
                 makeSortable($('tbl-aniv'));
+                addClientClickHandlers($('tbl-aniv'));
             } else {
-                $('aniv-table').innerHTML = '<p class="empty"><p>Nenhum aniversariante encontrado.</p></p>';
+                $('aniv-table').innerHTML = '<p class="empty"><p>Nenhum aniversariante nos próximos 30 dias.</p></p>';
             }
+        }
+
+        function renderTopSpenders() {
+            const spenders = allContatos.filter(c=>(c.totalGasto||0)>0).sort((a,b)=>(b.totalGasto||0)-(a.totalGasto||0)).slice(0,30);
+            if (spenders.length > 0) {
+                $('top-spenders-table').innerHTML = `<table class="fin-table" id="tbl-spenders"><thead><tr><th>#</th><th>Nome</th><th class="amount">Total Gasto</th><th>Pedidos</th><th>Telefone</th></tr></thead><tbody>${
+                    spenders.map((s,i) => `<tr class="clickable" data-nome="${esc(s.nome)}"><td>${i+1}</td><td>${esc(s.nome)}</td><td class="amount">${fmtBRLFull(s.totalGasto)}</td><td>${s.pedidos||0}</td><td>${fmtWhatsApp(s.telefone)}</td></tr>`).join('')}</tbody></table>`;
+                makeSortable($('tbl-spenders'));
+                addClientClickHandlers($('tbl-spenders'));
+            }
+        }
+
+        function renderMostFrequent() {
+            const freq = allContatos.filter(c=>(c.pedidos||0)>0).sort((a,b)=>(b.pedidos||0)-(a.pedidos||0)).slice(0,30);
+            if (freq.length > 0) {
+                $('most-frequent-table').innerHTML = `<table class="fin-table" id="tbl-freq"><thead><tr><th>#</th><th>Nome</th><th>Pedidos</th><th class="amount">Total Gasto</th><th>Telefone</th></tr></thead><tbody>${
+                    freq.map((f,i) => `<tr class="clickable" data-nome="${esc(f.nome)}"><td>${i+1}</td><td>${esc(f.nome)}</td><td>${f.pedidos||0}</td><td class="amount">${fmtBRLFull(f.totalGasto)}</td><td>${fmtWhatsApp(f.telefone)}</td></tr>`).join('')}</tbody></table>`;
+                makeSortable($('tbl-freq'));
+                addClientClickHandlers($('tbl-freq'));
+            }
+        }
+
+        function renderClientSearch() {
+            const search = ($('cli-search')?.value||'').toLowerCase().trim();
+            if (search.length < 2) {
+                $('cli-search-table').innerHTML = '<p class="empty"><p>Digite pelo menos 2 caracteres para buscar.</p></p>';
+                $('cli-search-count').textContent = '';
+                return;
+            }
+            const results = allContatos.filter(c =>
+                (c.nome||'').toLowerCase().includes(search) || (c.telefone||'').toLowerCase().includes(search)
+            ).slice(0, 50);
+            $('cli-search-count').textContent = `${results.length}${results.length===50?'+':''} resultado${results.length!==1?'s':''}`;
+            if (results.length === 0) {
+                $('cli-search-table').innerHTML = '<p class="empty"><p>Nenhum cliente encontrado.</p></p>';
+                return;
+            }
+            $('cli-search-table').innerHTML = `<table class="fin-table" id="tbl-cli-search"><thead><tr><th>Nome</th><th>Telefone</th><th class="amount">Total Gasto</th><th>Pedidos</th><th>Último Pedido</th></tr></thead><tbody>${
+                results.map(c => {
+                    return `<tr class="clickable" data-nome="${esc(c.nome)}"><td>${esc(c.nome)}</td><td>${fmtWhatsApp(c.telefone)}</td><td class="amount">${(c.totalGasto||0)>0?fmtBRLFull(c.totalGasto):'—'}</td><td>${c.pedidos||'—'}</td><td>${fmtDateBR(c.ultimoPedido)}</td></tr>`;
+                }).join('')}</tbody></table>`;
+            makeSortable($('tbl-cli-search'));
+            addClientClickHandlers($('tbl-cli-search'));
+        }
+
+        function addClientClickHandlers(tableEl) {
+            if (!tableEl) return;
+            tableEl.querySelectorAll('tr.clickable').forEach(tr => {
+                tr.addEventListener('click', e => {
+                    if (e.target.closest('a')) return;
+                    const nome = tr.dataset.nome;
+                    showClientPopup(nome);
+                });
+            });
+        }
+
+        function showClientPopup(nome) {
+            const client = allContatos.find(c => c.nome === nome);
+            if (!client) return;
+
+            $('popup-name').textContent = client.nome;
+            const dias = calcDiasAte(client.nascimento);
+            const nascFmt = client.nascimento && client.nascimento !== 'None'
+                ? fmtDateBR(client.nascimento) + (dias !== null ? ` (${dias === 0 ? 'HOJE!' : dias + 'd'})` : '')
+                : '—';
+            const ticketMedio = (client.pedidos||0) > 0 ? fmtBRLFull((client.totalGasto||0) / client.pedidos) : '—';
+
+            $('popup-body').innerHTML = `
+                <div class="popup-stat"><span class="popup-stat-label">Telefone</span><span class="popup-stat-value">${fmtWhatsApp(client.telefone)}</span></div>
+                <div class="popup-stat"><span class="popup-stat-label">Aniversário</span><span class="popup-stat-value">${nascFmt}</span></div>
+                <div class="popup-stat"><span class="popup-stat-label">Total Gasto</span><span class="popup-stat-value" style="color:#10b981">${(client.totalGasto||0)>0?fmtBRLFull(client.totalGasto):'—'}</span></div>
+                <div class="popup-stat"><span class="popup-stat-label">Pedidos</span><span class="popup-stat-value">${client.pedidos||0}</span></div>
+                <div class="popup-stat"><span class="popup-stat-label">Ticket Médio</span><span class="popup-stat-value">${ticketMedio}</span></div>
+                <div class="popup-stat"><span class="popup-stat-label">Último Pedido</span><span class="popup-stat-value">${fmtDateBR(client.ultimoPedido)}</span></div>
+            `;
+            $('client-popup').classList.add('open');
         }
 
         // ── Search filters ──
         function initSearchFilters() {
-            let cpTimer, fornTimer, anivTimer;
+            let cpTimer, fornTimer, anivTimer, cliTimer;
             $('cp-search')?.addEventListener('input', () => { clearTimeout(cpTimer); cpTimer = setTimeout(renderFinancialData, 300); });
+            $('cp-date-from')?.addEventListener('change', renderFinancialData);
+            $('cp-date-to')?.addEventListener('change', renderFinancialData);
             $('forn-search')?.addEventListener('input', () => { clearTimeout(fornTimer); fornTimer = setTimeout(renderFinancialData, 300); });
             $('aniv-search')?.addEventListener('input', () => { clearTimeout(anivTimer); anivTimer = setTimeout(renderAnivTable, 300); });
+            $('cli-search')?.addEventListener('input', () => { clearTimeout(cliTimer); cliTimer = setTimeout(renderClientSearch, 400); });
         }
     </script>
 </body>
