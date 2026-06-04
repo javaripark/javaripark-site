@@ -1030,9 +1030,21 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
             p_tipo = find_column(p_cols, ["TIPO"])
             p_grupo = find_column(p_cols, ["CODIGOPRODUTOTIPO", "GRUPO_ID", "IDGRUPO", "TIPO_ID"])
 
-            # Load category names
+            # Load category names from ETIQUETAS (real menu categories in Consumer POS)
             cat_map = {}
-            if groups_table:
+            etiqueta_table = find_table(tables, ["ETIQUETAS", "ETIQUETA"])
+            p_etiqueta = find_column(p_cols, ["CODIGOETIQUETA", "ETIQUETA_ID", "IDETIQUETA"])
+            if etiqueta_table and p_etiqueta:
+                e_cols = get_columns(cur, etiqueta_table)
+                e_pk = find_column(e_cols, ["CODIGO", "ID"])
+                e_desc = find_column(e_cols, ["DESCRICAO", "NOME"])
+                if e_pk and e_desc:
+                    cur.execute(f"SELECT {e_pk}, {e_desc} FROM {etiqueta_table}")
+                    for row in cur.fetchall():
+                        cat_map[row[0]] = str(row[1] or "").strip()
+                    print(f"  Loaded {len(cat_map)} categories from {etiqueta_table}")
+            elif groups_table:
+                # Fallback to PRODUTOTIPO
                 g_cols = get_columns(cur, groups_table)
                 g_pk = find_column(g_cols, ["CODIGO", "ID"])
                 g_nome = find_column(g_cols, ["NOME", "DESCRICAO"])
@@ -1040,23 +1052,18 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
                     cur.execute(f"SELECT {g_pk}, {g_nome} FROM {groups_table}")
                     for row in cur.fetchall():
                         cat_map[row[0]] = str(row[1] or "").strip()
-                    print(f"  Loaded {len(cat_map)} categories from {groups_table}")
-
-            # Build query with category join
-            select_parts = [
-                f"pd.{pd_pk}", f"pd.{pd_prod}", f"p.{p_nome}",
-                f"COALESCE(pd.{pd_est_atual}, 0)", f"COALESCE(pd.{pd_est_min}, 0)",
-                f"COALESCE(pd.{pd_preco_custo}, 0)", f"COALESCE(pd.{pd_preco_venda}, 0)",
-            ]
-            if p_grupo:
-                select_parts.append(f"p.{p_grupo}")
-            if p_tipo:
-                select_parts.append(f"p.{p_tipo}")
+                    print(f"  Loaded {len(cat_map)} categories from {groups_table} (fallback)")
+                p_etiqueta = p_grupo  # Use grupo column as fallback
 
             cur.execute(f"""
-                SELECT {', '.join(select_parts)}
+                SELECT pd.{pd_pk}, pd.{pd_prod}, p.{p_nome},
+                       COALESCE(pd.{pd_est_atual}, 0), COALESCE(pd.{pd_est_min}, 0),
+                       COALESCE(pd.{pd_preco_custo}, 0), COALESCE(pd.{pd_preco_venda}, 0),
+                       {('p.' + p_etiqueta) if p_etiqueta else 'NULL'},
+                       {('p.' + p_tipo) if p_tipo else 'NULL'}
                 FROM {prod_detail} pd
                 LEFT JOIN {prod_table} p ON pd.{pd_prod} = p.CODIGO
+                WHERE p.{p_nome} NOT LIKE '%* Exclu%'
                 ORDER BY p.{p_nome}
             """)
 
@@ -1064,22 +1071,20 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
             insumos = []
             estoque_itens = []
             for row in cur.fetchall():
-                idx = 0
-                pd_code = row[idx]; idx += 1
-                prod_code = row[idx]; idx += 1
-                nome = str(row[idx] or "").strip(); idx += 1
-                est_atual = float(row[idx] or 0); idx += 1
-                est_min = float(row[idx] or 0); idx += 1
-                preco_custo = float(row[idx] or 0); idx += 1
-                preco_venda = float(row[idx] or 0); idx += 1
-                grupo_id = row[idx] if p_grupo and idx < len(row) else None
-                if p_grupo and idx < len(row): idx += 1
-                tipo = str(row[idx] or "").strip() if p_tipo and idx < len(row) else ""
+                pd_code = row[0]
+                prod_code = row[1]
+                nome = str(row[2] or "").strip()
+                est_atual = float(row[3] or 0)
+                est_min = float(row[4] or 0)
+                preco_custo = float(row[5] or 0)
+                preco_venda = float(row[6] or 0)
+                etiqueta_id = row[7]
+                tipo = str(row[8] or "").strip()
 
                 if not nome:
                     continue
 
-                categoria = cat_map.get(grupo_id, "SEM CATEGORIA") if grupo_id else "SEM CATEGORIA"
+                categoria = cat_map.get(etiqueta_id, "SEM CATEGORIA") if etiqueta_id else "SEM CATEGORIA"
 
                 item = {
                     "codigo": prod_code,
