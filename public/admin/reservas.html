@@ -605,7 +605,7 @@
                     const events = [...snap.data().events].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
                     panel.style.display = 'block';
                     list.innerHTML = events.map(ev =>
-                        `<div class="agenda-event"><strong>${ev.time || '--:--'}</strong><span>${ev.name}${ev.obs ? ' — ' + ev.obs : ''}</span></div>`
+                        `<div class="agenda-event"><strong style="${ev.color ? 'color:'+ev.color : ''}">${ev.time || '--:--'}</strong><span>${ev.name}${ev.obs ? ' — ' + ev.obs : ''}</span></div>`
                     ).join('');
                 } else {
                     panel.style.display = 'none';
