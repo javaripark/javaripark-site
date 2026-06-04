@@ -158,6 +158,32 @@
         </nav>
 
         <div class="card">
+            <h3>Visão Geral</h3>
+            <div class="kpi-grid" style="margin-bottom:0">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Realizadas</div>
+                    <div class="kpi-value" id="global-total-display">—</div>
+                    <div class="kpi-sub">desde o início</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Futuras</div>
+                    <div class="kpi-value" id="global-future-display">—</div>
+                    <div class="kpi-sub" id="global-future-people-sub"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Este Mês</div>
+                    <div class="kpi-value" id="global-month-display">—</div>
+                    <div class="kpi-sub" id="global-month-label"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Próxima</div>
+                    <div class="kpi-value" id="global-next-display" style="font-size:.85em">—</div>
+                    <div class="kpi-sub" id="global-next-sub"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
             <label for="reservation-date" class="field-label">Data</label>
             <input type="date" id="reservation-date" class="field-input" />
             <p id="date-reservations-indicator" class="calendar-indicator"></p>
@@ -451,6 +477,7 @@
         fetchAndRenderReservations(selectedDate);
         fetchGlobalCapacity();
         fetchAgendaPreview(selectedDate);
+        fetchGlobalStats();
 
         // iOS fix: re-subscribe Firestore listeners when page becomes visible again
         // iOS Safari/Chrome kills WebSocket connections when app goes to background
@@ -459,6 +486,7 @@
                 fetchAndRenderReservations(selectedDate);
                 fetchGlobalCapacity();
                 fetchAgendaPreview(selectedDate);
+                fetchGlobalStats();
             }
         });
 
@@ -586,6 +614,47 @@
             }, () => {
                 $('agenda-preview').style.display = 'none';
             });
+        }
+
+        // Global stats — total + future reservations
+        const MONTH_NAMES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+        async function fetchGlobalStats() {
+            try {
+                const snap = await getDocs(collection(db, `artifacts/${appId}/public/data/reservas`));
+                const all = [];
+                snap.forEach(d => all.push(d.data()));
+
+                const today = new Date().toISOString().split('T')[0];
+                const now = new Date();
+                const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+                const monthEnd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-31`;
+
+                const total = all.length;
+                const future = all.filter(r => r.Data >= today);
+                const futurePeople = future.reduce((s, r) => s + (r['Quantidade de Pessoas'] || 0), 0);
+                const thisMonth = all.filter(r => r.Data >= monthStart && r.Data <= monthEnd);
+
+                // Próxima reserva futura
+                const sorted = future.filter(r => r.Data >= today).sort((a, b) => a.Data.localeCompare(b.Data));
+                const next = sorted[0];
+
+                $('global-total-display').textContent = total;
+                $('global-future-display').textContent = future.length;
+                $('global-future-people-sub').textContent = futurePeople + ' pessoas';
+                $('global-month-display').textContent = thisMonth.length;
+                $('global-month-label').textContent = MONTH_NAMES[now.getMonth()] + '/' + now.getFullYear();
+
+                if (next) {
+                    const p = next.Data.split('-');
+                    $('global-next-display').textContent = `${p[2]}/${p[1]}`;
+                    $('global-next-sub').textContent = `${next.Nome || ''} ${next.Sobrenome || ''}`.trim();
+                } else {
+                    $('global-next-display').textContent = '—';
+                    $('global-next-sub').textContent = 'nenhuma agendada';
+                }
+            } catch (err) {
+                console.error('Erro global stats:', err);
+            }
         }
 
         // Render map
