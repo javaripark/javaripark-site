@@ -64,14 +64,22 @@ app.post('/enqueue', (req, res) => {
   res.json({ ok: true, enfileiradas: added, fila: queueStatus() });
 });
 
-// Log de envios
-app.get('/log', (req, res) => {
+// Exige o PIN (além do token) nas rotas com dados sensíveis / mutações.
+function requirePin(req, res, next) {
+  if (config.sendPin && req.headers['x-send-pin'] !== config.sendPin) {
+    return res.status(401).json({ error: 'pin_invalido' });
+  }
+  next();
+}
+
+// Log de envios (contém nomes/telefones — protegido por PIN)
+app.get('/log', requirePin, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 100, 1000);
   res.json({ log: readLog(limit) });
 });
 
-// Opt-out manual
-app.post('/optout', (req, res) => {
+// Opt-out manual (mutação — protegido por PIN)
+app.post('/optout', requirePin, (req, res) => {
   const num = String(req.body?.number || '').replace(/\D/g, '');
   if (!num) return res.status(400).json({ error: 'numero_invalido' });
   const added = addOptOut(num);

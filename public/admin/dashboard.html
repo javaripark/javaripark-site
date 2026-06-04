@@ -1634,8 +1634,8 @@
         // Pré-configuração: se preenchidos, a config carrega sozinha em qualquer
         // dispositivo (sem precisar digitar). ⚠ Ficam VISÍVEIS no código público —
         // use só com número dedicado. Deixe vazio p/ guardar só no navegador (localStorage).
-        const WA_DEFAULT_ENDPOINT = '';
-        const WA_DEFAULT_TOKEN = '';
+        const WA_DEFAULT_ENDPOINT = 'https://macbook-pro-de-rene.tailf78ede.ts.net';
+        const WA_DEFAULT_TOKEN = '4d5bc973c37ce3e9ed21989556ea1f578ad642d35aaee8097b8b4f1d1ae3afdb';
         const WA_MAX_BULK = 500;
         function waCfg() { return { endpoint: (localStorage.getItem(WA_EP_KEY) || '').replace(/\/+$/, ''), token: localStorage.getItem(WA_TK_KEY) || '', pin: localStorage.getItem(WA_PIN_KEY) || '' }; }
         function waHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + waCfg().token }; }
