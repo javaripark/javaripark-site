@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Central de Reservas — Javari StrEat Park</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -26,13 +29,13 @@
         .header .logout-btn:hover{background:rgba(255,255,255,.18)}
         .map-container { position: relative; width: 100%; padding-top: 121.875%; background-color: #faf8f4; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,.1); overflow: visible; }
         .map-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .sector { position: absolute; background-color: rgba(147,51,234,.2); border: 2px solid #9333ea; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: all .2s ease-in-out; padding: 5px; box-sizing: border-box; font-size: .8em; color: #4a0080; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
-        .sector:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,.15); }
+        .sector { position: absolute; background-color: rgba(147,51,234,.2); border: 2px solid #9333ea; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; cursor: pointer; transition: all .2s ease-in-out; padding: 3px; box-sizing: border-box; font-size: .8em; color: #4a0080; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,.1); overflow: hidden; z-index: 1; }
+        .sector:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,.15); z-index: 2; }
         .sector.reserved { background-color: rgba(234,88,12,.8); border-color: #ea580c; color: white; box-shadow: 0 4px 8px rgba(0,0,0,.2); }
         .sector.free { background-color: rgba(144,226,74,.8); border: 3px dashed #4CAF50; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,.2); }
         .sector.free .sector-name { font-size: 2.2em !important; font-weight: bolder !important; color: white !important; display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
-        .sector-info { font-size: .9em; margin-top: 5px; }
-        .sector-name { font-size: 1.1em; font-weight: bold; }
+        .sector-info { font-size: .75em; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .sector-name { font-size: 1em; font-weight: bold; white-space: nowrap; }
         #sector-1 { top: 66.7%; left: 59.1%; width: 13.8%; height: 7.1%; }
         #sector-2 { top: 66.7%; left: 22.7%; width: 13.8%; height: 7.1%; }
         #sector-3 { top: 57.7%; left: 59.1%; width: 13.8%; height: 7.1%; }
@@ -271,7 +274,7 @@
                     </div>
                     <div class="form-group">
                         <label for="form-sector">Setor Desejado:</label>
-                        <input type="text" id="form-sector" name="sector" class="field-readonly" readonly required>
+                        <select id="form-sector" name="sector" class="field-input" required></select>
                     </div>
                     <div class="form-group">
                         <label for="first-name">Nome:</label>
@@ -433,8 +436,14 @@
         const occupancyBar = $('occupancy-bar');
         const occupancyPct = $('occupancy-percentage-display');
 
-        // Auth guard (sessionStorage)
-        const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
+        // Auth guard (localStorage with TTL — survives iOS tab switches)
+        const AUTH_KEY = 'javari_admin_auth';
+        const AUTH_TTL = 24 * 60 * 60 * 1000; // 24h
+        let session = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
+        // Migrate sessionStorage → localStorage
+        if (session && !localStorage.getItem(AUTH_KEY)) localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+        // Check TTL
+        if (session && session.ts && (Date.now() - session.ts > AUTH_TTL)) { session = null; localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); }
         if (!session) { window.location.href = '/admin/index.html'; }
         $('auth-loading').style.display = 'none';
         $('app-container').style.display = 'block';
@@ -443,7 +452,17 @@
         fetchGlobalCapacity();
         fetchAgendaPreview(selectedDate);
 
-        $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('javari_admin_auth'); window.location.href = '/admin/index.html'; });
+        // iOS fix: re-subscribe Firestore listeners when page becomes visible again
+        // iOS Safari/Chrome kills WebSocket connections when app goes to background
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                fetchAndRenderReservations(selectedDate);
+                fetchGlobalCapacity();
+                fetchAgendaPreview(selectedDate);
+            }
+        });
+
+        $('logoutBtn').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; });
 
         function showMessage(message, type = 'info') {
             messageBox.textContent = message;
@@ -454,9 +473,16 @@
             messageBox.style.animation = 'fadeInOut 3s forwards';
         }
 
+        function stripCountryCode(digits) {
+            // Remove +55 or 55 prefix if present (Brazilian country code)
+            if (digits.length > 11 && digits.startsWith('55')) digits = digits.substring(2);
+            return digits;
+        }
+
         function formatPhoneDisplay(raw) {
-            let v = String(raw).replace(/\D/g, '');
+            let v = stripCountryCode(String(raw).replace(/\D/g, ''));
             if (v.length === 0) return '';
+            if (v.length > 11) v = v.substring(0, 11);
             let f = '(' + v.substring(0, 2);
             if (v.length > 2) {
                 f += ') ';
@@ -468,7 +494,7 @@
         }
 
         function formatPhoneInput(input) {
-            let v = input.value.replace(/\D/g, '');
+            let v = stripCountryCode(input.value.replace(/\D/g, ''));
             if (v.length > 11) v = v.substring(0, 11);
             let f = '';
             if (v.length > 0) {
@@ -598,6 +624,30 @@
             });
         }
 
+        // Build sector options for the select
+        function buildSectorOptions(currentSector, editDocId) {
+            const sel = $('form-sector');
+            sel.innerHTML = '';
+
+            const allSectors = ['1','2','3','4','5','6','7','8','9','Bus Lounge','Extras'];
+            const occupiedSectors = currentReservations
+                .filter(r => r.Setor !== 'Extras' && r.id !== editDocId)
+                .map(r => r.Setor);
+
+            allSectors.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s === 'Extras' ? 'Extras (sem setor fixo)' : 'Setor ' + s;
+                if (s !== 'Extras' && occupiedSectors.includes(s)) {
+                    opt.disabled = true;
+                    opt.textContent += ' — ocupado';
+                }
+                sel.appendChild(opt);
+            });
+
+            sel.value = currentSector;
+        }
+
         // Reservation form
         function openReservationForm(date, sector, edit = null) {
             const d = new Date(date + 'T00:00:00');
@@ -608,21 +658,11 @@
             form.reset();
             $('reservation-doc-id').value = '';
             $('form-date').value = dateFormatter.format(d);
-            $('form-sector').value = sector;
-
-            if (sector === 'Extras') {
-                $('form-sector').readOnly = false;
-                $('form-sector').classList.remove('field-readonly');
-                $('form-sector').placeholder = 'Ex: Mesa 1, Área VIP';
-            } else {
-                $('form-sector').readOnly = true;
-                $('form-sector').classList.add('field-readonly');
-                $('form-sector').placeholder = '';
-            }
 
             if (edit) {
                 $('form-modal-title').textContent = 'Editar Reserva';
                 $('reservation-doc-id').value = edit.id;
+                buildSectorOptions(edit.Setor, edit.id);
                 $('first-name').value = edit.Nome || '';
                 $('last-name').value = edit.Sobrenome || '';
                 $('num-people').value = edit['Quantidade de Pessoas'] || '';
@@ -631,6 +671,7 @@
                 $('observations').value = edit.Observacoes || '';
             } else {
                 $('form-modal-title').textContent = 'Registrar Nova Reserva';
+                buildSectorOptions(sector, null);
             }
             $('reservation-form-modal').style.display = 'flex';
         }
@@ -692,7 +733,8 @@
         }
 
         async function sendWhatsAppReconfirmation(res) {
-            const num = (res.Whatsapp || '').replace(/\D/g, '');
+            let num = stripCountryCode((res.Whatsapp || '').replace(/\D/g, ''));
+            num = '55' + num; // wa.me needs country code
             const msg = `Olá!%0A%0AEstamos enviando esta mensagem para reconfirmar a sua reserva conosco e atualizar a sua expectativa de convidados.%0A%0ATudo certo pra vivermos esse momento? O número de pessoas que você nos informou segue o mesmo? 🥰%0A%0AO seu retorno é importante e garante que a sua reserva não seja alterada por falta dessa reconfirmação.%0A%0AAbraços e até mais!%0A%0ARodrigo - Javari Park%0Ar. Javari, 112 - Mooca (SP)%0A@javaripark`;
             window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
             try {
@@ -729,7 +771,7 @@
                 reservations.forEach(res => {
                     const item = document.createElement('div');
                     item.className = 'extras-item';
-                    item.innerHTML = `<p class="extras-item-title">Setor Extra: ${res.Setor}</p><p>Nome: ${res.Nome} ${res.Sobrenome}</p><p>Pessoas: ${res['Quantidade de Pessoas']}</p>${res.ReconfirmadoEm ? '<p class="reconfirmed-label">Reconfirmado</p>' : ''}`;
+                    item.innerHTML = `<p class="extras-item-title">Setor Extra: ${res.Setor}</p><p>Nome: ${res.Nome} ${res.Sobrenome}</p><p>Pessoas: ${res['Quantidade de Pessoas']}</p>${res.Observacoes ? '<p style="font-size:.85em;color:#666;margin-top:4px"><em>Obs: ' + res.Observacoes + '</em></p>' : ''}${res.ReconfirmadoEm ? '<p class="reconfirmed-label">Reconfirmado</p>' : ''}`;
                     item.onclick = () => { $('extras-list-modal').style.display = 'none'; openDetailsModal(res); };
                     content.appendChild(item);
                 });

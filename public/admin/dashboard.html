@@ -356,7 +356,11 @@
     </div>
 
     <script>
-        const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
+        const AUTH_KEY = 'javari_admin_auth';
+        const AUTH_TTL = 24 * 60 * 60 * 1000;
+        let session = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
+        if (session && !localStorage.getItem(AUTH_KEY)) localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+        if (session && session.ts && (Date.now() - session.ts > AUTH_TTL)) { session = null; localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); }
         if (!session) { window.location.href = '/admin/index.html'; }
 
         const $ = id => document.getElementById(id);
@@ -368,7 +372,7 @@
         let currentFinFilter = 'todos';
 
         $('user-email-display').textContent = session ? session.email : '';
-        $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('javari_admin_auth'); window.location.href = '/admin/index.html'; });
+        $('logoutBtn').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; });
 
         // ── Section tabs ──
         document.querySelectorAll('.section-tab').forEach(tab => {

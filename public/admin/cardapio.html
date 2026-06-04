@@ -328,15 +328,19 @@
         let deleteAction = null;
         let unsubscribe = null;
 
-        // Auth guard (sessionStorage)
-        const session = JSON.parse(sessionStorage.getItem('javari_admin_auth') || 'null');
+        // Auth guard (localStorage with TTL)
+        const AUTH_KEY = 'javari_admin_auth';
+        const AUTH_TTL = 24 * 60 * 60 * 1000;
+        let session = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
+        if (session && !localStorage.getItem(AUTH_KEY)) localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+        if (session && session.ts && (Date.now() - session.ts > AUTH_TTL)) { session = null; localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); }
         if (!session) { window.location.href = '/admin/index.html'; }
         $('auth-loading').style.display = 'none';
         $('app-container').style.display = 'block';
         $('user-email-display').textContent = session ? session.email : '';
         listenToCardapio();
 
-        $('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('javari_admin_auth'); window.location.href = '/admin/index.html'; });
+        $('logoutBtn').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; });
 
         function showMessage(message, type = 'info') {
             messageBox.textContent = message;
