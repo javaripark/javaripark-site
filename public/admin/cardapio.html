@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardápio — Javari StrEat Park</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
@@ -152,6 +153,40 @@
             <div class="cons-kpi" id="unified-kpis"></div>
         </div>
 
+        <!-- Dashboards de margem -->
+        <div class="section-card">
+            <h3 style="font-size:.85em;font-weight:700;color:#4f1964;margin-bottom:10px">Margens (produtos com preço de venda e custo)</h3>
+            <div class="cons-kpi" id="margin-kpis" style="margin-bottom:12px"></div>
+            <div style="display:grid;grid-template-columns:1fr;gap:14px" id="margin-lists-grid">
+                <div>
+                    <h4 style="font-size:12px;font-weight:700;color:#10b981;text-transform:uppercase;margin-bottom:6px">🔝 Melhores Margens</h4>
+                    <div id="best-margins"></div>
+                </div>
+                <div>
+                    <h4 style="font-size:12px;font-weight:700;color:#ef4444;text-transform:uppercase;margin-bottom:6px">⚠ Piores Margens</h4>
+                    <div id="worst-margins"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico de vendas por item -->
+        <div class="section-card" id="hist-card" style="display:none">
+            <h3 style="font-size:.85em;font-weight:700;color:#4f1964;margin-bottom:10px">Histórico de Vendas por Item</h3>
+            <div class="cons-filter">
+                <input type="text" id="hist-search" placeholder="Buscar item…" list="hist-datalist" style="flex:1">
+                <datalist id="hist-datalist"></datalist>
+                <select id="hist-period">
+                    <option value="6">Últimos 6 meses</option>
+                    <option value="12" selected>Últimos 12 meses</option>
+                    <option value="24">Últimos 24 meses</option>
+                    <option value="0">Todo o histórico</option>
+                </select>
+                <span class="cons-count" id="hist-summary"></span>
+            </div>
+            <div class="chart-box" style="margin-top:10px"><canvas id="chart-hist"></canvas></div>
+            <div id="hist-table" style="margin-top:10px"></div>
+        </div>
+
         <!-- Lista de compras -->
         <div class="section-card" style="background:#fffbeb;border:1px solid #fcd34d">
             <h3 style="font-size:.85em;font-weight:700;color:#92400e;margin-bottom:8px">📋 Lista de Compras Automática</h3>
@@ -193,8 +228,8 @@
             <div class="cons-filter">
                 <input type="text" id="u-search" placeholder="Buscar produto ou insumo…">
                 <select id="u-tipo">
+                    <option value="produto" selected>Só produtos</option>
                     <option value="">Produtos e insumos</option>
-                    <option value="produto">Só produtos (com preço de venda)</option>
                     <option value="insumo">Só insumos</option>
                 </select>
                 <select id="u-status-filter">
@@ -279,12 +314,99 @@
                 renderKpis(d);
                 buildCatFilter();
                 renderTable();
+                renderMargins();
             } catch (e) {
                 console.warn('Erro ao carregar estoque:', e);
                 $('cardapio-sync-info').textContent = 'Erro ao carregar dados de estoque.';
             }
+            loadSalesHistory();
         }
         loadData();
+
+        // ── Dashboards de margem ──
+        function margemPct(i) {
+            if (!(i.precoVenda > 0 && i.precoCusto > 0)) return null;
+            return ((i.precoVenda - i.precoCusto) / i.precoVenda) * 100;
+        }
+        function renderMargins() {
+            const comMargem = allItems
+                .map(i => ({ ...i, _m: margemPct(i) }))
+                .filter(i => i._m !== null);
+
+            if (comMargem.length === 0) {
+                $('margin-kpis').innerHTML = '<div class="cons-kpi-card"><div class="cons-kpi-label">Sem dados de margem</div></div>';
+                return;
+            }
+
+            const media = comMargem.reduce((s, i) => s + i._m, 0) / comMargem.length;
+            const negativas = comMargem.filter(i => i._m < 0).length;
+            const mediana = [...comMargem].sort((a, b) => a._m - b._m)[Math.floor(comMargem.length / 2)]._m;
+
+            $('margin-kpis').innerHTML = `
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Margem Média</div><div class="cons-kpi-value" style="color:#10b981">${media.toFixed(1)}%</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Margem Mediana</div><div class="cons-kpi-value">${mediana.toFixed(1)}%</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Produtos Avaliados</div><div class="cons-kpi-value">${comMargem.length}</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Margem Negativa</div><div class="cons-kpi-value" style="color:#ef4444">${negativas}</div></div>
+            `;
+
+            const sorted = [...comMargem].sort((a, b) => b._m - a._m);
+            const best = sorted.slice(0, 8);
+            const worst = sorted.slice(-8).reverse();
+            const rowHtml = i => {
+                const col = i._m < 0 ? '#ef4444' : i._m < 30 ? '#f59e0b' : '#10b981';
+                return `<tr><td>${escapeHtml(i.nome)}</td><td style="text-align:right">${fmtBRL(i.precoCusto)}</td><td style="text-align:right">${fmtBRL(i.precoVenda)}</td><td style="text-align:right;font-weight:700;color:${col}">${i._m.toFixed(0)}%</td></tr>`;
+            };
+            const tbl = items => `<div style="overflow-x:auto"><table class="cons-table"><thead><tr><th>Item</th><th style="text-align:right">Custo</th><th style="text-align:right">Venda</th><th style="text-align:right">Margem</th></tr></thead><tbody>${items.map(rowHtml).join('')}</tbody></table></div>`;
+            $('best-margins').innerHTML = tbl(best);
+            $('worst-margins').innerHTML = tbl(worst);
+        }
+
+        // ── Histórico de vendas por item ──
+        let salesHist = null;
+        let histChart = null;
+        async function loadSalesHistory() {
+            try {
+                const res = await fetch('/data/vendas-produtos.json');
+                if (!res.ok) return; // arquivo ainda não gerado
+                salesHist = await res.json();
+                const nomes = Object.keys(salesHist.produtos || {}).sort();
+                if (nomes.length === 0) return;
+                $('hist-card').style.display = 'block';
+                $('hist-datalist').innerHTML = nomes.map(n => `<option value="${escapeHtml(n)}">`).join('');
+                $('hist-search').addEventListener('input', renderHistory);
+                $('hist-period').addEventListener('change', renderHistory);
+            } catch (e) { /* sem histórico */ }
+        }
+        function renderHistory() {
+            const nome = $('hist-search').value.trim();
+            const prod = salesHist?.produtos?.[nome];
+            if (!prod) { $('hist-summary').textContent = nome ? 'Item não encontrado' : ''; return; }
+            const period = parseInt($('hist-period').value);
+            let meses = prod.meses || [];
+            if (period > 0) meses = meses.slice(-period);
+
+            const totalQtd = meses.reduce((s, m) => s + m.qtd, 0);
+            const totalRec = meses.reduce((s, m) => s + m.receita, 0);
+            $('hist-summary').textContent = `${fmtQty(totalQtd)} un · ${fmtBRL(totalRec)}`;
+
+            if (histChart) { histChart.destroy(); histChart = null; }
+            histChart = new Chart($('chart-hist'), {
+                type: 'bar',
+                data: {
+                    labels: meses.map(m => { const [y, mo] = m.mes.split('-'); return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(mo)-1] + '/' + y.slice(2); }),
+                    datasets: [
+                        { label: 'Qtd vendida', data: meses.map(m => m.qtd), backgroundColor: 'rgba(79,25,100,.6)', yAxisID: 'y' },
+                        { label: 'Receita (R$)', data: meses.map(m => m.receita), type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', yAxisID: 'y1', tension: .3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: true, aspectRatio: 2.2, interaction: { mode: 'index', intersect: false },
+                    scales: { y: { position: 'left', title: { display: true, text: 'Qtd' }, grid: { color: '#f0f0f0' } }, y1: { position: 'right', title: { display: true, text: 'R$' }, grid: { display: false } } } }
+            });
+
+            $('hist-table').innerHTML = `<div style="overflow-x:auto;max-height:240px;overflow-y:auto"><table class="cons-table"><thead><tr><th>Mês</th><th style="text-align:right">Qtd</th><th style="text-align:right">Receita</th></tr></thead><tbody>${
+                [...meses].reverse().map(m => `<tr><td>${m.mes}</td><td style="text-align:right">${fmtQty(m.qtd)}</td><td style="text-align:right">${fmtBRL(m.receita)}</td></tr>`).join('')
+            }</tbody></table></div>`;
+        }
 
         function renderKpis(d) {
             const produtos = allItems.filter(i => i.precoVenda > 0).length;
