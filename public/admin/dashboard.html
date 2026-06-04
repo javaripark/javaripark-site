@@ -284,18 +284,20 @@
             </div>
 
             <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">Total a Pagar</div><div class="kpi-value" id="fin-total-pagar">—</div><div class="kpi-sub" id="fin-pagar-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Total no Período</div><div class="kpi-value" id="fin-total">—</div><div class="kpi-sub" id="fin-total-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Pago</div><div class="kpi-value" id="fin-pago" style="color:#10b981">—</div><div class="kpi-sub" id="fin-pago-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Pendente</div><div class="kpi-value" id="fin-pendente" style="color:#f59e0b">—</div><div class="kpi-sub" id="fin-pendente-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Vencido</div><div class="kpi-value" id="fin-vencido" style="color:#ef4444">—</div><div class="kpi-sub" id="fin-vencido-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Total Compras</div><div class="kpi-value" id="fin-compras">—</div><div class="kpi-sub" id="fin-compras-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Fornecedores</div><div class="kpi-value" id="fin-fornecedores">—</div><div class="kpi-sub" id="fin-fornecedores-sub"></div></div>
             </div>
 
             <div class="card">
                 <h3>Contas a Pagar</h3>
+                <p style="font-size:11px;color:#999;margin-bottom:8px">Os KPIs acima refletem o período e a busca. Os botões de status filtram a tabela.</p>
                 <div class="table-controls">
                     <input type="text" id="cp-search" placeholder="Buscar descrição, fornecedor ou categoria…">
                     <input type="date" id="cp-date-from" title="De">
                     <input type="date" id="cp-date-to" title="Até">
+                    <button id="cp-clear" class="filter-pill" style="font-size:11px">Limpar</button>
                     <span class="table-count" id="cp-count"></span>
                 </div>
                 <div id="contas-pagar-table" class="table-wrap"></div>
@@ -599,6 +601,12 @@
                 renderFinancialData();
             });
         });
+        $('cp-clear')?.addEventListener('click', () => {
+            $('cp-search').value = ''; $('cp-date-from').value = ''; $('cp-date-to').value = '';
+            currentFinFilter = 'todos';
+            document.querySelectorAll('.fin-filter').forEach(b => b.classList.toggle('active', b.dataset.status === 'todos'));
+            renderFinancialData();
+        });
 
         // ── Popup ──
         $('popup-close').addEventListener('click', () => $('client-popup').classList.remove('open'));
@@ -849,43 +857,53 @@
             const today = fmt(new Date());
 
             if (financialData.contas_pagar) {
-                let items = financialData.contas_pagar.items || [];
-                items = items.map(i => {
-                    const status = i.status === 'pago' ? 'pago' : (i.vencimento < today ? 'vencido' : 'pendente');
+                const all = (financialData.contas_pagar.items || []).map(i => {
+                    const status = i.status === 'pago' ? 'pago' : ((i.vencimento||'') < today ? 'vencido' : 'pendente');
                     return {...i, _status: status};
                 });
 
-                const totalPagar = items.filter(i=>i._status!=='pago').reduce((s,i)=>s+(parseFloat(i.valor)||0),0);
-                const totalVencido = items.filter(i=>i._status==='vencido').reduce((s,i)=>s+(parseFloat(i.valor)||0),0);
-                $('fin-total-pagar').textContent = fmtBRL(totalPagar);
-                $('fin-vencido').textContent = fmtBRL(totalVencido);
-                $('fin-pagar-sub').textContent = `${items.length} contas`;
-                $('fin-vencido-sub').textContent = totalVencido>0?'Atenção!':'Em dia';
-
-                if (currentFinFilter !== 'todos') {
-                    items = items.filter(i => i._status === currentFinFilter);
-                }
-
+                // Escopo dos KPIs: busca + intervalo de datas (NÃO o pill de status)
                 const search = ($('cp-search')?.value||'').toLowerCase();
-                if (search) items = items.filter(i =>
-                    (i.descricao||'').toLowerCase().includes(search) ||
-                    (i.fornecedor||'').toLowerCase().includes(search) ||
-                    (i.categoria||'').toLowerCase().includes(search)
-                );
-
                 const dfrom = $('cp-date-from')?.value;
                 const dto = $('cp-date-to')?.value;
-                if (dfrom) items = items.filter(i => (i.vencimento||'') >= dfrom);
-                if (dto) items = items.filter(i => (i.vencimento||'') <= dto);
+                let scoped = all;
+                if (search) scoped = scoped.filter(i =>
+                    (i.descricao||'').toLowerCase().includes(search) ||
+                    (i.fornecedor||'').toLowerCase().includes(search) ||
+                    (i.categoria||'').toLowerCase().includes(search));
+                if (dfrom) scoped = scoped.filter(i => (i.vencimento||'') >= dfrom);
+                if (dto) scoped = scoped.filter(i => (i.vencimento||'') <= dto);
 
-                $('cp-count').textContent = `${items.length} registro${items.length!==1?'s':''}`;
+                const sum = arr => arr.reduce((s,i)=>s+(parseFloat(i.valor)||0),0);
+                const pago = scoped.filter(i=>i._status==='pago');
+                const pendente = scoped.filter(i=>i._status==='pendente');
+                const vencido = scoped.filter(i=>i._status==='vencido');
+                $('fin-total').textContent = fmtBRL(sum(scoped));
+                $('fin-total-sub').textContent = `${scoped.length} conta${scoped.length!==1?'s':''}`;
+                $('fin-pago').textContent = fmtBRL(sum(pago));
+                $('fin-pago-sub').textContent = `${pago.length} conta${pago.length!==1?'s':''}`;
+                $('fin-pendente').textContent = fmtBRL(sum(pendente));
+                $('fin-pendente-sub').textContent = `${pendente.length} conta${pendente.length!==1?'s':''}`;
+                $('fin-vencido').textContent = fmtBRL(sum(vencido));
+                $('fin-vencido-sub').textContent = vencido.length ? `${vencido.length} conta${vencido.length!==1?'s':''}` : 'Em dia';
 
+                // Destaca o KPI correspondente ao filtro de status ativo
+                [['todos','fin-total'],['pago','fin-pago'],['pendente','fin-pendente'],['vencido','fin-vencido']].forEach(([st,id]) => {
+                    const card = $(id).closest('.kpi-card');
+                    if (card) card.style.outline = (currentFinFilter === st) ? '2px solid #4f1964' : 'none';
+                });
+
+                // Tabela: aplica o pill de status sobre o escopo
+                let rows = scoped;
+                if (currentFinFilter !== 'todos') rows = rows.filter(i => i._status === currentFinFilter);
+
+                $('cp-count').textContent = `${rows.length} registro${rows.length!==1?'s':''}`;
                 const el = $('contas-pagar-table');
-                el.innerHTML = items.length === 0 ? '<p class="empty"><p>Nenhum registro encontrado.</p></p>' :
-                    `<table class="fin-table" id="tbl-cp"><thead><tr><th>Descrição</th><th>Fornecedor</th><th>Categoria</th><th>Vencimento</th><th class="amount">Valor</th><th>Status</th></tr></thead><tbody>${
-                    items.sort((a,b)=>(a.vencimento||'').localeCompare(b.vencimento||'')).map(i => {
+                el.innerHTML = rows.length === 0 ? '<p class="empty">Nenhum registro encontrado.</p>' :
+                    `<table class="fin-table" id="tbl-cp"><thead><tr><th>Descrição</th><th>Fornecedor</th><th>Categoria</th><th>Vencimento</th><th>Pagamento</th><th class="amount">Valor</th><th>Status</th></tr></thead><tbody>${
+                    rows.sort((a,b)=>(b.vencimento||'').localeCompare(a.vencimento||'')).map(i => {
                         const label = {pago:'Pago',vencido:'Vencido',pendente:'Pendente'}[i._status];
-                        return `<tr><td>${esc(i.descricao||'—')}</td><td>${esc(i.fornecedor||'—')}</td><td>${esc((i.categoria||'—').replace(/\s*Inativo$/i,''))}</td><td>${fmtDateBR(i.vencimento)}</td><td class="amount">${fmtBRLFull(parseFloat(i.valor)||0)}</td><td><span class="status-badge status-${i._status}">${label}</span></td></tr>`;
+                        return `<tr><td>${esc(i.descricao||'—')}</td><td>${esc(i.fornecedor||'—')}</td><td>${esc((i.categoria||'—').replace(/\s*Inativo$/i,''))}</td><td>${fmtDateBR(i.vencimento)}</td><td>${i.dataPagamento?fmtDateBR(i.dataPagamento):'—'}</td><td class="amount">${fmtBRLFull(parseFloat(i.valor)||0)}</td><td><span class="status-badge status-${i._status}">${label}</span></td></tr>`;
                     }).join('')}</tbody></table>`;
                 makeSortable($('tbl-cp'));
             }
@@ -896,9 +914,7 @@
                 let items = financialData.fornecedores.items || [];
                 const search = ($('forn-search')?.value||'').toLowerCase();
                 if (search) items = items.filter(i=>(i.nome||'').toLowerCase().includes(search)||(i.cnpj||'').toLowerCase().includes(search));
-                $('fin-fornecedores').textContent = financialData.fornecedores.items.length.toString();
-                $('fin-fornecedores-sub').textContent = 'cadastrados';
-                $('forn-count').textContent = `${items.length} registro${items.length!==1?'s':''}`;
+                $('forn-count').textContent = `${items.length} de ${(financialData.fornecedores.items||[]).length}`;
                 const el = $('fornecedores-table');
                 el.innerHTML = `<table class="fin-table" id="tbl-forn"><thead><tr><th>Nome</th><th>CNPJ/CPF</th><th>Telefone</th><th>E-mail</th></tr></thead><tbody>${
                     items.map(i=>`<tr><td>${esc(i.nome||'—')}</td><td>${esc(i.cnpj||'—')}</td><td>${esc(i.telefone||'—')}</td><td>${esc(i.email||'—')}</td></tr>`).join('')}</tbody></table>`;
@@ -907,11 +923,9 @@
 
             if (financialData.compras) {
                 const items = financialData.compras.items || [];
-                const totalCompras = items.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
-                $('fin-compras').textContent = fmtBRL(totalCompras);
-                $('fin-compras-sub').textContent = `${items.length} compra${items.length!==1?'s':''}`;
                 const el = $('compras-table');
-                el.innerHTML = `<table class="fin-table" id="tbl-compras"><thead><tr><th>Data</th><th>Fornecedor</th><th>Descrição</th><th class="amount">Total</th></tr></thead><tbody>${
+                el.innerHTML = items.length === 0 ? '<p class="empty">Sem compras registradas.</p>' :
+                    `<table class="fin-table" id="tbl-compras"><thead><tr><th>Data</th><th>Fornecedor</th><th>Descrição</th><th class="amount">Total</th></tr></thead><tbody>${
                     items.sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(i=>`<tr><td>${fmtDateBR(i.data)}</td><td>${esc(i.fornecedor||'—')}</td><td>${esc(i.descricao||i.nota||'—')}</td><td class="amount">${fmtBRLFull(parseFloat(i.total)||0)}</td></tr>`).join('')}</tbody></table>`;
                 makeSortable($('tbl-compras'));
             }
