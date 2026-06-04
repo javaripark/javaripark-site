@@ -324,6 +324,25 @@
 
         <!-- ==================== CLIENTES ==================== -->
         <div class="section-panel" id="panel-clientes">
+            <details class="card" id="wa-config-card" style="margin-bottom:14px">
+                <summary style="cursor:pointer;font-weight:700;font-size:.85em;color:#555;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:8px">
+                    <span>⚙ Envio automático WhatsApp</span>
+                    <span id="wa-status-badge" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#e5e7eb;color:#666;text-transform:none;letter-spacing:0">não configurado</span>
+                </summary>
+                <div style="margin-top:12px">
+                    <p style="font-size:12px;color:#888;margin-bottom:10px">Conecta ao serviço self-host de WhatsApp. Cole a URL HTTPS do túnel (Cloudflare/Tailscale) e o token do <code>.env</code>.</p>
+                    <input type="text" id="wa-endpoint" placeholder="https://wa.seutunnel.com" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px">
+                    <input type="password" id="wa-token" placeholder="Token (AUTH_TOKEN)" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        <button id="wa-save-btn" class="filter-pill" style="background:#4f1964;color:#fff;border-color:#4f1964">Salvar</button>
+                        <button id="wa-test-btn" class="filter-pill">Testar conexão</button>
+                        <button id="wa-qr-btn" class="filter-pill">Ver QR (parear número)</button>
+                        <span id="wa-status-detail" style="font-size:12px;color:#888"></span>
+                    </div>
+                    <div id="wa-qr-box" style="display:none;margin-top:12px;text-align:center"></div>
+                </div>
+            </details>
+
             <div class="kpi-grid">
                 <div class="kpi-card"><div class="kpi-label">Total Contatos</div><div class="kpi-value" id="cli-total">—</div><div class="kpi-sub" id="cli-total-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Aniversariantes do Mês</div><div class="kpi-value" id="cli-aniv-mes" style="color:#f59e0b">—</div><div class="kpi-sub" id="cli-aniv-sub"></div></div>
@@ -370,6 +389,7 @@
                         <option value="30">30 dias</option>
                     </select>
                     <input type="text" id="aniv-search" placeholder="Buscar nome…" style="flex:1">
+                    <button id="aniv-send-all" class="filter-pill" style="background:#25D366;color:#fff;border-color:#25D366">Enviar p/ todos</button>
                     <span class="table-count" id="aniv-count"></span>
                 </div>
                 <div id="aniv-table" class="table-wrap"></div>
@@ -397,6 +417,7 @@
                         <option value="ocasional">Ocasional (1-2 visitas)</option>
                     </select>
                     <input type="text" id="fid-search" placeholder="Buscar nome…" style="flex:1">
+                    <button id="fid-send-all" class="filter-pill" style="background:#25D366;color:#fff;border-color:#25D366">Enviar p/ todos</button>
                     <span class="table-count" id="fid-count"></span>
                 </div>
                 <div id="fid-table" class="table-wrap"></div>
@@ -424,6 +445,23 @@
                 <div class="popup-body" id="popup-body"></div>
             </div>
         </div>
+
+        <!-- Confirm modal -->
+        <div class="popup-overlay" id="confirm-overlay">
+            <div class="popup-box" style="max-width:420px">
+                <div class="popup-header"><h3 id="confirm-title">Confirmar</h3></div>
+                <div class="popup-body">
+                    <p id="confirm-msg" style="font-size:14px;color:#444;white-space:pre-line;line-height:1.5"></p>
+                    <div style="display:flex;gap:10px;margin-top:18px">
+                        <button id="confirm-cancel" class="filter-pill" style="flex:1">Cancelar</button>
+                        <button id="confirm-ok" class="filter-pill" style="flex:1;background:#25D366;color:#fff;border-color:#25D366">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:90%;text-align:center"></div>
 
         <div class="sync-info" id="sync-info">
             <span class="sync-badge">Sem dados</span>
@@ -477,6 +515,8 @@
         let clientData = null;
         let allContatos = [];
         let currentFinFilter = 'todos';
+        let lastAnivList = [];
+        let lastFidList = [];
 
         $('user-email-display').textContent = session ? session.email : '';
         $('logoutBtn').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; });
@@ -998,6 +1038,7 @@
 
             const search = ($('aniv-search')?.value||'').toLowerCase();
             if (search) anivs = anivs.filter(a=>(a.nome||'').toLowerCase().includes(search));
+            lastAnivList = anivs;
             const label = maxDias === 0 ? 'hoje' : maxDias === 1 ? 'amanhã' : `próx. ${maxDias}d`;
             $('aniv-count').textContent = `${anivs.length} aniversariante${anivs.length!==1?'s':''} (${label})`;
 
@@ -1110,6 +1151,7 @@
             if (search) clients = clients.filter(c => (c.nome||'').toLowerCase().includes(search));
 
             clients.sort((a, b) => (b.totalGasto || 0) - (a.totalGasto || 0));
+            lastFidList = clients;
 
             const shown = clients.slice(0, 200);
             $('fid-count').textContent = `${clients.length} cliente${clients.length !== 1 ? 's' : ''}${clients.length > 200 ? ' (mostrando 200)' : ''}`;
@@ -1240,6 +1282,107 @@
             renderTop5('top5-bar', barProds, '#7c3aed');
             renderTop5('top5-kitchen', kitchenProds, '#ea580c');
         }
+
+        // ── Toast + confirm modal (substituem alert/confirm nativos) ──
+        let _toastTimer;
+        function toast(msg, ms = 3500) {
+            const t = $('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            clearTimeout(_toastTimer);
+            _toastTimer = setTimeout(() => t.style.display = 'none', ms);
+        }
+        function confirmModal(title, msg) {
+            return new Promise(resolve => {
+                $('confirm-title').textContent = title;
+                $('confirm-msg').textContent = msg;
+                $('confirm-overlay').classList.add('open');
+                const cleanup = () => { $('confirm-overlay').classList.remove('open'); $('confirm-ok').onclick = null; $('confirm-cancel').onclick = null; };
+                $('confirm-ok').onclick = () => { cleanup(); resolve(true); };
+                $('confirm-cancel').onclick = () => { cleanup(); resolve(false); };
+            });
+        }
+
+        // ── Integração serviço WhatsApp ──
+        const WA_EP_KEY = 'javari_wa_endpoint', WA_TK_KEY = 'javari_wa_token';
+        const WA_MAX_BULK = 500;
+        function waCfg() { return { endpoint: (localStorage.getItem(WA_EP_KEY) || '').replace(/\/+$/, ''), token: localStorage.getItem(WA_TK_KEY) || '' }; }
+        function waHeaders() { return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + waCfg().token }; }
+
+        async function waCheckStatus() {
+            const { endpoint, token } = waCfg();
+            const badge = $('wa-status-badge'), detail = $('wa-status-detail');
+            const setBadge = (txt, bg, col) => { badge.textContent = txt; badge.style.background = bg; badge.style.color = col; };
+            if (!endpoint || !token) { setBadge('não configurado', '#e5e7eb', '#666'); detail.textContent = ''; return; }
+            try {
+                const r = await fetch(endpoint + '/status', { headers: waHeaders() });
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const d = await r.json();
+                if (d.wa.connected) {
+                    setBadge('conectado', '#d1fae5', '#065f46');
+                    detail.textContent = `Nº ${d.wa.me || '?'} · hoje: ${d.fila.enviadosHoje}/${d.fila.limiteDia} · fila: ${d.fila.pendentes}`;
+                } else if (d.wa.hasQr) {
+                    setBadge('aguardando QR', '#fef3c7', '#92400e');
+                    detail.textContent = 'Clique "Ver QR" e escaneie com o número emissor.';
+                } else {
+                    setBadge('desconectado', '#fee2e2', '#991b1b'); detail.textContent = '';
+                }
+            } catch (e) {
+                setBadge('offline', '#fee2e2', '#991b1b');
+                detail.textContent = 'Serviço inacessível. Confira se está rodando e a URL do túnel.';
+            }
+        }
+
+        async function waShowQr() {
+            const { endpoint, token } = waCfg();
+            const box = $('wa-qr-box');
+            if (!endpoint || !token) { toast('Configure endpoint e token primeiro.'); return; }
+            box.style.display = 'block'; box.innerHTML = 'Carregando QR…';
+            try {
+                const r = await fetch(endpoint + '/qr', { headers: waHeaders() });
+                const d = await r.json();
+                if (d.qr) box.innerHTML = `<img src="${d.qr}" style="max-width:240px;border:1px solid #eee;border-radius:8px"><p style="font-size:12px;color:#888;margin-top:6px">WhatsApp → Aparelhos conectados → Conectar aparelho</p>`;
+                else box.innerHTML = `<p style="font-size:13px;color:#888">${d.message || 'Sem QR (já conectado?)'}</p>`;
+            } catch (e) { box.innerHTML = '<p style="font-size:13px;color:#991b1b">Erro ao buscar QR.</p>'; }
+        }
+
+        async function waSendBulk(list, templateId) {
+            const { endpoint, token } = waCfg();
+            if (!endpoint || !token) { toast('Configure o serviço de WhatsApp primeiro (⚙ no topo da aba).'); return; }
+            const tpl = $(templateId).value || '';
+            const recipients = (list || []).filter(c => c.telefone && c.telefone.replace(/\D/g, '').length >= 10);
+            if (recipients.length === 0) { toast('Nenhum contato com telefone válido na lista atual.'); return; }
+            let toSend = recipients, capped = false;
+            if (recipients.length > WA_MAX_BULK) { toSend = recipients.slice(0, WA_MAX_BULK); capped = true; }
+            const ok = await confirmModal('Enviar WhatsApp em massa',
+                `Enfileirar ${toSend.length} mensagem(ns)?` +
+                (capped ? `\n\n(Limitado a ${WA_MAX_BULK} por vez — a lista tem ${recipients.length}.)` : '') +
+                `\n\nO envio respeita o limite diário e o delay entre mensagens, então pode levar dias para concluir.`);
+            if (!ok) return;
+            const messages = toSend.map(c => ({ to: c.telefone, nome: c.nome, message: tpl.replace('{nome}', (c.nome || '').split(' ')[0]) }));
+            try {
+                const r = await fetch(endpoint + '/enqueue', { method: 'POST', headers: waHeaders(), body: JSON.stringify({ messages }) });
+                const d = await r.json();
+                if (r.ok) { toast(`${d.enfileiradas} mensagens na fila. Restante hoje: ${d.fila.restanteHoje}/${d.fila.limiteDia}.`); waCheckStatus(); }
+                else toast('Erro: ' + (d.error || r.status));
+            } catch (e) { toast('Falha ao conectar no serviço: ' + e.message); }
+        }
+
+        function waInit() {
+            $('wa-endpoint').value = localStorage.getItem(WA_EP_KEY) || '';
+            $('wa-token').value = localStorage.getItem(WA_TK_KEY) || '';
+            $('wa-save-btn').addEventListener('click', () => {
+                localStorage.setItem(WA_EP_KEY, $('wa-endpoint').value.trim());
+                localStorage.setItem(WA_TK_KEY, $('wa-token').value.trim());
+                toast('Configuração salva.'); waCheckStatus();
+            });
+            $('wa-test-btn').addEventListener('click', waCheckStatus);
+            $('wa-qr-btn').addEventListener('click', waShowQr);
+            $('aniv-send-all').addEventListener('click', () => waSendBulk(lastAnivList, 'aniv-msg-template'));
+            $('fid-send-all').addEventListener('click', () => waSendBulk(lastFidList, 'fid-msg-template'));
+            if (localStorage.getItem(WA_EP_KEY) && localStorage.getItem(WA_TK_KEY)) waCheckStatus();
+        }
+        waInit();
 
         // ── Search filters ──
         function initSearchFilters() {
