@@ -946,12 +946,25 @@ def upload_to_firestore(daily_data, financial_data=None, sync_meta=None):
 
     print(f"Uploaded {len(daily_data)} days to Firestore ({FIRESTORE_PATH_FAT})")
 
-    # Upload financial data
+    # Upload financial data — o dashboard usa o JSON estático, então o Firestore
+    # aqui é só backup. Documentos acima de ~1MB são truncados ou pulados sem
+    # derrubar o pipeline (o JSON estático preserva tudo).
     if financial_data:
+        FS_DOC_LIMIT = 1_000_000  # margem abaixo do limite de 1.048.576 do Firestore
         for key, data in financial_data.items():
-            db.document(f"{FIRESTORE_PATH_FIN}/{key}").set(data)
-            print(f"  Uploaded financeiro/{key}")
-        print(f"Uploaded {len(financial_data)} financial documents to Firestore ({FIRESTORE_PATH_FIN})")
+            try:
+                payload = data
+                approx = len(json.dumps(data, default=str).encode("utf-8"))
+                if approx > FS_DOC_LIMIT and isinstance(data, dict) and isinstance(data.get("items"), list):
+                    # Mantém só os itens mais recentes que couberem (backup; estático tem tudo)
+                    keep = max(50, int(len(data["items"]) * FS_DOC_LIMIT / approx))
+                    payload = {**data, "items": data["items"][-keep:], "truncatedForFirestore": True}
+                    print(f"  financeiro/{key}: {approx} bytes > limite, truncado p/ Firestore ({keep} itens; estático completo)")
+                db.document(f"{FIRESTORE_PATH_FIN}/{key}").set(payload)
+                print(f"  Uploaded financeiro/{key}")
+            except Exception as e:
+                print(f"  ⚠ Falha ao subir financeiro/{key} pro Firestore (ignorado, JSON estático preserva): {str(e)[:120]}")
+        print(f"Firestore financeiro processado ({FIRESTORE_PATH_FIN})")
 
     # Upload sync metadata
     if sync_meta:
@@ -1371,7 +1384,11 @@ def main():
         }
         if stale_warning:
             sync_meta["aviso"] = stale_warning.strip()
-        upload_to_firestore(daily_data, financial_data, sync_meta)
+        try:
+            upload_to_firestore(daily_data, financial_data, sync_meta)
+        except Exception as e:
+            # Firestore é backup; o dashboard usa o JSON estático. Não derruba o pipeline.
+            print(f"⚠ Upload pro Firestore falhou (ignorado, JSON estático continua): {str(e)[:160]}")
 
         # 6. Write static JSON files for dashboard
         print("\n[6/6] Writing static JSON files...")
