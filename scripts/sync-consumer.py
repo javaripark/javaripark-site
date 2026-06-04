@@ -673,6 +673,22 @@ def query_financial_data(db_path):
             except Exception as e:
                 print(f"  Fornecedores query failed: {e}")
 
+    # ── Mapa de categorias de contas (CATEGORIACONTAS) ──
+    cat_contas_map = {}
+    cat_contas_table = find_table(tables, ["CATEGORIACONTAS", "CATEGORIA_CONTAS", "CATEGORIASCONTAS", "PLANOCONTAS"])
+    if cat_contas_table:
+        cc_cols = get_columns(cur, cat_contas_table)
+        cc_id = find_column(cc_cols, ["CODIGO", "ID"])
+        cc_nome = find_column(cc_cols, ["DESCRICAO", "NOME"])
+        if cc_id and cc_nome:
+            try:
+                cur.execute(f"SELECT {cc_id}, {cc_nome} FROM {cat_contas_table}")
+                for row in cur.fetchall():
+                    cat_contas_map[row[0]] = str(row[1] or "").strip()
+                print(f"  Loaded {len(cat_contas_map)} categorias de contas")
+            except Exception as e:
+                print(f"  CATEGORIACONTAS query failed: {e}")
+
     # ── Contas a Pagar ──
     cp_table = find_table(tables, [
         "CONTASPAGAR", "CONTA_PAGAR", "CONTAS_PAGAR", "CONTAS_A_PAGAR", "CONTA",
@@ -694,6 +710,8 @@ def query_financial_data(db_path):
         data_col = find_column(cols, ["DATACADASTRO", "DATA", "DATAEMISSAO", "DATA_EMISSAO",
                                        "DT_EMISSAO", "DATA_LANCAMENTO", "DATALANCAMENTO"])
         valor_pago_col = find_column(cols, ["VALORPAGO", "VALOR_PAGO", "VLR_PAGO", "VALOR_QUITADO"])
+        pgto_col = find_column(cols, ["DATAPAGAMENTO", "DATA_PAGAMENTO", "DT_PAGAMENTO"])
+        cat_col = find_column(cols, ["CODIGOCATEGORIACONTAS", "CODIGOCATEGORIA", "IDCATEGORIA", "CATEGORIA_ID"])
         cp_delete_col = find_column(cols, ["DATADELETE"])
 
         if valor_col and venc_col:
@@ -702,12 +720,15 @@ def query_financial_data(db_path):
             select.extend([valor_col, venc_col])
             if cp_status_col: select.append(cp_status_col)
             if valor_pago_col: select.append(valor_pago_col)
+            if pgto_col: select.append(pgto_col)
+            if cat_col: select.append(cat_col)
 
             where = ""
             if cp_delete_col:
                 where = f"WHERE {cp_delete_col} IS NULL"
 
-            sql = f"SELECT {', '.join(select)} FROM {cp_table} {where} ORDER BY {venc_col} DESC"
+            # ASC para o histórico vir completo e ordenado do mais antigo
+            sql = f"SELECT {', '.join(select)} FROM {cp_table} {where} ORDER BY {venc_col} ASC"
             try:
                 cur.execute(sql)
                 items = []
@@ -726,29 +747,40 @@ def query_financial_data(db_path):
                     venc_raw = row[idx]; idx += 1
                     vencimento = venc_raw.strftime("%Y-%m-%d") if isinstance(venc_raw, datetime) else str(venc_raw or "")[:10]
 
-                    status = ""
+                    raw_status = ""
                     if cp_status_col:
-                        s = str(row[idx] or "").strip().upper(); idx += 1
-                        if s in ("P", "PAGO", "S", "SIM", "1", "Q", "QUITADO"):
-                            status = "pago"
-                        else:
-                            status = "pendente"
-                    elif valor_pago_col:
-                        status = "pendente"
-                    else:
-                        status = "pendente"
+                        raw_status = str(row[idx] or "").strip().upper(); idx += 1
 
+                    valor_pago = 0
                     if valor_pago_col:
-                        vp = float(row[idx] or 0); idx += 1
-                        if vp >= valor and valor > 0:
-                            status = "pago"
+                        valor_pago = float(row[idx] or 0); idx += 1
+
+                    data_pagamento = ""
+                    if pgto_col:
+                        pg_raw = row[idx]; idx += 1
+                        data_pagamento = pg_raw.strftime("%Y-%m-%d") if isinstance(pg_raw, datetime) else str(pg_raw or "")[:10]
+
+                    categoria = ""
+                    if cat_col:
+                        cid = row[idx]; idx += 1
+                        categoria = cat_contas_map.get(cid, "")
+
+                    # Status: pago se tem data de pagamento OU valor pago cobre o valor OU flag de status
+                    status = "pendente"
+                    if (data_pagamento and data_pagamento not in ("", "None")) or \
+                       (valor_pago >= valor and valor > 0) or \
+                       raw_status in ("P", "PAGO", "S", "SIM", "1", "Q", "QUITADO"):
+                        status = "pago"
 
                     item = {
                         "descricao": descricao,
                         "fornecedor": fornecedor_nome,
+                        "categoria": categoria,
                         "valor": valor,
                         "vencimento": vencimento,
                         "status": status,
+                        "dataPagamento": data_pagamento,
+                        "valorPago": round(valor_pago, 2),
                     }
                     items.append(item)
 
@@ -758,7 +790,7 @@ def query_financial_data(db_path):
                             total_vencido += valor
 
                 if items:
-                    result["contas_pagar"] = {"items": items[:500], "syncedAt": datetime.utcnow().isoformat()}
+                    result["contas_pagar"] = {"items": items, "syncedAt": datetime.utcnow().isoformat()}
                     result["resumo"] = {
                         "totalAPagar": total_pagar,
                         "totalVencido": total_vencido,
