@@ -1012,9 +1012,10 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
                     json.dump(cli_data, f, ensure_ascii=False)
                 print(f"  Wrote {cli_path} ({len(contatos)} contatos)")
 
-        # 4. produtos-consumer.json + estoque.json
+        # 4. produtos-consumer.json + estoque.json + cardapio.json
         prod_detail = find_table(tables, ["PRODUTODETALHE"])
         prod_table = find_table(tables, ["PRODUTOS"])
+        groups_table = find_table(tables, ["PRODUTOTIPO", "GRUPO", "GRUPOS", "CATEGORIA"])
         if prod_detail and prod_table:
             pd_cols = get_columns(cur, prod_detail)
             p_cols = get_columns(cur, prod_table)
@@ -1027,32 +1028,67 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
             pd_preco_venda = find_column(pd_cols, ["PRECOVENDA"])
             p_nome = find_column(p_cols, ["NOME", "DESCRICAO"])
             p_tipo = find_column(p_cols, ["TIPO"])
+            p_grupo = find_column(p_cols, ["CODIGOPRODUTOTIPO", "GRUPO_ID", "IDGRUPO", "TIPO_ID"])
 
-            # Products
+            # Load category names
+            cat_map = {}
+            if groups_table:
+                g_cols = get_columns(cur, groups_table)
+                g_pk = find_column(g_cols, ["CODIGO", "ID"])
+                g_nome = find_column(g_cols, ["NOME", "DESCRICAO"])
+                if g_pk and g_nome:
+                    cur.execute(f"SELECT {g_pk}, {g_nome} FROM {groups_table}")
+                    for row in cur.fetchall():
+                        cat_map[row[0]] = str(row[1] or "").strip()
+                    print(f"  Loaded {len(cat_map)} categories from {groups_table}")
+
+            # Build query with category join
+            select_parts = [
+                f"pd.{pd_pk}", f"pd.{pd_prod}", f"p.{p_nome}",
+                f"COALESCE(pd.{pd_est_atual}, 0)", f"COALESCE(pd.{pd_est_min}, 0)",
+                f"COALESCE(pd.{pd_preco_custo}, 0)", f"COALESCE(pd.{pd_preco_venda}, 0)",
+            ]
+            if p_grupo:
+                select_parts.append(f"p.{p_grupo}")
+            if p_tipo:
+                select_parts.append(f"p.{p_tipo}")
+
             cur.execute(f"""
-                SELECT pd.{pd_pk}, pd.{pd_prod}, p.{p_nome},
-                       COALESCE(pd.{pd_est_atual}, 0), COALESCE(pd.{pd_est_min}, 0),
-                       COALESCE(pd.{pd_preco_custo}, 0), COALESCE(pd.{pd_preco_venda}, 0)
+                SELECT {', '.join(select_parts)}
                 FROM {prod_detail} pd
                 LEFT JOIN {prod_table} p ON pd.{pd_prod} = p.CODIGO
                 ORDER BY p.{p_nome}
             """)
+
             produtos = []
             insumos = []
             estoque_itens = []
             for row in cur.fetchall():
-                pd_code = row[0]
-                prod_code = row[1]
-                nome = str(row[2] or "").strip()
-                est_atual = float(row[3] or 0)
-                est_min = float(row[4] or 0)
-                preco_custo = float(row[5] or 0)
-                preco_venda = float(row[6] or 0)
+                idx = 0
+                pd_code = row[idx]; idx += 1
+                prod_code = row[idx]; idx += 1
+                nome = str(row[idx] or "").strip(); idx += 1
+                est_atual = float(row[idx] or 0); idx += 1
+                est_min = float(row[idx] or 0); idx += 1
+                preco_custo = float(row[idx] or 0); idx += 1
+                preco_venda = float(row[idx] or 0); idx += 1
+                grupo_id = row[idx] if p_grupo and idx < len(row) else None
+                if p_grupo and idx < len(row): idx += 1
+                tipo = str(row[idx] or "").strip() if p_tipo and idx < len(row) else ""
 
                 if not nome:
                     continue
 
-                item = {"codigo": prod_code, "nome": nome}
+                categoria = cat_map.get(grupo_id, "SEM CATEGORIA") if grupo_id else "SEM CATEGORIA"
+
+                item = {
+                    "codigo": prod_code,
+                    "nome": nome,
+                    "categoria": categoria,
+                    "tipo": tipo,
+                    "precoVenda": round(preco_venda, 2),
+                    "precoCusto": round(preco_custo, 2),
+                }
                 if preco_venda > 0:
                     produtos.append(item)
                 else:
@@ -1073,14 +1109,18 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
                     "estoqueMinimo": est_min,
                     "precoCusto": preco_custo,
                     "precoVenda": preco_venda,
+                    "categoria": categoria,
+                    "tipo": tipo,
                     "status": status,
                 })
 
+            # produtos-consumer.json
             prod_path = os.path.join(data_dir, "produtos-consumer.json")
             with open(prod_path, "w", encoding="utf-8") as f:
                 json.dump({"syncedAt": now_iso, "produtos": produtos, "insumos": insumos}, f, ensure_ascii=False)
             print(f"  Wrote {prod_path} ({len(produtos)} produtos, {len(insumos)} insumos)")
 
+            # estoque.json
             est_baixo = sum(1 for i in estoque_itens if i["status"] == "baixo")
             est_atencao = sum(1 for i in estoque_itens if i["status"] == "atencao")
             est_path = os.path.join(data_dir, "estoque.json")
@@ -1094,6 +1134,28 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
                     "itens": estoque_itens,
                 }, f, ensure_ascii=False)
             print(f"  Wrote {est_path} ({len(estoque_itens)} itens, {est_baixo} baixo, {est_atencao} atenção)")
+
+            # cardapio.json — products grouped by category (only sellable items)
+            from collections import OrderedDict
+            cardapio_cats = defaultdict(list)
+            for p in produtos:
+                cardapio_cats[p["categoria"]].append({
+                    "name": p["nome"],
+                    "price": p["precoVenda"],
+                })
+            cardapio = {
+                "syncedAt": now_iso,
+                "source": "consumer-pos",
+                "totalProdutos": len(produtos),
+                "categories": [
+                    {"category": cat, "items": sorted(items, key=lambda x: x["name"])}
+                    for cat, items in sorted(cardapio_cats.items())
+                ],
+            }
+            card_path = os.path.join(data_dir, "cardapio.json")
+            with open(card_path, "w", encoding="utf-8") as f:
+                json.dump(cardapio, f, ensure_ascii=False)
+            print(f"  Wrote {card_path} ({len(cardapio['categories'])} categorias)")
 
         con.close()
     except Exception as e:
