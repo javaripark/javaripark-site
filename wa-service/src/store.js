@@ -27,14 +27,18 @@ function todayStr() {
 }
 
 // ── Contador diário ──
+// state = { startedAt: 'YYYY-MM-DD', date: 'YYYY-MM-DD', sent: N }
 export function getDailyState() {
-  const s = readJson(STATE_FILE, { date: '', sent: 0 });
+  const s = readJson(STATE_FILE, { startedAt: '', date: '', sent: 0 });
+  if (!s.startedAt) s.startedAt = todayStr();   // primeira execução marca o início (p/ aquecimento)
   if (s.date !== todayStr()) {
-    // Vira o dia: zera contador
-    const fresh = { date: todayStr(), sent: 0 };
+    // Vira o dia: zera contador, preserva startedAt
+    const fresh = { startedAt: s.startedAt, date: todayStr(), sent: 0 };
     writeJson(STATE_FILE, fresh);
     return fresh;
   }
+  // Persiste startedAt caso tenha acabado de ser criado
+  if (!readJson(STATE_FILE, {}).startedAt) writeJson(STATE_FILE, s);
   return s;
 }
 export function incDailySent() {
@@ -42,6 +46,13 @@ export function incDailySent() {
   s.sent += 1;
   writeJson(STATE_FILE, s);
   return s.sent;
+}
+// Dias decorridos desde o início (1 = primeiro dia)
+export function daysSinceStart() {
+  const s = getDailyState();
+  const start = new Date(s.startedAt + 'T00:00:00');
+  const today = new Date(todayStr() + 'T00:00:00');
+  return Math.floor((today - start) / 86400000) + 1;
 }
 
 // ── Fila ──
@@ -69,6 +80,12 @@ export function dequeue() {
   const item = q.shift();
   setQueue(q);
   return item || null;
+}
+// Devolve um item ao FIM da fila (retry), com contador de tentativas
+export function requeue(item) {
+  const q = getQueue();
+  q.push({ ...item, retries: (item.retries || 0) + 1 });
+  setQueue(q);
 }
 
 // ── Opt-out ──

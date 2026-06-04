@@ -60,18 +60,27 @@ Copie a URL HTTPS gerada e cole no dashboard (aba Clientes → ⚙ Config WhatsA
 
 ---
 
-## Aquecimento do número (importante)
+## Aquecimento do número (automático)
 
-Número novo não pode disparar 40 msgs no dia 1. Suba gradual editando `DAILY_CAP`:
+Número novo não pode disparar 40 msgs no dia 1. O serviço faz isso **sozinho**:
+o limite efetivo sobe gradual de ~25% (dia 1) até 100% no dia `WARMUP_DAYS`.
 
-| Dias | DAILY_CAP sugerido |
-|------|--------------------|
-| 1-3  | 10 |
-| 4-7  | 20 |
-| 8-14 | 30 |
-| 15+  | 40-50 |
+Com `DAILY_CAP=40` e `WARMUP_DAYS=7`, o limite real por dia fica aproximadamente:
 
-Reinicie o serviço após mudar o `.env` (`pm2 restart javari-wa`).
+| Dia | Limite efetivo |
+|-----|----------------|
+| 1   | 10 |
+| 2   | 11 |
+| 3   | 17 |
+| 4   | 23 |
+| 5   | 29 |
+| 6   | 34 |
+| 7+  | 40 |
+
+O "dia 1" é a primeira vez que o serviço roda (gravado em `data/state.json`).
+Não precisa editar nada manualmente — só ajuste `DAILY_CAP`/`WARMUP_DAYS` se quiser outro ritmo.
+
+> A máquina **deve estar no fuso horário de Brasília** (a virada do contador diário e a janela de horário usam a hora local da máquina).
 
 ---
 

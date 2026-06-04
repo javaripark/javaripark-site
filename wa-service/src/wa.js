@@ -34,56 +34,85 @@ export function toJid(raw) {
   return { digits: '55' + d, jid: '55' + d + '@s.whatsapp.net' };
 }
 
+let connecting = false; // evita startWA() concorrentes empilhando sockets
+
+// Opt-out só dispara se a mensagem FOR a palavra-chave (ou começar com ela),
+// não se a palavra aparecer no meio de uma frase ("não vou PARAR de elogiar").
+function isOptOutMessage(text) {
+  const t = text.trim().toUpperCase();
+  // Casa se a mensagem É a palavra-chave, ou COMEÇA com ela seguida de
+  // qualquer caractere que não seja letra (espaço, vírgula, ponto, etc).
+  // Não casa "PARARAM" nem "PARAR" no meio de uma frase.
+  return config.optoutKeywords.some(k => {
+    if (t === k) return true;
+    if (!t.startsWith(k)) return false;
+    const next = t.charAt(k.length);
+    return !/[A-ZÀ-Ú]/.test(next); // próximo char não é letra
+  });
+}
+
 export async function startWA() {
-  const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
-  const { version } = await fetchLatestBaileysVersion();
+  if (connecting) { console.log('… startWA já em andamento, ignorando chamada duplicada.'); return sock; }
+  connecting = true;
 
-  sock = makeWASocket({
-    version,
-    auth: authState,
-    logger,
-    printQRInTerminal: false,
-    markOnlineOnConnect: false,
-  });
+  // Limpa socket anterior antes de criar um novo (evita listeners/sockets empilhados)
+  if (sock) {
+    try { sock.ev.removeAllListeners(); sock.end?.(); } catch {}
+    sock = null;
+  }
 
-  sock.ev.on('creds.update', saveCreds);
+  try {
+    const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+    const { version } = await fetchLatestBaileysVersion();
 
-  sock.ev.on('connection.update', async (u) => {
-    const { connection, lastDisconnect, qr } = u;
-    if (qr) {
-      state.qrDataUrl = await qrcode.toDataURL(qr);
-      console.log('📱 QR gerado. Acesse GET /qr ou escaneie no terminal abaixo:');
-      // Também imprime no terminal pra teste local
-      try { console.log(await qrcode.toString(qr, { type: 'terminal', small: true })); } catch {}
-    }
-    if (connection === 'open') {
-      state.connected = true;
-      state.qrDataUrl = null;
-      state.me = sock.user?.id?.split(':')[0] || null;
-      console.log(`✅ Conectado como ${state.me}`);
-    }
-    if (connection === 'close') {
-      state.connected = false;
-      const code = lastDisconnect?.error?.output?.statusCode;
-      const loggedOut = code === DisconnectReason.loggedOut;
-      console.log(`⚠  Conexão fechada (code ${code}).${loggedOut ? ' Deslogado — precisa re-parear.' : ' Reconectando...'}`);
-      if (!loggedOut) setTimeout(() => startWA().catch(e => console.error('Erro reconnect:', e)), 3000);
-    }
-  });
+    sock = makeWASocket({
+      version,
+      auth: authState,
+      logger,
+      printQRInTerminal: false,
+      markOnlineOnConnect: false,
+    });
 
-  // Opt-out automático: cliente respondeu PARAR/SAIR/etc
-  sock.ev.on('messages.upsert', ({ messages }) => {
-    for (const m of messages) {
-      if (!m.message || m.key.fromMe) continue;
-      const text = (m.message.conversation || m.message.extendedTextMessage?.text || '').trim().toUpperCase();
-      if (config.optoutKeywords.some(k => text === k || text.includes(k))) {
-        const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
-        if (num && addOptOut(num)) console.log(`🚫 Opt-out automático: ${num}`);
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', async (u) => {
+      const { connection, lastDisconnect, qr } = u;
+      if (qr) {
+        state.qrDataUrl = await qrcode.toDataURL(qr);
+        console.log('📱 QR gerado. Acesse GET /qr ou escaneie no terminal abaixo:');
+        try { console.log(await qrcode.toString(qr, { type: 'terminal', small: true })); } catch {}
       }
-    }
-  });
+      if (connection === 'open') {
+        state.connected = true;
+        state.qrDataUrl = null;
+        state.me = sock.user?.id?.split(':')[0] || null;
+        console.log(`✅ Conectado como ${state.me}`);
+      }
+      if (connection === 'close') {
+        state.connected = false;
+        const code = lastDisconnect?.error?.output?.statusCode;
+        const loggedOut = code === DisconnectReason.loggedOut;
+        console.log(`⚠  Conexão fechada (code ${code}).${loggedOut ? ' Deslogado — precisa re-parear.' : ' Reconectando...'}`);
+        if (!loggedOut) setTimeout(() => startWA().catch(e => console.error('Erro reconnect:', e)), 3000);
+      }
+    });
 
-  return sock;
+    // Opt-out automático: cliente respondeu PARAR/SAIR/etc
+    sock.ev.on('messages.upsert', ({ messages }) => {
+      for (const m of messages) {
+        if (!m.message || m.key.fromMe) continue;
+        const text = m.message.conversation || m.message.extendedTextMessage?.text || '';
+        if (isOptOutMessage(text)) {
+          const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
+          if (num && addOptOut(num)) console.log(`🚫 Opt-out automático: ${num}`);
+        }
+      }
+    });
+
+    return sock;
+  } finally {
+    connecting = false;
+  }
 }
 
 // Envia uma mensagem de texto. Retorna {ok, reason}
