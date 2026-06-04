@@ -355,7 +355,8 @@ def query_sales_data(db_path):
             "formasPagamento": {"pix": 0, "credito": 0, "debito": 0, "dinheiro": 0, "outros": 0},
             "porCategoria": [],
             "porHora": [],
-            "topProdutos": []
+            "topProdutos": [],
+            "topProdutosPorCategoria": {}
         }
 
     print(f"Found {len(daily_data)} days of sales data")
@@ -456,7 +457,7 @@ def query_sales_data(db_path):
         except Exception as e:
             print(f"  Hourly query failed: {e}")
 
-    # 4. Top products per day
+    # 4. Top products per day (with real ETIQUETAS categories)
     if items_table and products_table:
         item_cols = get_columns(cur, items_table)
         print(f"Item columns: {item_cols}")
@@ -470,29 +471,82 @@ def query_sales_data(db_path):
                                                   "ID_VENDA", "COD_VENDA", "MOVIMENTO_ID"])
         item_name_col = find_column(item_cols, ["NOMEPRODUTO", "NOME_PRODUTO"])
 
-        # ITENSPEDIDO has NOMEPRODUTO directly — use it if available
-        if item_qty_col and item_total_col and item_sale_col and item_name_col:
-            print("Querying product sales (using item names)...")
+        # Build ETIQUETAS category map for product-level category resolution
+        etiqueta_table = find_table(tables, ["ETIQUETAS", "ETIQUETA"])
+        etiqueta_map = {}
+        if etiqueta_table:
+            e_cols = get_columns(cur, etiqueta_table)
+            print(f"ETIQUETAS columns: {e_cols}")
+            e_pk = find_column(e_cols, ["CODIGO", "ID"])
+            e_desc = find_column(e_cols, ["DESCRICAO", "NOME"])
+            if e_pk and e_desc:
+                try:
+                    cur.execute(f"SELECT {e_pk}, {e_desc} FROM {etiqueta_table}")
+                    for row in cur.fetchall():
+                        etiqueta_map[row[0]] = str(row[1] or "").strip()
+                    print(f"  Loaded {len(etiqueta_map)} etiquetas: {etiqueta_map}")
+                except Exception as e:
+                    print(f"  Failed to load ETIQUETAS: {e}")
 
+        # Discover PRODUTOS columns for the join
+        prod_cols = get_columns(cur, products_table)
+        print(f"PRODUTOS columns: {prod_cols}")
+        p_pk = find_column(prod_cols, ["CODIGO", "ID"])
+        p_etiqueta_col = find_column(prod_cols, ["CODIGOETIQUETA", "ETIQUETA_ID", "IDETIQUETA"])
+
+        # Discover PRODUTODETALHE columns for join path
+        prod_detail_table = find_table(tables, ["PRODUTODETALHE"])
+        pd_cols = get_columns(cur, prod_detail_table) if prod_detail_table else []
+        pd_pk = find_column(pd_cols, ["CODIGO", "ID"]) if pd_cols else None
+        pd_prod_fk = find_column(pd_cols, ["CODIGOPRODUTO", "PRODUTO_ID", "IDPRODUTO"]) if pd_cols else None
+
+        # Prefer joining through PRODUTODETALHE -> PRODUTOS -> ETIQUETAS for real categories
+        if item_qty_col and item_total_col and item_sale_col and item_name_col:
             joined_status = ""
             if delete_col:
                 joined_status = f"AND v.{delete_col} IS NULL"
             elif status_col:
                 joined_status = f"AND v.{status_col} NOT IN ('C', 'CANCELADA', 'CANCELADO')"
 
-            sql = f"""
-                SELECT CAST(v.{date_col} AS DATE), i.{item_name_col}, 'Sem categoria',
-                       SUM(i.{item_qty_col}), SUM(i.{item_total_col})
-                FROM {items_table} i
-                JOIN {sales_table} v ON v.{sales_pk or 'CODIGO'} = i.{item_sale_col}
-                WHERE i.{item_total_col} > 0 AND i.{item_name_col} IS NOT NULL {joined_status}
-                GROUP BY CAST(v.{date_col} AS DATE), i.{item_name_col}
-                ORDER BY CAST(v.{date_col} AS DATE), SUM(i.{item_total_col}) DESC
-            """
+            # Try the full join: ITENSPEDIDO -> PRODUTODETALHE -> PRODUTOS -> ETIQUETAS
+            use_etiqueta_join = (etiqueta_map and prod_detail_table and item_prod_col
+                                 and pd_pk and pd_prod_fk and p_pk and p_etiqueta_col)
+
+            if use_etiqueta_join:
+                print("Querying product sales (with ETIQUETAS categories)...")
+                sql = f"""
+                    SELECT CAST(v.{date_col} AS DATE),
+                           i.{item_name_col},
+                           e.{e_desc},
+                           SUM(i.{item_qty_col}),
+                           SUM(i.{item_total_col})
+                    FROM {items_table} i
+                    JOIN {sales_table} v ON v.{sales_pk or 'CODIGO'} = i.{item_sale_col}
+                    LEFT JOIN {prod_detail_table} pd ON pd.{pd_pk} = i.{item_prod_col}
+                    LEFT JOIN {products_table} p ON p.{p_pk} = pd.{pd_prod_fk}
+                    LEFT JOIN {etiqueta_table} e ON e.{e_pk} = p.{p_etiqueta_col}
+                    WHERE i.{item_total_col} > 0 AND i.{item_name_col} IS NOT NULL {joined_status}
+                    GROUP BY CAST(v.{date_col} AS DATE), i.{item_name_col}, e.{e_desc}
+                    ORDER BY CAST(v.{date_col} AS DATE), SUM(i.{item_total_col}) DESC
+                """
+            else:
+                print("Querying product sales (no ETIQUETAS join available, falling back)...")
+                sql = f"""
+                    SELECT CAST(v.{date_col} AS DATE), i.{item_name_col}, NULL,
+                           SUM(i.{item_qty_col}), SUM(i.{item_total_col})
+                    FROM {items_table} i
+                    JOIN {sales_table} v ON v.{sales_pk or 'CODIGO'} = i.{item_sale_col}
+                    WHERE i.{item_total_col} > 0 AND i.{item_name_col} IS NOT NULL {joined_status}
+                    GROUP BY CAST(v.{date_col} AS DATE), i.{item_name_col}
+                    ORDER BY CAST(v.{date_col} AS DATE), SUM(i.{item_total_col}) DESC
+                """
+
             try:
                 cur.execute(sql)
                 day_products = defaultdict(list)
                 day_categories = defaultdict(lambda: defaultdict(lambda: {"faturamento": 0, "qtd": 0}))
+                # Track products per category per day for topProdutosPorCategoria
+                day_cat_products = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "faturamento": 0})))
 
                 for row in cur.fetchall():
                     dt = row[0]
@@ -502,13 +556,15 @@ def query_sales_data(db_path):
                     if date_str not in daily_data:
                         continue
                     prod_name = (str(row[1] or "")).strip()
-                    cat_name = (str(row[2] or "Sem categoria")).strip()
+                    cat_name = (str(row[2] or "")).strip() or "Sem categoria"
                     qty = float(row[3] or 0)
                     total = float(row[4] or 0)
 
-                    day_products[date_str].append({"nome": prod_name, "qtd": qty, "faturamento": total})
+                    day_products[date_str].append({"nome": prod_name, "categoria": cat_name, "qtd": qty, "faturamento": total})
                     day_categories[date_str][cat_name]["faturamento"] += total
                     day_categories[date_str][cat_name]["qtd"] += qty
+                    day_cat_products[date_str][cat_name][prod_name]["qtd"] += qty
+                    day_cat_products[date_str][cat_name][prod_name]["faturamento"] += total
 
                 for date_str in daily_data:
                     prods = day_products.get(date_str, [])
@@ -520,8 +576,23 @@ def query_sales_data(db_path):
                         {"nome": k, "faturamento": v["faturamento"], "qtd": v["qtd"]}
                         for k, v in sorted(cats.items(), key=lambda x: x[1]["faturamento"], reverse=True)
                     ]
+
+                    # Build topProdutosPorCategoria: { "Drinks": [...], "Grill": [...], ... }
+                    cat_prods = day_cat_products.get(date_str, {})
+                    top_by_cat = {}
+                    for cat, prods_in_cat in cat_prods.items():
+                        items_sorted = sorted(
+                            [{"nome": pn, "qtd": pv["qtd"], "faturamento": pv["faturamento"]}
+                             for pn, pv in prods_in_cat.items()],
+                            key=lambda x: x["faturamento"], reverse=True
+                        )
+                        top_by_cat[cat] = items_sorted[:10]
+                    daily_data[date_str]["topProdutosPorCategoria"] = top_by_cat
+
             except Exception as e:
                 print(f"  Product query failed: {e}")
+                import traceback
+                traceback.print_exc()
 
     con.close()
     return daily_data
@@ -905,38 +976,42 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
             json.dump(fin, f, ensure_ascii=False)
         print(f"  Wrote {fin_path}")
 
-    # 3. clientes.json — extract from the same database
+    # 3. clientes.json — extract from CONTATOS table
     try:
         con = fdb.connect(database=db_path, user="SYSDBA", password="masterkey", charset="WIN1252")
         cur = con.cursor()
         tables = [row[0].strip() for row in cur.execute(
             "SELECT RDB$RELATION_NAME FROM RDB$RELATIONS WHERE RDB$SYSTEM_FLAG=0").fetchall()]
 
-        pessoa_table = find_table(tables, ["PESSOA", "PESSOAS", "CLIENTE", "CLIENTES"])
-        if pessoa_table:
-            cols = get_columns(cur, pessoa_table)
+        contatos_table = find_table(tables, ["CONTATOS", "CONTATO", "PESSOA", "PESSOAS", "CLIENTE", "CLIENTES"])
+        if contatos_table:
+            cols = get_columns(cur, contatos_table)
+            print(f"CONTATOS columns ({contatos_table}): {cols}")
             nome_col = find_column(cols, ["NOME", "RAZAOSOCIAL", "RAZAO_SOCIAL", "NOMECLIENTE"])
-            tel_col = find_column(cols, ["TELEFONE", "CELULAR", "FONE", "TEL"])
+            tel_col = find_column(cols, ["FONECELULAR", "TELEFONE", "CELULAR", "FONE", "TEL"])
             nasc_col = find_column(cols, ["DATANASCIMENTO", "NASCIMENTO", "DATA_NASCIMENTO", "DTNASC"])
-            pk_col = find_column(cols, ["ID", "CODIGO", "IDPESSOA", "COD"])
+            pk_col = find_column(cols, ["CODIGO", "ID", "IDCONTATO", "IDPESSOA", "COD"])
+            sexo_col = find_column(cols, ["SEXO", "GENERO"])
+            delete_col_c = find_column(cols, ["DATADELETE"])
 
             if nome_col:
-                # Get spending data per client
+                # Get spending data per client using CODIGOCONTATOCLIENTE from PEDIDOS
                 spending = {}
                 sales_table = find_table(tables, ["PEDIDOS", "PEDIDO", "VENDA", "VENDAS"])
                 if sales_table:
                     s_cols = get_columns(cur, sales_table)
-                    s_pessoa = find_column(s_cols, ["IDPESSOA", "PESSOA_ID", "CLIENTE_ID", "ID_PESSOA", "IDCLIENTE"])
+                    s_contato = find_column(s_cols, ["CODIGOCONTATOCLIENTE", "IDPESSOA", "PESSOA_ID",
+                                                      "CLIENTE_ID", "ID_PESSOA", "IDCLIENTE"])
                     s_total = find_column(s_cols, ["VALORTOTAL", "TOTAL", "TOTALFINAL", "TOTALPEDIDO", "SUBTOTALPAGO"])
                     s_date = find_column(s_cols, ["DATA", "DATAABERTURA", "DATAFECHAMENTO", "DATAPEDIDO", "DATAHORAPEDIDO"])
                     s_delete = find_column(s_cols, ["DATADELETE"])
-                    if s_pessoa and s_total:
+                    if s_contato and s_total:
                         del_filter = f"AND {s_delete} IS NULL" if s_delete else ""
                         cur.execute(f"""
-                            SELECT {s_pessoa}, COUNT(*), SUM({s_total}), MAX({s_date})
+                            SELECT {s_contato}, COUNT(*), SUM({s_total}), MAX({s_date})
                             FROM {sales_table}
                             WHERE {s_total} > 0 {del_filter}
-                            GROUP BY {s_pessoa}
+                            GROUP BY {s_contato}
                         """)
                         for row in cur.fetchall():
                             pid = row[0]
@@ -956,11 +1031,20 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
                 if pk_col: select_cols.insert(0, pk_col)
                 if tel_col: select_cols.append(tel_col)
                 if nasc_col: select_cols.append(nasc_col)
+                if sexo_col: select_cols.append(sexo_col)
 
-                cur.execute(f"SELECT {', '.join(select_cols)} FROM {pessoa_table} WHERE {nome_col} IS NOT NULL ORDER BY {nome_col}")
+                # Filter: non-null name, not deleted, not starting with '* Exclu'
+                where_parts = [f"{nome_col} IS NOT NULL"]
+                if delete_col_c:
+                    where_parts.append(f"{delete_col_c} IS NULL")
+                where_parts.append(f"{nome_col} NOT LIKE '* Exclu%'")
+                where_clause = " AND ".join(where_parts)
+
+                cur.execute(f"SELECT {', '.join(select_cols)} FROM {contatos_table} WHERE {where_clause} ORDER BY {nome_col}")
                 contatos = []
                 com_tel = 0
                 com_nasc = 0
+                com_sexo = 0
                 aniv_por_mes = [0] * 12
                 for row in cur.fetchall():
                     idx = 0
@@ -979,11 +1063,19 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
                                 nascimento = raw.strftime("%Y-%m-%d")
                             else:
                                 nascimento = str(raw)[:10]
+                    sexo = None
+                    if sexo_col:
+                        raw_sexo = row[idx]; idx += 1
+                        if raw_sexo:
+                            sexo = str(raw_sexo).strip()
 
                     if not nome or nome.upper() in ("NONE", "NULL", ""):
                         continue
+                    # Double-check exclusion filter (belt and suspenders)
+                    if nome.startswith("* Exclu"):
+                        continue
 
-                    c = {"nome": nome, "telefone": telefone, "nascimento": nascimento}
+                    c = {"nome": nome, "telefone": telefone, "nascimento": nascimento, "sexo": sexo}
                     sp = spending.get(pid, {})
                     c["totalGasto"] = sp.get("totalGasto", 0)
                     c["pedidos"] = sp.get("pedidos", 0)
@@ -998,19 +1090,22 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
                             aniv_por_mes[m - 1] += 1
                         except (IndexError, ValueError):
                             pass
+                    if sexo:
+                        com_sexo += 1
 
                 cli_data = {
                     "syncedAt": now_iso,
                     "totalContatos": len(contatos),
                     "comTelefone": com_tel,
                     "comNascimento": com_nasc,
+                    "comSexo": com_sexo,
                     "aniversariosPorMes": aniv_por_mes,
                     "contatos": contatos,
                 }
                 cli_path = os.path.join(data_dir, "clientes.json")
                 with open(cli_path, "w", encoding="utf-8") as f:
                     json.dump(cli_data, f, ensure_ascii=False)
-                print(f"  Wrote {cli_path} ({len(contatos)} contatos)")
+                print(f"  Wrote {cli_path} ({len(contatos)} contatos, {com_tel} com tel, {com_sexo} com sexo)")
 
         # 4. produtos-consumer.json + estoque.json + cardapio.json
         prod_detail = find_table(tables, ["PRODUTODETALHE"])
