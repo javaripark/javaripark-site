@@ -853,6 +853,256 @@ def upload_to_firestore(daily_data, financial_data=None, sync_meta=None):
 
 
 # ---------------------------------------------------------------------------
+# Static JSON export (for GitHub Pages dashboard)
+# ---------------------------------------------------------------------------
+def write_static_json(daily_data, financial_data, db_path, repo_root):
+    """Write static JSON files to public/data/ for the dashboard."""
+    import firebird.driver as fdb
+
+    data_dir = os.path.join(repo_root, "public", "data")
+    os.makedirs(data_dir, exist_ok=True)
+    now_iso = datetime.utcnow().isoformat()
+
+    # 1. faturamento.json — array sorted by date
+    fat_array = []
+    for date_str in sorted(daily_data.keys()):
+        entry = dict(daily_data[date_str])
+        entry["date"] = date_str
+        fat_array.append(entry)
+
+    fat_path = os.path.join(data_dir, "faturamento.json")
+    with open(fat_path, "w", encoding="utf-8") as f:
+        json.dump(fat_array, f, ensure_ascii=False)
+    print(f"  Wrote {fat_path} ({len(fat_array)} days)")
+
+    # 2. financeiro.json — flat object with contas_pagar, fornecedores, compras, resumo, resumoMensal
+    if financial_data:
+        fin = dict(financial_data)
+        # Build resumoMensal from contas_pagar
+        cp_items = fin.get("contas_pagar", {}).get("items", [])
+        monthly = defaultdict(lambda: {"receita": 0, "despesa": 0})
+        for item in cp_items:
+            venc = item.get("vencimento", "")[:7]  # YYYY-MM
+            if venc:
+                monthly[venc]["despesa"] += item.get("valor", 0)
+        # Add revenue from faturamento
+        for date_str, data in daily_data.items():
+            mes = date_str[:7]
+            monthly[mes]["receita"] += data.get("faturamento", 0)
+        fin["resumoMensal"] = [{"mes": k, "receita": round(v["receita"], 2), "despesa": round(v["despesa"], 2)}
+                               for k, v in sorted(monthly.items())]
+        # resumo
+        total_despesa = sum(i.get("valor", 0) for i in cp_items)
+        total_pago = sum(i.get("valorPago", 0) for i in cp_items if i.get("status") == "pago")
+        fin["resumo"] = {
+            "totalContas": len(cp_items),
+            "totalDespesa": round(total_despesa, 2),
+            "totalPago": round(total_pago, 2),
+        }
+
+        fin_path = os.path.join(data_dir, "financeiro.json")
+        with open(fin_path, "w", encoding="utf-8") as f:
+            json.dump(fin, f, ensure_ascii=False)
+        print(f"  Wrote {fin_path}")
+
+    # 3. clientes.json — extract from the same database
+    try:
+        con = fdb.connect(database=db_path, user="SYSDBA", password="masterkey", charset="WIN1252")
+        cur = con.cursor()
+        tables = [row[0].strip() for row in cur.execute(
+            "SELECT RDB$RELATION_NAME FROM RDB$RELATIONS WHERE RDB$SYSTEM_FLAG=0").fetchall()]
+
+        pessoa_table = find_table(tables, ["PESSOA", "PESSOAS", "CLIENTE", "CLIENTES"])
+        if pessoa_table:
+            cols = get_columns(cur, pessoa_table)
+            nome_col = find_column(cols, ["NOME", "RAZAOSOCIAL", "RAZAO_SOCIAL", "NOMECLIENTE"])
+            tel_col = find_column(cols, ["TELEFONE", "CELULAR", "FONE", "TEL"])
+            nasc_col = find_column(cols, ["DATANASCIMENTO", "NASCIMENTO", "DATA_NASCIMENTO", "DTNASC"])
+            pk_col = find_column(cols, ["ID", "CODIGO", "IDPESSOA", "COD"])
+
+            if nome_col:
+                # Get spending data per client
+                spending = {}
+                sales_table = find_table(tables, ["PEDIDOS", "PEDIDO", "VENDA", "VENDAS"])
+                if sales_table:
+                    s_cols = get_columns(cur, sales_table)
+                    s_pessoa = find_column(s_cols, ["IDPESSOA", "PESSOA_ID", "CLIENTE_ID", "ID_PESSOA", "IDCLIENTE"])
+                    s_total = find_column(s_cols, ["VALORTOTAL", "TOTAL", "TOTALFINAL", "TOTALPEDIDO", "SUBTOTALPAGO"])
+                    s_date = find_column(s_cols, ["DATA", "DATAABERTURA", "DATAFECHAMENTO", "DATAPEDIDO", "DATAHORAPEDIDO"])
+                    s_delete = find_column(s_cols, ["DATADELETE"])
+                    if s_pessoa and s_total:
+                        del_filter = f"AND {s_delete} IS NULL" if s_delete else ""
+                        cur.execute(f"""
+                            SELECT {s_pessoa}, COUNT(*), SUM({s_total}), MAX({s_date})
+                            FROM {sales_table}
+                            WHERE {s_total} > 0 {del_filter}
+                            GROUP BY {s_pessoa}
+                        """)
+                        for row in cur.fetchall():
+                            pid = row[0]
+                            if pid:
+                                last_dt = row[3]
+                                if isinstance(last_dt, datetime):
+                                    last_str = last_dt.strftime("%Y-%m-%d")
+                                else:
+                                    last_str = str(last_dt or "")[:10]
+                                spending[pid] = {
+                                    "pedidos": int(row[1] or 0),
+                                    "totalGasto": round(float(row[2] or 0), 2),
+                                    "ultimoPedido": last_str,
+                                }
+
+                select_cols = [nome_col]
+                if pk_col: select_cols.insert(0, pk_col)
+                if tel_col: select_cols.append(tel_col)
+                if nasc_col: select_cols.append(nasc_col)
+
+                cur.execute(f"SELECT {', '.join(select_cols)} FROM {pessoa_table} WHERE {nome_col} IS NOT NULL ORDER BY {nome_col}")
+                contatos = []
+                com_tel = 0
+                com_nasc = 0
+                aniv_por_mes = [0] * 12
+                for row in cur.fetchall():
+                    idx = 0
+                    pid = None
+                    if pk_col:
+                        pid = row[idx]; idx += 1
+                    nome = str(row[idx] or "").strip(); idx += 1
+                    telefone = ""
+                    if tel_col:
+                        telefone = str(row[idx] or "").strip(); idx += 1
+                    nascimento = ""
+                    if nasc_col:
+                        raw = row[idx]; idx += 1
+                        if raw:
+                            if isinstance(raw, datetime):
+                                nascimento = raw.strftime("%Y-%m-%d")
+                            else:
+                                nascimento = str(raw)[:10]
+
+                    if not nome or nome.upper() in ("NONE", "NULL", ""):
+                        continue
+
+                    c = {"nome": nome, "telefone": telefone, "nascimento": nascimento}
+                    sp = spending.get(pid, {})
+                    c["totalGasto"] = sp.get("totalGasto", 0)
+                    c["pedidos"] = sp.get("pedidos", 0)
+                    c["ultimoPedido"] = sp.get("ultimoPedido", "")
+                    contatos.append(c)
+                    if telefone:
+                        com_tel += 1
+                    if nascimento:
+                        com_nasc += 1
+                        try:
+                            m = int(nascimento.split("-")[1])
+                            aniv_por_mes[m - 1] += 1
+                        except (IndexError, ValueError):
+                            pass
+
+                cli_data = {
+                    "syncedAt": now_iso,
+                    "totalContatos": len(contatos),
+                    "comTelefone": com_tel,
+                    "comNascimento": com_nasc,
+                    "aniversariosPorMes": aniv_por_mes,
+                    "contatos": contatos,
+                }
+                cli_path = os.path.join(data_dir, "clientes.json")
+                with open(cli_path, "w", encoding="utf-8") as f:
+                    json.dump(cli_data, f, ensure_ascii=False)
+                print(f"  Wrote {cli_path} ({len(contatos)} contatos)")
+
+        # 4. produtos-consumer.json + estoque.json
+        prod_detail = find_table(tables, ["PRODUTODETALHE"])
+        prod_table = find_table(tables, ["PRODUTOS"])
+        if prod_detail and prod_table:
+            pd_cols = get_columns(cur, prod_detail)
+            p_cols = get_columns(cur, prod_table)
+
+            pd_pk = find_column(pd_cols, ["CODIGO", "ID"])
+            pd_prod = find_column(pd_cols, ["CODIGOPRODUTO", "PRODUTO_ID", "IDPRODUTO"])
+            pd_est_atual = find_column(pd_cols, ["ESTOQUEATUAL"])
+            pd_est_min = find_column(pd_cols, ["ESTOQUEMINIMO"])
+            pd_preco_custo = find_column(pd_cols, ["PRECOCUSTO"])
+            pd_preco_venda = find_column(pd_cols, ["PRECOVENDA"])
+            p_nome = find_column(p_cols, ["NOME", "DESCRICAO"])
+            p_tipo = find_column(p_cols, ["TIPO"])
+
+            # Products
+            cur.execute(f"""
+                SELECT pd.{pd_pk}, pd.{pd_prod}, p.{p_nome},
+                       COALESCE(pd.{pd_est_atual}, 0), COALESCE(pd.{pd_est_min}, 0),
+                       COALESCE(pd.{pd_preco_custo}, 0), COALESCE(pd.{pd_preco_venda}, 0)
+                FROM {prod_detail} pd
+                LEFT JOIN {prod_table} p ON pd.{pd_prod} = p.CODIGO
+                ORDER BY p.{p_nome}
+            """)
+            produtos = []
+            insumos = []
+            estoque_itens = []
+            for row in cur.fetchall():
+                pd_code = row[0]
+                prod_code = row[1]
+                nome = str(row[2] or "").strip()
+                est_atual = float(row[3] or 0)
+                est_min = float(row[4] or 0)
+                preco_custo = float(row[5] or 0)
+                preco_venda = float(row[6] or 0)
+
+                if not nome:
+                    continue
+
+                item = {"codigo": prod_code, "nome": nome}
+                if preco_venda > 0:
+                    produtos.append(item)
+                else:
+                    insumos.append(item)
+
+                # Estoque
+                status = "ok"
+                if est_min > 0:
+                    if est_atual <= est_min:
+                        status = "baixo"
+                    elif est_atual <= est_min * 1.5:
+                        status = "atencao"
+                estoque_itens.append({
+                    "pdCodigo": pd_code,
+                    "prodCodigo": prod_code,
+                    "nome": nome,
+                    "estoqueAtual": est_atual,
+                    "estoqueMinimo": est_min,
+                    "precoCusto": preco_custo,
+                    "precoVenda": preco_venda,
+                    "status": status,
+                })
+
+            prod_path = os.path.join(data_dir, "produtos-consumer.json")
+            with open(prod_path, "w", encoding="utf-8") as f:
+                json.dump({"syncedAt": now_iso, "produtos": produtos, "insumos": insumos}, f, ensure_ascii=False)
+            print(f"  Wrote {prod_path} ({len(produtos)} produtos, {len(insumos)} insumos)")
+
+            est_baixo = sum(1 for i in estoque_itens if i["status"] == "baixo")
+            est_atencao = sum(1 for i in estoque_itens if i["status"] == "atencao")
+            est_path = os.path.join(data_dir, "estoque.json")
+            with open(est_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "syncedAt": now_iso,
+                    "totalItens": len(estoque_itens),
+                    "comMinimo": sum(1 for i in estoque_itens if i["estoqueMinimo"] > 0),
+                    "estoqueBaixo": est_baixo,
+                    "estoqueAtencao": est_atencao,
+                    "itens": estoque_itens,
+                }, f, ensure_ascii=False)
+            print(f"  Wrote {est_path} ({len(estoque_itens)} itens, {est_baixo} baixo, {est_atencao} atenção)")
+
+        con.close()
+    except Exception as e:
+        print(f"  Warning: could not extract clientes/produtos/estoque: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
@@ -861,13 +1111,17 @@ def main():
     now_brt = datetime.now(timezone.utc) + BRT_OFFSET
     now_brt = now_brt.replace(tzinfo=timezone(BRT_OFFSET))
 
+    # Detect repo root (for static JSON output)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(script_dir)
+
     print("=" * 60)
     print(f"Consumer Backup → Firestore Sync ({now_brt.strftime('%Y-%m-%d %H:%M BRT')})")
     print("=" * 60)
 
     with tempfile.TemporaryDirectory() as tmp:
         # 1. Select and download from Google Drive
-        print("\n[1/5] Selecting backup from Google Drive...")
+        print("\n[1/6] Selecting backup from Google Drive...")
         drive = get_drive_service()
         files = list_drive_backups(drive)
 
@@ -884,11 +1138,11 @@ def main():
         backup_path = download_file(drive, chosen, tmp)
 
         # 2. Restore Firebird database
-        print("\n[2/5] Restoring Firebird database...")
+        print("\n[2/6] Restoring Firebird database...")
         db_path = restore_firebird_backup(backup_path, tmp)
 
         # 3. Extract sales data
-        print("\n[3/5] Extracting sales data...")
+        print("\n[3/6] Extracting sales data...")
         daily_data = query_sales_data(db_path)
 
         if not daily_data:
@@ -900,7 +1154,7 @@ def main():
         print(f"Total revenue: R$ {total:,.2f}")
 
         # 4. Extract financial data
-        print("\n[4/5] Extracting financial data...")
+        print("\n[4/6] Extracting financial data...")
         financial_data = query_financial_data(db_path)
 
         if financial_data:
@@ -909,7 +1163,7 @@ def main():
             print("No financial data found (tables may not exist in this Consumer version)")
 
         # 5. Upload to Firestore
-        print("\n[5/5] Uploading to Firestore...")
+        print("\n[5/6] Uploading to Firestore...")
         sync_meta = {
             "arquivo": chosen["name"],
             "modificado": chosen["modifiedTime"],
@@ -920,6 +1174,10 @@ def main():
         if stale_warning:
             sync_meta["aviso"] = stale_warning.strip()
         upload_to_firestore(daily_data, financial_data, sync_meta)
+
+        # 6. Write static JSON files for dashboard
+        print("\n[6/6] Writing static JSON files...")
+        write_static_json(daily_data, financial_data, db_path, repo_root)
 
     print("\nDone!")
 

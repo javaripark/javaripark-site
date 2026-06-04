@@ -149,7 +149,18 @@
     </style>
 </head>
 <body>
-    <div class="container" id="app-container">
+    <!-- Dashboard password gate -->
+    <div id="dash-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:#111;display:flex;align-items:center;justify-content:center">
+        <div style="background:#fff;border-radius:16px;padding:36px 24px;width:90%;max-width:380px;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.3)">
+            <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Acesso Restrito</h2>
+            <p style="font-size:13px;color:#777;margin-bottom:20px">Este painel requer senha adicional.</p>
+            <input type="password" id="dash-pass" placeholder="Senha do dashboard" style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:12px" autocomplete="off">
+            <button id="dash-pass-btn" style="width:100%;padding:14px;background:#4f1964;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer">Entrar</button>
+            <p id="dash-pass-error" style="margin-top:12px;padding:8px;background:#fee2e2;color:#991b1b;border-radius:8px;font-size:13px;display:none">Senha incorreta</p>
+        </div>
+    </div>
+
+    <div class="container" id="app-container" style="display:none">
         <header class="header">
             <h1>Painel Administrativo</h1>
             <p id="user-email-display"></p>
@@ -364,6 +375,38 @@
         if (!session) { window.location.href = '/admin/index.html'; }
 
         const $ = id => document.getElementById(id);
+
+        // Dashboard password gate (separate from admin login)
+        const DASH_PASS = 'Rcastro@666';
+        const DASH_KEY = 'javari_dash_auth';
+        const DASH_TTL = 12 * 60 * 60 * 1000; // 12h
+        const dashAuth = JSON.parse(localStorage.getItem(DASH_KEY) || 'null');
+
+        if (dashAuth && dashAuth.ts && (Date.now() - dashAuth.ts < DASH_TTL)) {
+            // Already authenticated
+            $('dash-gate').style.display = 'none';
+            $('app-container').style.display = 'block';
+        } else {
+            localStorage.removeItem(DASH_KEY);
+            $('dash-gate').style.display = 'flex';
+            $('app-container').style.display = 'none';
+            $('dash-pass').focus();
+        }
+
+        function tryDashLogin() {
+            if ($('dash-pass').value === DASH_PASS) {
+                localStorage.setItem(DASH_KEY, JSON.stringify({ ts: Date.now() }));
+                $('dash-gate').style.display = 'none';
+                $('app-container').style.display = 'block';
+                $('dash-pass-error').style.display = 'none';
+            } else {
+                $('dash-pass-error').style.display = 'block';
+                $('dash-pass').value = '';
+                $('dash-pass').focus();
+            }
+        }
+        $('dash-pass-btn').addEventListener('click', tryDashLogin);
+        $('dash-pass').addEventListener('keydown', e => { if (e.key === 'Enter') tryDashLogin(); });
         let charts = {};
         let allDailyData = [];
         let financialData = null;
