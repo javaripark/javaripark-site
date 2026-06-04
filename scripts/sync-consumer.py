@@ -488,17 +488,20 @@ def query_sales_data(db_path):
                 except Exception as e:
                     print(f"  Failed to load ETIQUETAS: {e}")
 
-        # Discover PRODUTOS columns for the join
-        prod_cols = get_columns(cur, products_table)
-        print(f"PRODUTOS columns: {prod_cols}")
-        p_pk = find_column(prod_cols, ["CODIGO", "ID"])
-        p_etiqueta_col = find_column(prod_cols, ["CODIGOETIQUETA", "ETIQUETA_ID", "IDETIQUETA"])
+        # Discover PRODUTOS table (the actual products table, not PRODUTODETALHE)
+        # products_table from main query is PRODUTODETALHE; we need the real PRODUTOS for CODIGOETIQUETA
+        real_prod_table = find_table(tables, ["PRODUTOS"])
+        prod_cols = get_columns(cur, real_prod_table) if real_prod_table else []
+        print(f"PRODUTOS (real) columns: {prod_cols}")
+        p_pk = find_column(prod_cols, ["CODIGO", "ID"]) if prod_cols else None
+        p_etiqueta_col = find_column(prod_cols, ["CODIGOETIQUETA", "ETIQUETA_ID", "IDETIQUETA"]) if prod_cols else None
 
-        # Discover PRODUTODETALHE columns for join path
+        # PRODUTODETALHE columns for join path (ITENSPEDIDO.CODIGOPRODUTODETALHE → PRODUTODETALHE.CODIGO → PRODUTODETALHE.CODIGOPRODUTO → PRODUTOS.CODIGO)
         prod_detail_table = find_table(tables, ["PRODUTODETALHE"])
         pd_cols = get_columns(cur, prod_detail_table) if prod_detail_table else []
         pd_pk = find_column(pd_cols, ["CODIGO", "ID"]) if pd_cols else None
         pd_prod_fk = find_column(pd_cols, ["CODIGOPRODUTO", "PRODUTO_ID", "IDPRODUTO"]) if pd_cols else None
+        print(f"PRODUTODETALHE join: pk={pd_pk}, prod_fk={pd_prod_fk}")
 
         # Prefer joining through PRODUTODETALHE -> PRODUTOS -> ETIQUETAS for real categories
         if item_qty_col and item_total_col and item_sale_col and item_name_col:
@@ -509,11 +512,12 @@ def query_sales_data(db_path):
                 joined_status = f"AND v.{status_col} NOT IN ('C', 'CANCELADA', 'CANCELADO')"
 
             # Try the full join: ITENSPEDIDO -> PRODUTODETALHE -> PRODUTOS -> ETIQUETAS
-            use_etiqueta_join = (etiqueta_map and prod_detail_table and item_prod_col
-                                 and pd_pk and pd_prod_fk and p_pk and p_etiqueta_col)
+            use_etiqueta_join = (etiqueta_map and prod_detail_table and real_prod_table
+                                 and item_prod_col and pd_pk and pd_prod_fk
+                                 and p_pk and p_etiqueta_col)
 
             if use_etiqueta_join:
-                print("Querying product sales (with ETIQUETAS categories)...")
+                print(f"Querying product sales (with ETIQUETAS: i.{item_prod_col} → pd.{pd_pk} → pd.{pd_prod_fk} → p.{p_pk} → p.{p_etiqueta_col} → e.{e_pk})...")
                 sql = f"""
                     SELECT CAST(v.{date_col} AS DATE),
                            i.{item_name_col},
@@ -523,7 +527,7 @@ def query_sales_data(db_path):
                     FROM {items_table} i
                     JOIN {sales_table} v ON v.{sales_pk or 'CODIGO'} = i.{item_sale_col}
                     LEFT JOIN {prod_detail_table} pd ON pd.{pd_pk} = i.{item_prod_col}
-                    LEFT JOIN {products_table} p ON p.{p_pk} = pd.{pd_prod_fk}
+                    LEFT JOIN {real_prod_table} p ON p.{p_pk} = pd.{pd_prod_fk}
                     LEFT JOIN {etiqueta_table} e ON e.{e_pk} = p.{p_etiqueta_col}
                     WHERE i.{item_total_col} > 0 AND i.{item_name_col} IS NOT NULL {joined_status}
                     GROUP BY CAST(v.{date_col} AS DATE), i.{item_name_col}, e.{e_desc}
