@@ -250,6 +250,28 @@
                 <div id="weekday-empty" class="empty"><p>Sem dados.</p></div>
                 <div class="chart-box" style="max-height:200px"><canvas id="chart-weekday" style="display:none"></canvas></div>
             </div>
+
+            <div class="chart-grid">
+                <div class="card">
+                    <h3>Bar vs Cozinha</h3>
+                    <div class="kpi-grid" style="margin-bottom:8px">
+                        <div class="kpi-card"><div class="kpi-label">Bar</div><div class="kpi-value" id="sector-bar-val" style="color:#7c3aed">—</div><div class="kpi-sub" id="sector-bar-pct"></div></div>
+                        <div class="kpi-card"><div class="kpi-label">Cozinha</div><div class="kpi-value" id="sector-kitchen-val" style="color:#ea580c">—</div><div class="kpi-sub" id="sector-kitchen-pct"></div></div>
+                    </div>
+                    <div class="chart-box"><canvas id="chart-sectors"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>Top 5 por Setor</h3>
+                    <div style="margin-bottom:12px">
+                        <h4 style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:6px">Bar</h4>
+                        <div id="top5-bar"></div>
+                    </div>
+                    <div>
+                        <h4 style="font-size:11px;font-weight:700;color:#ea580c;text-transform:uppercase;margin-bottom:6px">Cozinha</h4>
+                        <div id="top5-kitchen"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== FINANCEIRO ==================== -->
@@ -311,8 +333,16 @@
 
             <div class="chart-grid">
                 <div class="card">
-                    <h3>Aniversariantes por Mês</h3>
-                    <div class="chart-box"><canvas id="chart-birthdays"></canvas></div>
+                    <h3>Perfil Demográfico</h3>
+                    <div class="kpi-grid" style="margin-bottom:8px">
+                        <div class="kpi-card"><div class="kpi-label">Mulheres</div><div class="kpi-value" id="demo-fem" style="color:#db2777">—</div><div class="kpi-sub" id="demo-fem-pct"></div></div>
+                        <div class="kpi-card"><div class="kpi-label">Homens</div><div class="kpi-value" id="demo-masc" style="color:#2563eb">—</div><div class="kpi-sub" id="demo-masc-pct"></div></div>
+                    </div>
+                    <div class="kpi-grid" style="margin-bottom:0">
+                        <div class="kpi-card"><div class="kpi-label">Idade Média</div><div class="kpi-value" id="demo-age">—</div><div class="kpi-sub">anos</div></div>
+                        <div class="kpi-card"><div class="kpi-label">Faixa Mais Comum</div><div class="kpi-value" id="demo-range" style="font-size:.9em">—</div><div class="kpi-sub" id="demo-range-pct"></div></div>
+                    </div>
+                    <div class="chart-box" style="margin-top:10px"><canvas id="chart-age-dist"></canvas></div>
                 </div>
                 <div class="card">
                     <h3>Fidelidade</h3>
@@ -321,13 +351,25 @@
             </div>
 
             <div class="card">
-                <h3>Próximos Aniversariantes (30 dias)</h3>
+                <h3>Aniversariantes por Mês</h3>
+                <div class="chart-box"><canvas id="chart-birthdays"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h3>Próximos Aniversariantes</h3>
                 <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#92400e">
-                    <strong>Mensagem WhatsApp:</strong>
-                    <textarea id="aniv-msg-template" rows="3" style="width:100%;margin-top:6px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:inherit;resize:vertical">Olá, {nome}! 🎂 Seu aniversário está chegando e queremos celebrar com você! Venha comemorar no Javari StrEat Park — preparamos algo especial pra você e seus convidados. Reserve sua mesa: wa.me/551120811544 🎉</textarea>
+                    <strong>Mensagem WhatsApp (editável — salva automaticamente):</strong>
+                    <textarea id="aniv-msg-template" rows="3" style="width:100%;margin-top:6px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:inherit;resize:vertical"></textarea>
                 </div>
                 <div class="table-controls">
-                    <input type="text" id="aniv-search" placeholder="Buscar nome…">
+                    <select id="aniv-range" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600">
+                        <option value="0">Hoje</option>
+                        <option value="1">Amanhã</option>
+                        <option value="7" selected>7 dias</option>
+                        <option value="15">15 dias</option>
+                        <option value="30">30 dias</option>
+                    </select>
+                    <input type="text" id="aniv-search" placeholder="Buscar nome…" style="flex:1">
                     <span class="table-count" id="aniv-count"></span>
                 </div>
                 <div id="aniv-table" class="table-wrap"></div>
@@ -344,6 +386,10 @@
 
             <div class="card">
                 <h3>Clientes por Fidelidade</h3>
+                <div style="background:#d1fae5;border:1px solid #10b981;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#065f46">
+                    <strong>Mensagem WhatsApp (editável — salva automaticamente):</strong>
+                    <textarea id="fid-msg-template" rows="3" style="width:100%;margin-top:6px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:inherit;resize:vertical"></textarea>
+                </div>
                 <div class="table-controls">
                     <select id="fid-filter" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600">
                         <option value="vip">VIP (10+ visitas)</option>
@@ -434,6 +480,44 @@
 
         $('user-email-display').textContent = session ? session.email : '';
         $('logoutBtn').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; });
+
+        // ── WhatsApp message templates (persist in localStorage) ──
+        const MSG_DEFAULTS = {
+            'aniv-msg-template': 'Olá, {nome}! 🎂 Seu aniversário está chegando e queremos celebrar com você! Venha comemorar no Javari StrEat Park — preparamos algo especial pra você e seus convidados. Reserve sua mesa: wa.me/551120811544 🎉',
+            'fid-msg-template': 'Olá, {nome}! Sentimos sua falta no Javari StrEat Park! 🍻 Que tal marcar uma visita? Estamos com novidades no cardápio e eventos especiais toda semana. Reserve: wa.me/551120811544'
+        };
+        Object.entries(MSG_DEFAULTS).forEach(([id, def]) => {
+            const saved = localStorage.getItem('javari_msg_' + id);
+            $(id).value = saved || def;
+            $(id).addEventListener('input', () => localStorage.setItem('javari_msg_' + id, $(id).value));
+        });
+
+        // ── Gender inference from Brazilian first names ──
+        const FEMALE_ENDINGS = ['a','ssa','nda','na','la','ra','cia','ria','nia','ia','ina','ene','ane','ice','ete','ilde','ude','ude'];
+        const MALE_NAMES = new Set(['LUCA','JOSUE','ANDRE','JORGE','MATHEUS','LUCAS','CARLOS','MARCOS','JONAS','NICOLAS','VINICIUS','MARCUS','THOMAS']);
+        const FEMALE_NAMES = new Set(['MABEL','RAQUEL','BEATRIZ','INGRID','SOLANGE','SUELI','MIRIAM','VIVIAN','KAREN','LILIAN','CARMEN']);
+        function inferGender(nome) {
+            if (!nome) return null;
+            const first = nome.split(' ')[0].toUpperCase().trim();
+            if (FEMALE_NAMES.has(first)) return 'F';
+            if (MALE_NAMES.has(first)) return 'M';
+            if (first.endsWith('A') || first.endsWith('E') && !first.endsWith('UE') && !first.endsWith('ME')) return 'F';
+            if (/[OEUIS]$/.test(first)) return 'M';
+            return null;
+        }
+
+        // ── Bar vs Kitchen classification ──
+        const BAR_CATS = new Set(['CERVEJAS','CACHAÇAS','CAIPIRINHA','DOSES E GARRAFAS','DRINKS CLÁSSICOS','DRINKS PRONTOS','GIN','NÃO ALCOÓLICOS','VINHOS E ESPUMANTES']);
+        const KITCHEN_CATS = new Set(['BAGUETES','FEIJOADA','PORÇÕES','SOBREMESAS','FESTA JUNINA']);
+        function classifySector(catName) {
+            const up = (catName || '').toUpperCase().trim();
+            if (BAR_CATS.has(up)) return 'bar';
+            if (KITCHEN_CATS.has(up)) return 'cozinha';
+            // Heuristic
+            if (/CERVEJ|DRINK|GIN|CAIPIR|CACHAÇ|VINHO|ESPUMANTE|WHISKY|VODKA|RUM|DOSE|LICOR|CHOPP|SUCO|REFRI|ÁGUA|ENERGÉTICO|CHÁ/.test(up)) return 'bar';
+            if (/PORÇ|BURGUER|HAMBUR|PIZZA|PRATO|SALAD|BAGUETE|FEIJOAD|SOBREMES|TORTA|BOLO|PASTEL|COXINHA|SALGAD/.test(up)) return 'cozinha';
+            return 'outros';
+        }
 
         // ── Section tabs ──
         document.querySelectorAll('.section-tab').forEach(tab => {
@@ -714,6 +798,9 @@
                 type:'bar',data:{labels:active.map(i=>names[i]),datasets:[{data:active.map(i=>avg[i]),backgroundColor:active.map(i=>`rgba(16,185,129,${0.3+(avg[i]/mx)*0.6})`),borderRadius:4}]},
                 options:{responsive:true,maintainAspectRatio:true,aspectRatio:3,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL(c.raw)+' (média)'}}},scales:{y:{ticks:{callback:v=>fmtBRL(v)},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}}
             });
+
+            // Bar vs Kitchen
+            renderBarVsKitchen(data);
         }
 
         // ── Financial rendering ──
@@ -882,6 +969,7 @@
             renderTopSpenders();
             renderMostFrequent();
             renderFidelityTable();
+            renderDemographics();
         }
 
         function getAnivWaLink(nome, telefone) {
@@ -895,12 +983,13 @@
         }
 
         function renderAnivTable() {
+            const maxDias = parseInt($('aniv-range')?.value || '7');
             const today = new Date();
             today.setHours(0,0,0,0);
             let anivs = allContatos
                 .map(c => {
                     const dias = calcDiasAte(c.nascimento);
-                    if (dias === null || dias > 30) return null;
+                    if (dias === null || dias > maxDias) return null;
                     const parts = c.nascimento.split('-');
                     return { ...c, dia: parseInt(parts[2]), mes: parseInt(parts[1]), diasAte: dias };
                 })
@@ -909,7 +998,8 @@
 
             const search = ($('aniv-search')?.value||'').toLowerCase();
             if (search) anivs = anivs.filter(a=>(a.nome||'').toLowerCase().includes(search));
-            $('aniv-count').textContent = `${anivs.length} aniversariante${anivs.length!==1?'s':''}`;
+            const label = maxDias === 0 ? 'hoje' : maxDias === 1 ? 'amanhã' : `próx. ${maxDias}d`;
+            $('aniv-count').textContent = `${anivs.length} aniversariante${anivs.length!==1?'s':''} (${label})`;
 
             if (anivs.length > 0) {
                 $('aniv-table').innerHTML = `<table class="fin-table" id="tbl-aniv"><thead><tr><th>Nome</th><th>Aniversário</th><th>Dias</th><th>Telefone</th><th class="amount">Gasto Total</th><th>Visitas</th><th>WhatsApp</th></tr></thead><tbody>${
@@ -920,7 +1010,7 @@
                 makeSortable($('tbl-aniv'));
                 addClientClickHandlers($('tbl-aniv'));
             } else {
-                $('aniv-table').innerHTML = '<p class="empty"><p>Nenhum aniversariante nos próximos 30 dias.</p></p>';
+                $('aniv-table').innerHTML = `<p class="empty">Nenhum aniversariante ${label}.</p>`;
             }
         }
 
@@ -1025,14 +1115,130 @@
             $('fid-count').textContent = `${clients.length} cliente${clients.length !== 1 ? 's' : ''}${clients.length > 200 ? ' (mostrando 200)' : ''}`;
 
             if (shown.length > 0) {
-                $('fid-table').innerHTML = `<table class="fin-table" id="tbl-fid"><thead><tr><th>#</th><th>Nome</th><th>Telefone</th><th class="amount">Total Gasto</th><th>Pedidos</th><th>Último Pedido</th></tr></thead><tbody>${
-                    shown.map((c, i) => `<tr class="clickable" data-nome="${esc(c.nome)}"><td>${i + 1}</td><td>${esc(c.nome)}</td><td>${fmtWhatsApp(c.telefone)}</td><td class="amount">${(c.totalGasto || 0) > 0 ? fmtBRLFull(c.totalGasto) : '—'}</td><td>${c.pedidos || 0}</td><td>${fmtDateBR(c.ultimoPedido)}</td></tr>`
+                $('fid-table').innerHTML = `<table class="fin-table" id="tbl-fid"><thead><tr><th>#</th><th>Nome</th><th>Telefone</th><th class="amount">Total Gasto</th><th>Pedidos</th><th>Último Pedido</th><th>WhatsApp</th></tr></thead><tbody>${
+                    shown.map((c, i) => `<tr class="clickable" data-nome="${esc(c.nome)}"><td>${i + 1}</td><td>${esc(c.nome)}</td><td>${fmtWhatsApp(c.telefone)}</td><td class="amount">${(c.totalGasto || 0) > 0 ? fmtBRLFull(c.totalGasto) : '—'}</td><td>${c.pedidos || 0}</td><td>${fmtDateBR(c.ultimoPedido)}</td><td>${getFidWaLink(c.nome, c.telefone)}</td></tr>`
                     ).join('')}</tbody></table>`;
                 makeSortable($('tbl-fid'));
                 addClientClickHandlers($('tbl-fid'));
             } else {
                 $('fid-table').innerHTML = '<p class="empty">Nenhum cliente nesta categoria.</p>';
             }
+        }
+
+        function getFidWaLink(nome, telefone) {
+            if (!telefone) return '';
+            const clean = telefone.replace(/\D/g, '');
+            if (clean.length < 10) return '';
+            const num = clean.startsWith('55') ? clean : '55' + clean;
+            const tpl = $('fid-msg-template')?.value || '';
+            const msg = encodeURIComponent(tpl.replace('{nome}', (nome||'').split(' ')[0]));
+            return `<a href="https://wa.me/${num}?text=${msg}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:#25D366;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap" title="Enviar mensagem">Enviar</a>`;
+        }
+
+        // ── Demographics ──
+        function renderDemographics() {
+            const withName = allContatos.filter(c => c.nome);
+            let fem = 0, masc = 0, unknown = 0;
+            withName.forEach(c => {
+                const g = c.sexo || inferGender(c.nome);
+                if (g === 'F') fem++;
+                else if (g === 'M') masc++;
+                else unknown++;
+            });
+            const total = fem + masc;
+            $('demo-fem').textContent = fem.toLocaleString('pt-BR');
+            $('demo-masc').textContent = masc.toLocaleString('pt-BR');
+            $('demo-fem-pct').textContent = total > 0 ? ((fem/total*100).toFixed(0) + '%') : '';
+            $('demo-masc-pct').textContent = total > 0 ? ((masc/total*100).toFixed(0) + '%') : '';
+
+            // Age
+            const thisYear = new Date().getFullYear();
+            const ages = allContatos
+                .filter(c => c.nascimento && c.nascimento !== 'None' && c.nascimento.length >= 4)
+                .map(c => thisYear - parseInt(c.nascimento.substring(0, 4)))
+                .filter(a => a > 10 && a < 100);
+
+            if (ages.length > 0) {
+                const avg = ages.reduce((s, a) => s + a, 0) / ages.length;
+                $('demo-age').textContent = Math.round(avg);
+
+                // Age distribution
+                const ranges = {'18-24':0,'25-29':0,'30-34':0,'35-39':0,'40-49':0,'50+':0};
+                ages.forEach(a => {
+                    if (a < 18) return;
+                    if (a <= 24) ranges['18-24']++;
+                    else if (a <= 29) ranges['25-29']++;
+                    else if (a <= 34) ranges['30-34']++;
+                    else if (a <= 39) ranges['35-39']++;
+                    else if (a <= 49) ranges['40-49']++;
+                    else ranges['50+']++;
+                });
+                const maxRange = Object.entries(ranges).sort((a,b) => b[1]-a[1])[0];
+                $('demo-range').textContent = maxRange[0];
+                $('demo-range-pct').textContent = ((maxRange[1]/ages.length*100).toFixed(0)) + '% dos clientes';
+
+                destroyChart('age-dist');
+                charts['age-dist'] = new Chart($('chart-age-dist'), {
+                    type: 'bar',
+                    data: { labels: Object.keys(ranges), datasets: [{ data: Object.values(ranges), backgroundColor: ['#818cf8','#6366f1','#4f46e5','#4338ca','#3730a3','#312e81'], borderRadius: 4 }] },
+                    options: { responsive:true, maintainAspectRatio:true, aspectRatio:1.8, plugins:{legend:{display:false}}, scales:{y:{grid:{color:'#f0f0f0'}},x:{grid:{display:false}}} }
+                });
+            }
+        }
+
+        // ── Bar vs Kitchen ──
+        function renderBarVsKitchen(data) {
+            const catTotals = {};
+            const prodByCat = {};
+
+            data.forEach(d => {
+                (d.porCategoria || []).forEach(c => {
+                    const name = c.nome || 'Sem categoria';
+                    catTotals[name] = (catTotals[name] || 0) + (c.faturamento || 0);
+                });
+                (d.topProdutos || []).forEach(p => {
+                    const cat = p.categoria || 'Sem categoria';
+                    if (!prodByCat[p.nome]) prodByCat[p.nome] = { nome: p.nome, cat, fat: 0 };
+                    prodByCat[p.nome].fat += (p.faturamento || 0);
+                });
+            });
+
+            let barTotal = 0, kitchenTotal = 0;
+            Object.entries(catTotals).forEach(([name, val]) => {
+                const sector = classifySector(name);
+                if (sector === 'bar') barTotal += val;
+                else if (sector === 'cozinha') kitchenTotal += val;
+            });
+
+            const grandTotal = barTotal + kitchenTotal;
+            $('sector-bar-val').textContent = fmtBRL(barTotal);
+            $('sector-kitchen-val').textContent = fmtBRL(kitchenTotal);
+            $('sector-bar-pct').textContent = grandTotal > 0 ? ((barTotal/grandTotal*100).toFixed(0) + '% do total') : '';
+            $('sector-kitchen-pct').textContent = grandTotal > 0 ? ((kitchenTotal/grandTotal*100).toFixed(0) + '% do total') : '';
+
+            destroyChart('sectors');
+            if (grandTotal > 0) {
+                charts.sectors = new Chart($('chart-sectors'), {
+                    type: 'doughnut',
+                    data: { labels: ['Bar', 'Cozinha'], datasets: [{ data: [barTotal, kitchenTotal], backgroundColor: ['#7c3aed','#ea580c'] }] },
+                    options: { responsive:true, maintainAspectRatio:true, aspectRatio:1.4, plugins:{legend:{position:'bottom'}} }
+                });
+            }
+
+            // Top 5 per sector
+            const allProds = Object.values(prodByCat);
+            const barProds = allProds.filter(p => classifySector(p.cat) === 'bar').sort((a,b) => b.fat-a.fat).slice(0,5);
+            const kitchenProds = allProds.filter(p => classifySector(p.cat) === 'cozinha').sort((a,b) => b.fat-a.fat).slice(0,5);
+
+            function renderTop5(containerId, prods, color) {
+                const el = $(containerId);
+                if (prods.length === 0) { el.innerHTML = '<p class="empty">Sem dados.</p>'; return; }
+                el.innerHTML = prods.map((p, i) =>
+                    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px"><span><strong style="color:${color}">${i+1}.</strong> ${esc(p.nome)}</span><span style="font-weight:600">${fmtBRL(p.fat)}</span></div>`
+                ).join('');
+            }
+            renderTop5('top5-bar', barProds, '#7c3aed');
+            renderTop5('top5-kitchen', kitchenProds, '#ea580c');
         }
 
         // ── Search filters ──
@@ -1043,6 +1249,7 @@
             $('cp-date-to')?.addEventListener('change', renderFinancialData);
             $('forn-search')?.addEventListener('input', () => { clearTimeout(fornTimer); fornTimer = setTimeout(renderFinancialData, 300); });
             $('aniv-search')?.addEventListener('input', () => { clearTimeout(anivTimer); anivTimer = setTimeout(renderAnivTable, 300); });
+            $('aniv-range')?.addEventListener('change', renderAnivTable);
             $('cli-search')?.addEventListener('input', () => { clearTimeout(cliTimer); cliTimer = setTimeout(renderClientSearch, 400); });
             $('fid-filter')?.addEventListener('change', renderFidelityTable);
             $('fid-search')?.addEventListener('input', () => { clearTimeout(fidTimer); fidTimer = setTimeout(renderFidelityTable, 300); });
