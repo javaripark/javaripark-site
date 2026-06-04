@@ -322,6 +322,10 @@
 
             <div class="card">
                 <h3>Próximos Aniversariantes (30 dias)</h3>
+                <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#92400e">
+                    <strong>Mensagem WhatsApp:</strong>
+                    <textarea id="aniv-msg-template" rows="3" style="width:100%;margin-top:6px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:inherit;resize:vertical">Olá, {nome}! 🎂 Seu aniversário está chegando e queremos celebrar com você! Venha comemorar no Javari StrEat Park — preparamos algo especial pra você e seus convidados. Reserve sua mesa: wa.me/551120811544 🎉</textarea>
+                </div>
                 <div class="table-controls">
                     <input type="text" id="aniv-search" placeholder="Buscar nome…">
                     <span class="table-count" id="aniv-count"></span>
@@ -336,6 +340,20 @@
                     <span class="table-count" id="cli-search-count"></span>
                 </div>
                 <div id="cli-search-table" class="table-wrap"></div>
+            </div>
+
+            <div class="card">
+                <h3>Clientes por Fidelidade</h3>
+                <div class="table-controls">
+                    <select id="fid-filter" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-weight:600">
+                        <option value="vip">VIP (10+ visitas)</option>
+                        <option value="regular">Regular (3-9 visitas)</option>
+                        <option value="ocasional">Ocasional (1-2 visitas)</option>
+                    </select>
+                    <input type="text" id="fid-search" placeholder="Buscar nome…" style="flex:1">
+                    <span class="table-count" id="fid-count"></span>
+                </div>
+                <div id="fid-table" class="table-wrap"></div>
             </div>
 
             <div class="chart-grid">
@@ -863,6 +881,17 @@
             renderAnivTable();
             renderTopSpenders();
             renderMostFrequent();
+            renderFidelityTable();
+        }
+
+        function getAnivWaLink(nome, telefone) {
+            if (!telefone) return '';
+            const clean = telefone.replace(/\D/g, '');
+            if (clean.length < 10) return '';
+            const num = clean.startsWith('55') ? clean : '55' + clean;
+            const tpl = $('aniv-msg-template')?.value || '';
+            const msg = encodeURIComponent(tpl.replace('{nome}', (nome||'').split(' ')[0]));
+            return `<a href="https://wa.me/${num}?text=${msg}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:#25D366;color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap" title="Enviar mensagem de aniversário">Enviar</a>`;
         }
 
         function renderAnivTable() {
@@ -883,10 +912,10 @@
             $('aniv-count').textContent = `${anivs.length} aniversariante${anivs.length!==1?'s':''}`;
 
             if (anivs.length > 0) {
-                $('aniv-table').innerHTML = `<table class="fin-table" id="tbl-aniv"><thead><tr><th>Nome</th><th>Aniversário</th><th>Dias</th><th>Telefone</th><th class="amount">Gasto Total</th><th>Visitas</th></tr></thead><tbody>${
+                $('aniv-table').innerHTML = `<table class="fin-table" id="tbl-aniv"><thead><tr><th>Nome</th><th>Aniversário</th><th>Dias</th><th>Telefone</th><th class="amount">Gasto Total</th><th>Visitas</th><th>WhatsApp</th></tr></thead><tbody>${
                     anivs.map(a => {
                         const badge = a.diasAte===0 ? '<span class="status-badge status-vencido">HOJE!</span>' : a.diasAte<=7 ? '<span class="status-badge status-pendente">'+a.diasAte+'d</span>' : a.diasAte+'d';
-                        return `<tr class="clickable" data-nome="${esc(a.nome)}"><td>${esc(a.nome)}</td><td>${String(a.dia).padStart(2,'0')}/${String(a.mes).padStart(2,'0')}</td><td>${badge}</td><td>${fmtWhatsApp(a.telefone)}</td><td class="amount">${(a.totalGasto||0)>0?fmtBRLFull(a.totalGasto):'—'}</td><td>${a.pedidos||'—'}</td></tr>`;
+                        return `<tr class="clickable" data-nome="${esc(a.nome)}"><td>${esc(a.nome)}</td><td>${String(a.dia).padStart(2,'0')}/${String(a.mes).padStart(2,'0')}</td><td>${badge}</td><td>${fmtWhatsApp(a.telefone)}</td><td class="amount">${(a.totalGasto||0)>0?fmtBRLFull(a.totalGasto):'—'}</td><td>${a.pedidos||'—'}</td><td>${getAnivWaLink(a.nome, a.telefone)}</td></tr>`;
                     }).join('')}</tbody></table>`;
                 makeSortable($('tbl-aniv'));
                 addClientClickHandlers($('tbl-aniv'));
@@ -971,15 +1000,52 @@
             $('client-popup').classList.add('open');
         }
 
+        // ── Fidelity table (VIP / Regular / Ocasional) ──
+        function renderFidelityTable() {
+            const filter = $('fid-filter')?.value || 'vip';
+            const search = ($('fid-search')?.value || '').toLowerCase();
+
+            let minPedidos, maxPedidos, label;
+            switch (filter) {
+                case 'vip': minPedidos = 10; maxPedidos = Infinity; label = 'VIP'; break;
+                case 'regular': minPedidos = 3; maxPedidos = 9; label = 'Regular'; break;
+                case 'ocasional': minPedidos = 1; maxPedidos = 2; label = 'Ocasional'; break;
+            }
+
+            let clients = allContatos.filter(c => {
+                const p = c.pedidos || 0;
+                return p >= minPedidos && p <= maxPedidos;
+            });
+
+            if (search) clients = clients.filter(c => (c.nome||'').toLowerCase().includes(search));
+
+            clients.sort((a, b) => (b.totalGasto || 0) - (a.totalGasto || 0));
+
+            const shown = clients.slice(0, 200);
+            $('fid-count').textContent = `${clients.length} cliente${clients.length !== 1 ? 's' : ''}${clients.length > 200 ? ' (mostrando 200)' : ''}`;
+
+            if (shown.length > 0) {
+                $('fid-table').innerHTML = `<table class="fin-table" id="tbl-fid"><thead><tr><th>#</th><th>Nome</th><th>Telefone</th><th class="amount">Total Gasto</th><th>Pedidos</th><th>Último Pedido</th></tr></thead><tbody>${
+                    shown.map((c, i) => `<tr class="clickable" data-nome="${esc(c.nome)}"><td>${i + 1}</td><td>${esc(c.nome)}</td><td>${fmtWhatsApp(c.telefone)}</td><td class="amount">${(c.totalGasto || 0) > 0 ? fmtBRLFull(c.totalGasto) : '—'}</td><td>${c.pedidos || 0}</td><td>${fmtDateBR(c.ultimoPedido)}</td></tr>`
+                    ).join('')}</tbody></table>`;
+                makeSortable($('tbl-fid'));
+                addClientClickHandlers($('tbl-fid'));
+            } else {
+                $('fid-table').innerHTML = '<p class="empty">Nenhum cliente nesta categoria.</p>';
+            }
+        }
+
         // ── Search filters ──
         function initSearchFilters() {
-            let cpTimer, fornTimer, anivTimer, cliTimer;
+            let cpTimer, fornTimer, anivTimer, cliTimer, fidTimer;
             $('cp-search')?.addEventListener('input', () => { clearTimeout(cpTimer); cpTimer = setTimeout(renderFinancialData, 300); });
             $('cp-date-from')?.addEventListener('change', renderFinancialData);
             $('cp-date-to')?.addEventListener('change', renderFinancialData);
             $('forn-search')?.addEventListener('input', () => { clearTimeout(fornTimer); fornTimer = setTimeout(renderFinancialData, 300); });
             $('aniv-search')?.addEventListener('input', () => { clearTimeout(anivTimer); anivTimer = setTimeout(renderAnivTable, 300); });
             $('cli-search')?.addEventListener('input', () => { clearTimeout(cliTimer); cliTimer = setTimeout(renderClientSearch, 400); });
+            $('fid-filter')?.addEventListener('change', renderFidelityTable);
+            $('fid-search')?.addEventListener('input', () => { clearTimeout(fidTimer); fidTimer = setTimeout(renderFidelityTable, 300); });
         }
     </script>
 </body>
