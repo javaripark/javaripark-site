@@ -156,6 +156,10 @@
         <!-- Dashboards de margem -->
         <div class="section-card">
             <h3 style="font-size:.85em;font-weight:700;color:#4f1964;margin-bottom:10px">Margens (produtos com preço de venda e custo)</h3>
+            <div class="cons-filter" style="margin-bottom:10px">
+                <select id="margin-cat-filter"><option value="">Todas categorias</option></select>
+                <span class="cons-count" id="margin-cat-count"></span>
+            </div>
             <div class="cons-kpi" id="margin-kpis" style="margin-bottom:12px"></div>
             <div style="display:grid;grid-template-columns:1fr;gap:14px" id="margin-lists-grid">
                 <div>
@@ -167,6 +171,13 @@
                     <div id="worst-margins"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- Cruzamento de margem entre categorias -->
+        <div class="section-card">
+            <h3 style="font-size:.85em;font-weight:700;color:#4f1964;margin-bottom:10px">Margem por Categoria (cruzamento)</h3>
+            <div class="chart-box" style="margin-bottom:10px"><canvas id="chart-cat-margin"></canvas></div>
+            <div id="cat-margin-table"></div>
         </div>
 
         <!-- Histórico de vendas por item -->
@@ -328,13 +339,29 @@
             if (!(i.precoVenda > 0 && i.precoCusto > 0)) return null;
             return ((i.precoVenda - i.precoCusto) / i.precoVenda) * 100;
         }
+        let marginCatBuilt = false;
         function renderMargins() {
-            const comMargem = allItems
+            const todosComMargem = allItems
                 .map(i => ({ ...i, _m: margemPct(i) }))
                 .filter(i => i._m !== null);
 
+            // Constrói o filtro de categoria uma vez (só categorias que têm margem)
+            if (!marginCatBuilt) {
+                const cats = [...new Set(todosComMargem.map(i => i.categoria).filter(Boolean))].sort();
+                $('margin-cat-filter').innerHTML = '<option value="">Todas categorias</option>' +
+                    cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+                $('margin-cat-filter').addEventListener('change', renderMargins);
+                marginCatBuilt = true;
+                renderCatMargin(todosComMargem); // cruzamento usa todas as categorias (independe do filtro)
+            }
+
+            const catFilter = $('margin-cat-filter').value;
+            const comMargem = catFilter ? todosComMargem.filter(i => i.categoria === catFilter) : todosComMargem;
+            $('margin-cat-count').textContent = `${comMargem.length} produto${comMargem.length !== 1 ? 's' : ''}`;
+
             if (comMargem.length === 0) {
-                $('margin-kpis').innerHTML = '<div class="cons-kpi-card"><div class="cons-kpi-label">Sem dados de margem</div></div>';
+                $('margin-kpis').innerHTML = '<div class="cons-kpi-card"><div class="cons-kpi-label">Sem dados de margem nesta categoria</div></div>';
+                $('best-margins').innerHTML = ''; $('worst-margins').innerHTML = '';
                 return;
             }
 
@@ -354,11 +381,47 @@
             const worst = sorted.slice(-8).reverse();
             const rowHtml = i => {
                 const col = i._m < 0 ? '#ef4444' : i._m < 30 ? '#f59e0b' : '#10b981';
-                return `<tr><td>${escapeHtml(i.nome)}</td><td style="text-align:right">${fmtBRL(i.precoCusto)}</td><td style="text-align:right">${fmtBRL(i.precoVenda)}</td><td style="text-align:right;font-weight:700;color:${col}">${i._m.toFixed(0)}%</td></tr>`;
+                const catCell = catFilter ? '' : `<td>${escapeHtml((i.categoria || '—').replace(/\s*Inativo$/i, ''))}</td>`;
+                const catHead = catFilter ? '' : '<th>Categoria</th>';
+                return { row: `<tr><td>${escapeHtml(i.nome)}</td>${catCell}<td style="text-align:right">${fmtBRL(i.precoCusto)}</td><td style="text-align:right">${fmtBRL(i.precoVenda)}</td><td style="text-align:right;font-weight:700;color:${col}">${i._m.toFixed(0)}%</td></tr>`, catHead };
             };
-            const tbl = items => `<div style="overflow-x:auto"><table class="cons-table"><thead><tr><th>Item</th><th style="text-align:right">Custo</th><th style="text-align:right">Venda</th><th style="text-align:right">Margem</th></tr></thead><tbody>${items.map(rowHtml).join('')}</tbody></table></div>`;
+            const catHead = catFilter ? '' : '<th>Categoria</th>';
+            const tbl = items => `<div style="overflow-x:auto"><table class="cons-table"><thead><tr><th>Item</th>${catHead}<th style="text-align:right">Custo</th><th style="text-align:right">Venda</th><th style="text-align:right">Margem</th></tr></thead><tbody>${items.map(i => rowHtml(i).row).join('')}</tbody></table></div>`;
             $('best-margins').innerHTML = tbl(best);
             $('worst-margins').innerHTML = tbl(worst);
+        }
+
+        // ── Cruzamento: margem média por categoria ──
+        let catMarginChart = null;
+        function renderCatMargin(comMargem) {
+            const byCat = {};
+            comMargem.forEach(i => {
+                const c = (i.categoria || 'Sem categoria').replace(/\s*Inativo$/i, '');
+                if (!byCat[c]) byCat[c] = { soma: 0, n: 0, neg: 0 };
+                byCat[c].soma += i._m; byCat[c].n++; if (i._m < 0) byCat[c].neg++;
+            });
+            const cats = Object.entries(byCat)
+                .map(([cat, d]) => ({ cat, media: d.soma / d.n, n: d.n, neg: d.neg }))
+                .sort((a, b) => b.media - a.media);
+
+            if (catMarginChart) { catMarginChart.destroy(); catMarginChart = null; }
+            catMarginChart = new Chart($('chart-cat-margin'), {
+                type: 'bar',
+                data: {
+                    labels: cats.map(c => c.cat),
+                    datasets: [{ label: 'Margem média %', data: cats.map(c => +c.media.toFixed(1)),
+                        backgroundColor: cats.map(c => c.media < 0 ? '#ef4444' : c.media < 30 ? '#f59e0b' : '#10b981'), borderRadius: 3 }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, aspectRatio: cats.length > 12 ? 1.2 : 2,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw}% (${cats[c.dataIndex].n} produtos)` } } },
+                    scales: { x: { ticks: { callback: v => v + '%' }, grid: { color: '#f0f0f0' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+            });
+
+            $('cat-margin-table').innerHTML = `<div style="overflow-x:auto"><table class="cons-table"><thead><tr><th>Categoria</th><th style="text-align:right">Produtos</th><th style="text-align:right">Margem Média</th><th style="text-align:right">Margem Negativa</th></tr></thead><tbody>${
+                cats.map(c => { const col = c.media < 0 ? '#ef4444' : c.media < 30 ? '#f59e0b' : '#10b981';
+                    return `<tr><td>${escapeHtml(c.cat)}</td><td style="text-align:right">${c.n}</td><td style="text-align:right;font-weight:700;color:${col}">${c.media.toFixed(1)}%</td><td style="text-align:right">${c.neg || '—'}</td></tr>`;
+                }).join('')
+            }</tbody></table></div>`;
         }
 
         // ── Histórico de vendas por item ──
