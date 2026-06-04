@@ -126,7 +126,7 @@
     const AUTH_TTL = 24 * 60 * 60 * 1000; // 24h
     const existing = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
     if (existing && existing.ts && (Date.now() - existing.ts < AUTH_TTL)) {
-      window.location.href = '/admin/dashboard.html';
+      window.location.href = '/admin/reservas.html';
     } else {
       localStorage.removeItem(AUTH_KEY);
       sessionStorage.removeItem(AUTH_KEY);
@@ -155,7 +155,7 @@
         const authData = JSON.stringify({ email: user.email, name: user.name, ts: Date.now() });
         localStorage.setItem(AUTH_KEY, authData);
         sessionStorage.setItem(AUTH_KEY, authData);
-        window.location.href = '/admin/dashboard.html';
+        window.location.href = '/admin/reservas.html';
       } else {
         errorBox.textContent = 'E-mail ou senha incorretos.';
         errorBox.classList.add('visible');

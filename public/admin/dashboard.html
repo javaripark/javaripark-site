@@ -149,18 +149,7 @@
     </style>
 </head>
 <body>
-    <!-- Dashboard password gate -->
-    <div id="dash-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:#111;display:flex;align-items:center;justify-content:center">
-        <div style="background:#fff;border-radius:16px;padding:36px 24px;width:90%;max-width:380px;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.3)">
-            <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Acesso Restrito</h2>
-            <p style="font-size:13px;color:#777;margin-bottom:20px">Este painel requer senha adicional.</p>
-            <input type="password" id="dash-pass" placeholder="Senha do dashboard" style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:12px" autocomplete="off">
-            <button id="dash-pass-btn" style="width:100%;padding:14px;background:#4f1964;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer">Entrar</button>
-            <p id="dash-pass-error" style="margin-top:12px;padding:8px;background:#fee2e2;color:#991b1b;border-radius:8px;font-size:13px;display:none">Senha incorreta</p>
-        </div>
-    </div>
-
-    <div class="container" id="app-container" style="display:none">
+    <div class="container" id="app-container">
         <header class="header">
             <h1>Painel Administrativo</h1>
             <p id="user-email-display"></p>
@@ -168,13 +157,23 @@
         </header>
 
         <nav class="admin-nav">
-            <a href="/admin/dashboard.html" class="active">Dashboard</a>
             <a href="/admin/reservas.html">Reservas</a>
             <a href="/admin/agenda.html">Agenda</a>
             <a href="/admin/cardapio.html">Cardápio</a>
             <a href="/admin/blog.html">Blog</a>
+            <a href="/admin/dashboard.html" class="active">Dashboard</a>
         </nav>
 
+        <!-- Dashboard password gate (inline — header e nav seguem acessíveis) -->
+        <div id="dash-gate" class="card" style="display:none;max-width:420px;margin:24px auto;text-align:center">
+            <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Acesso Restrito</h2>
+            <p style="font-size:13px;color:#777;margin-bottom:20px">O Dashboard requer senha adicional. Use o menu acima para acessar as outras abas.</p>
+            <input type="password" id="dash-pass" placeholder="Senha do dashboard" style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:12px" autocomplete="off">
+            <button id="dash-pass-btn" style="width:100%;padding:14px;background:#4f1964;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer">Entrar</button>
+            <p id="dash-pass-error" style="margin-top:12px;padding:8px;background:#fee2e2;color:#991b1b;border-radius:8px;font-size:13px;display:none">Senha incorreta</p>
+        </div>
+
+      <div id="dash-content" style="display:none">
         <!-- Section tabs -->
         <div class="section-tabs">
             <div class="section-tab active" data-section="vendas">Vendas</div>
@@ -342,6 +341,37 @@
             </div>
 
             <div class="card">
+                <h3>Maiores Despesas por Categoria <span style="font-weight:400;font-size:.75em;color:#999">(no período selecionado)</span></h3>
+                <div class="chart-box" style="margin-bottom:10px"><canvas id="chart-despesas-cat"></canvas></div>
+                <div id="despesas-cat-table" class="table-wrap"></div>
+            </div>
+
+            <div class="card">
+                <h3>Endividamento — Financiamentos e Parcelamentos</h3>
+                <p style="font-size:11px;color:#999;margin-bottom:8px">Inclui empréstimos, capital de giro, cartão de crédito empresarial, juros e parcelamentos identificados por categoria/descrição.</p>
+                <div class="kpi-grid" style="margin-bottom:8px">
+                    <div class="kpi-card"><div class="kpi-label">Custo Financeiro no Período</div><div class="kpi-value" id="debt-total" style="color:#ef4444;font-size:.95em">—</div><div class="kpi-sub" id="debt-count"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">% das Despesas</div><div class="kpi-value" id="debt-pct-desp" style="font-size:.95em">—</div><div class="kpi-sub">do total de despesas</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Taxa de Endividamento</div><div class="kpi-value" id="debt-pct-rec" style="font-size:.95em">—</div><div class="kpi-sub">sobre a receita</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Pendente (a vencer)</div><div class="kpi-value" id="debt-pendente" style="color:#f59e0b;font-size:.95em">—</div><div class="kpi-sub" id="debt-pendente-count"></div></div>
+                </div>
+                <div class="chart-box" style="margin-bottom:10px"><canvas id="chart-debt"></canvas></div>
+                <div id="debt-table" class="table-wrap"></div>
+            </div>
+
+            <div class="card">
+                <h3>Desencaixe de Caixa e Prazo de Pagamento</h3>
+                <div class="kpi-grid" style="margin-bottom:8px">
+                    <div class="kpi-card"><div class="kpi-label">Prazo Médio de Pagamento</div><div class="kpi-value" id="dpo-avg" style="font-size:.95em">—</div><div class="kpi-sub" id="dpo-sub">vencimento → pagamento</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Pago no Prazo</div><div class="kpi-value" id="dpo-ontime" style="color:#10b981;font-size:.95em">—</div><div class="kpi-sub">até o vencimento</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Pago em Atraso</div><div class="kpi-value" id="dpo-late" style="color:#ef4444;font-size:.95em">—</div><div class="kpi-sub">após o vencimento</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Meses com Desencaixe</div><div class="kpi-value" id="gap-months" style="color:#f59e0b;font-size:.95em">—</div><div class="kpi-sub">saída > entrada</div></div>
+                </div>
+                <p style="font-size:11px;color:#999;margin-bottom:8px">Entrada = receita do mês · Saída = contas pagas no mês (por data de pagamento). Desencaixe = saída maior que entrada.</p>
+                <div class="chart-box"><canvas id="chart-desencaixe"></canvas></div>
+            </div>
+
+            <div class="card">
                 <h3>Fornecedores</h3>
                 <div class="table-controls">
                     <input type="text" id="forn-search" placeholder="Buscar fornecedor…">
@@ -469,6 +499,7 @@
                 </div>
             </div>
         </div>
+      </div><!-- /dash-content -->
 
         <!-- Client popup -->
         <div class="popup-overlay" id="client-popup">
@@ -519,14 +550,15 @@
         const DASH_TTL = 12 * 60 * 60 * 1000; // 12h
         const dashAuth = JSON.parse(localStorage.getItem(DASH_KEY) || 'null');
 
+        // Header + nav ficam SEMPRE visíveis (não trava a navegação).
+        // Só o conteúdo do dashboard (#dash-content) é protegido pela senha.
         if (dashAuth && dashAuth.ts && (Date.now() - dashAuth.ts < DASH_TTL)) {
-            // Already authenticated
             $('dash-gate').style.display = 'none';
-            $('app-container').style.display = 'block';
+            $('dash-content').style.display = 'block';
         } else {
             localStorage.removeItem(DASH_KEY);
-            $('dash-gate').style.display = 'flex';
-            $('app-container').style.display = 'none';
+            $('dash-gate').style.display = 'block';
+            $('dash-content').style.display = 'none';
             $('dash-pass').focus();
         }
 
@@ -534,8 +566,9 @@
             if ($('dash-pass').value === DASH_PASS) {
                 localStorage.setItem(DASH_KEY, JSON.stringify({ ts: Date.now() }));
                 $('dash-gate').style.display = 'none';
-                $('app-container').style.display = 'block';
+                $('dash-content').style.display = 'block';
                 $('dash-pass-error').style.display = 'none';
+                setTimeout(() => { try { Object.values(charts).forEach(c => c && c.resize()); } catch (e) {} }, 80);
             } else {
                 $('dash-pass-error').style.display = 'block';
                 $('dash-pass').value = '';
@@ -1031,7 +1064,8 @@
                     datasets: [
                         { type:'bar', label: 'Receita', data: months.map(m => m.receita), backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 3, order: 2 },
                         { type:'bar', label: 'Despesa', data: months.map(m => m.despesa), backgroundColor: 'rgba(239,68,68,0.6)', borderRadius: 3, order: 2 },
-                        { type:'line', label: 'Resultado', data: months.map(m => m.resultado), borderColor: '#4f1964', backgroundColor: '#4f1964', tension: .3, order: 1, pointRadius: 2 }
+                        { type:'line', label: 'Resultado', data: months.map(m => m.resultado), borderColor: '#4f1964', backgroundColor: '#4f1964', tension: .3, order: 1, pointRadius: 2 },
+                        { type:'line', label: 'Margem Líq. %', data: months.map(m => m.margem === null ? null : +m.margem.toFixed(1)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [4,3], tension: .3, order: 0, pointRadius: 0, yAxisID: 'yMarg' }
                     ]
                 },
                 options: {
@@ -1039,10 +1073,11 @@
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { position: 'top', labels: { padding: 10, font: { size: 11 } } },
-                        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtBRLFull(c.raw)}` } }
+                        tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'yMarg' ? `${c.dataset.label}: ${c.raw}%` : `${c.dataset.label}: ${fmtBRLFull(c.raw)}` } }
                     },
                     scales: {
                         y: { ticks: { callback: v => fmtBRL(v) }, grid: { color: '#f0f0f0' } },
+                        yMarg: { position: 'right', ticks: { callback: v => v + '%' }, grid: { display: false }, title: { display: true, text: 'Margem %' } },
                         x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 60 } }
                     }
                 }
@@ -1050,6 +1085,134 @@
 
             renderYoY(months);
             renderMonthlyTable(months);
+            renderDespesasCategoria(months);
+            renderEndividamento(months);
+            renderDesencaixe(months);
+        }
+
+        // Contas a pagar dentro do intervalo de meses do período selecionado
+        function finScopedContas(months) {
+            const items = financialData?.contas_pagar?.items || [];
+            if (months.length === 0) return [];
+            const fromM = months[0].mes, toM = months[months.length-1].mes;
+            const from = fromM + '-01', to = toM + '-31';
+            return items.filter(i => (i.vencimento || '') >= from && (i.vencimento || '') <= to);
+        }
+
+        function limpaCat(c) { return (c || 'Sem categoria').replace(/\s*-?\s*INATIVO$/i, '').replace(/\s*Inativo$/i, '').trim() || 'Sem categoria'; }
+
+        // ── Maiores despesas por categoria ──
+        function renderDespesasCategoria(months) {
+            const contas = finScopedContas(months);
+            const byCat = {};
+            contas.forEach(i => { const c = limpaCat(i.categoria); byCat[c] = (byCat[c] || 0) + (i.valor || 0); });
+            const sorted = Object.entries(byCat).map(([cat, v]) => ({ cat, v })).sort((a,b) => b.v - a.v);
+            const top = sorted.slice(0, 12);
+            const total = sorted.reduce((s,c)=>s+c.v,0);
+
+            destroyChart('despesas-cat');
+            charts['despesas-cat'] = new Chart($('chart-despesas-cat'), {
+                type: 'bar',
+                data: { labels: top.map(c=>c.cat), datasets: [{ label: 'Despesa', data: top.map(c=>c.v), backgroundColor: '#ef4444', borderRadius: 3 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, aspectRatio: 1.6,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${fmtBRLFull(c.raw)} (${total>0?(c.raw/total*100).toFixed(0):0}%)` } } },
+                    scales: { x: { ticks: { callback: v => fmtBRL(v) }, grid: { color: '#f0f0f0' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+            });
+
+            $('despesas-cat-table').innerHTML = `<table class="fin-table" id="tbl-desp-cat"><thead><tr><th>Categoria</th><th class="amount">Total</th><th>% do total</th></tr></thead><tbody>${
+                sorted.map(c => `<tr><td>${esc(c.cat)}</td><td class="amount">${fmtBRLFull(c.v)}</td><td>${total>0?(c.v/total*100).toFixed(1):0}%</td></tr>`).join('')
+            }</tbody></table>`;
+            makeSortable($('tbl-desp-cat'));
+        }
+
+        // ── Endividamento (financiamentos e parcelamentos) ──
+        const DEBT_RE = /empr[eé]stimo|financiamento|capital de giro|cart[ãa]o de cr[eé]dito|parcelamento|\bparcela\b|juros|consórcio|consorcio|leasing|banco|antecipa/i;
+        function isDebt(i) { return DEBT_RE.test(i.categoria || '') || DEBT_RE.test(i.descricao || ''); }
+        function renderEndividamento(months) {
+            const contas = finScopedContas(months);
+            const debt = contas.filter(isDebt);
+            const totalDebt = debt.reduce((s,i)=>s+(i.valor||0),0);
+            const totalDesp = contas.reduce((s,i)=>s+(i.valor||0),0);
+            const totalRec = months.reduce((s,m)=>s+m.receita,0);
+            const pendente = debt.filter(i => i.status !== 'pago').reduce((s,i)=>s+(i.valor||0),0);
+            const pendenteCount = debt.filter(i => i.status !== 'pago').length;
+
+            $('debt-total').textContent = fmtBRL(totalDebt);
+            $('debt-count').textContent = `${debt.length} lançamentos`;
+            $('debt-pct-desp').textContent = totalDesp>0 ? (totalDebt/totalDesp*100).toFixed(1)+'%' : '—';
+            $('debt-pct-rec').textContent = totalRec>0 ? (totalDebt/totalRec*100).toFixed(1)+'%' : '—';
+            $('debt-pct-rec').style.color = totalRec>0 && (totalDebt/totalRec) > 0.2 ? '#ef4444' : '#222';
+            $('debt-pendente').textContent = fmtBRL(pendente);
+            $('debt-pendente-count').textContent = `${pendenteCount} contas`;
+
+            // série mensal do custo financeiro
+            const byMonth = {};
+            months.forEach(m => byMonth[m.mes] = 0);
+            debt.forEach(i => { const m = (i.vencimento||'').slice(0,7); if (m in byMonth) byMonth[m] += (i.valor||0); });
+            const labels = months.map(m => mesLabel(m.mes));
+
+            destroyChart('debt');
+            charts.debt = new Chart($('chart-debt'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Custo financeiro/mês', data: months.map(m=>byMonth[m.mes]||0), backgroundColor: 'rgba(239,68,68,0.6)', borderRadius: 3 }] },
+                options: { responsive: true, maintainAspectRatio: true, aspectRatio: months.length>18?2.5:2,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtBRLFull(c.raw) } } },
+                    scales: { y: { ticks: { callback: v => fmtBRL(v) }, grid: { color: '#f0f0f0' } }, x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 60 } } } }
+            });
+
+            // tabela por categoria de dívida
+            const byCat = {};
+            debt.forEach(i => { const c = limpaCat(i.categoria); byCat[c] = (byCat[c]||0)+(i.valor||0); });
+            const cats = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+            $('debt-table').innerHTML = cats.length === 0 ? '<p class="empty">Nenhum financiamento/parcelamento identificado no período.</p>' :
+                `<table class="fin-table"><thead><tr><th>Tipo de dívida</th><th class="amount">Total</th></tr></thead><tbody>${
+                    cats.map(([c,v])=>`<tr><td>${esc(c)}</td><td class="amount">${fmtBRLFull(v)}</td></tr>`).join('')
+                }</tbody></table>`;
+        }
+
+        // ── Desencaixe de caixa + prazo de pagamento ──
+        function diasEntre(a, b) {
+            const da = new Date(a + 'T00:00:00'), db = new Date(b + 'T00:00:00');
+            if (isNaN(da) || isNaN(db)) return null;
+            return Math.round((db - da) / 86400000);
+        }
+        function renderDesencaixe(months) {
+            const contas = finScopedContas(months);
+            // Prazo de pagamento (vencimento → dataPagamento) dos pagos
+            const pagos = contas.filter(i => i.status === 'pago' && i.dataPagamento && i.vencimento);
+            const prazos = pagos.map(i => diasEntre(i.vencimento, i.dataPagamento)).filter(d => d !== null);
+            const avgPrazo = prazos.length ? prazos.reduce((s,d)=>s+d,0)/prazos.length : null;
+            const ontime = prazos.filter(d => d <= 0).length;
+            const late = prazos.filter(d => d > 0).length;
+
+            $('dpo-avg').textContent = avgPrazo === null ? '—' : `${avgPrazo >= 0 ? '+' : ''}${avgPrazo.toFixed(0)} dias`;
+            $('dpo-avg').style.color = avgPrazo === null ? '#222' : avgPrazo > 0 ? '#ef4444' : '#10b981';
+            $('dpo-sub').textContent = avgPrazo === null ? '—' : avgPrazo > 0 ? 'em média, após o vencimento' : 'em média, antes do vencimento';
+            $('dpo-ontime').textContent = prazos.length ? `${(ontime/prazos.length*100).toFixed(0)}%` : '—';
+            $('dpo-late').textContent = prazos.length ? `${(late/prazos.length*100).toFixed(0)}%` : '—';
+
+            // Desencaixe mensal: entrada (receita) vs saída (pagamentos efetivados por dataPagamento)
+            const saidaMes = {}; months.forEach(m => saidaMes[m.mes] = 0);
+            (financialData?.contas_pagar?.items || []).forEach(i => {
+                if (i.status === 'pago' && i.dataPagamento) { const m = i.dataPagamento.slice(0,7); if (m in saidaMes) saidaMes[m] += (i.valorPago || i.valor || 0); }
+            });
+            const comDesencaixe = months.filter(m => saidaMes[m.mes] > m.receita).length;
+            $('gap-months').textContent = `${comDesencaixe} de ${months.length}`;
+
+            destroyChart('desencaixe');
+            charts.desencaixe = new Chart($('chart-desencaixe'), {
+                data: {
+                    labels: months.map(m => mesLabel(m.mes)),
+                    datasets: [
+                        { type:'line', label: 'Entrada (receita)', data: months.map(m=>m.receita), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.1)', fill: true, tension: .3, pointRadius: 0 },
+                        { type:'line', label: 'Saída (pago no mês)', data: months.map(m=>saidaMes[m.mes]||0), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.1)', fill: true, tension: .3, pointRadius: 0 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: true, aspectRatio: months.length>18?2.5:2,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'top', labels: { padding: 10, font: { size: 11 } } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtBRLFull(c.raw)}` } } },
+                    scales: { y: { ticks: { callback: v => fmtBRL(v) }, grid: { color: '#f0f0f0' } }, x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 60 } } } }
+            });
         }
 
         // Performance ano a ano (sobre o período filtrado)
