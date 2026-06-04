@@ -146,85 +146,79 @@
             <a href="/admin/blog.html">Blog</a>
         </nav>
 
-        <!-- Sub-tabs -->
-        <div class="sub-tabs">
-            <div class="sub-tab active" data-sub="cardapio">Cardápio</div>
-            <div class="sub-tab" data-sub="produtos">Produtos Consumer</div>
-            <div class="sub-tab" data-sub="insumos">Insumos</div>
-            <div class="sub-tab" data-sub="estoque">Estoque</div>
+        <!-- Visão unificada: produto/insumo + venda + custo + estoque -->
+        <div class="section-card">
+            <p id="cardapio-sync-info" style="font-size:12px;color:#888;margin-bottom:10px"></p>
+            <div class="cons-kpi" id="unified-kpis"></div>
         </div>
 
-        <!-- SUB: Cardápio (read-only mirror from Consumer POS) -->
-        <div class="sub-panel active" id="sub-cardapio">
-            <div class="section-card">
-                <p id="cardapio-sync-info" style="font-size:12px;color:#888;margin-bottom:10px"></p>
-                <div class="cons-kpi" id="cardapio-kpis"></div>
-                <div class="cons-filter">
-                    <input type="text" id="cardapio-search" placeholder="Buscar item…">
-                    <select id="cardapio-cat-filter"><option value="">Todas categorias</option></select>
-                    <span class="cons-count" id="cardapio-count"></span>
-                </div>
-            </div>
-            <div id="cardapio-categories"></div>
-        </div>
-
-        <!-- SUB: Produtos Consumer -->
-        <div class="sub-panel" id="sub-produtos">
-            <div class="section-card">
-                <div class="cons-kpi" id="prod-kpis"></div>
-                <div class="cons-filter">
-                    <input type="text" id="prod-search" placeholder="Buscar produto…">
-                    <select id="prod-cat-filter"><option value="">Todas categorias</option></select>
-                    <span class="cons-count" id="prod-count"></span>
-                </div>
-                <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:600px;overflow-y:auto">
-                    <table class="cons-table" id="tbl-produtos">
-                        <thead><tr><th>Nome</th><th>Categoria</th><th>Preço</th></tr></thead>
-                        <tbody id="prod-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- SUB: Insumos -->
-        <div class="sub-panel" id="sub-insumos">
-            <div class="section-card">
-                <div class="cons-kpi" id="ins-kpis"></div>
-                <div class="cons-filter">
-                    <input type="text" id="ins-search" placeholder="Buscar insumo…">
-                    <select id="ins-cat-filter"><option value="">Todas categorias</option></select>
-                    <span class="cons-count" id="ins-count"></span>
-                </div>
-                <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:600px;overflow-y:auto">
-                    <table class="cons-table" id="tbl-insumos">
-                        <thead><tr><th>Nome</th><th>Categoria</th></tr></thead>
-                        <tbody id="ins-tbody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- SUB: Estoque -->
-        <div class="sub-panel" id="sub-estoque">
-            <div class="section-card">
-                <div class="cons-kpi" id="estoque-kpis"></div>
-                <div class="cons-filter">
-                    <input type="text" id="estoque-search" placeholder="Buscar produto ou insumo…">
-                    <select id="estoque-status-filter">
-                        <option value="">Todos</option>
-                        <option value="baixo">Estoque baixo</option>
-                        <option value="atencao">Atenção</option>
-                        <option value="ok">OK</option>
+        <!-- Lista de compras -->
+        <div class="section-card" style="background:#fffbeb;border:1px solid #fcd34d">
+            <h3 style="font-size:.85em;font-weight:700;color:#92400e;margin-bottom:8px">📋 Lista de Compras Automática</h3>
+            <p style="font-size:12px;color:#92400e;margin-bottom:10px">Critério: comprar itens cujo estoque atual está em ou abaixo do limite, repondo até o nível-alvo.</p>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:#92400e;margin-bottom:4px">Comprar quando atual ≤</label>
+                    <select id="buy-threshold" style="padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+                        <option value="1">o mínimo (100%)</option>
+                        <option value="1.25">1,25× o mínimo</option>
+                        <option value="1.5" selected>1,5× o mínimo (atenção)</option>
                     </select>
-                    <select id="estoque-cat-filter"><option value="">Todas categorias</option></select>
-                    <span class="cons-count" id="estoque-count"></span>
                 </div>
-                <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:600px;overflow-y:auto">
-                    <table class="cons-table" id="tbl-estoque">
-                        <thead><tr><th>Produto/Insumo</th><th>Categoria</th><th style="text-align:right">Atual</th><th style="text-align:right">Mínimo</th><th>Status</th></tr></thead>
-                        <tbody id="estoque-tbody"></tbody>
-                    </table>
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:#92400e;margin-bottom:4px">Repor até</label>
+                    <select id="buy-target" style="padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+                        <option value="1.5">1,5× o mínimo</option>
+                        <option value="2" selected>2× o mínimo</option>
+                        <option value="3">3× o mínimo</option>
+                    </select>
                 </div>
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:600;color:#92400e;margin-bottom:4px">Tipo</label>
+                    <select id="buy-tipo" style="padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+                        <option value="">Todos</option>
+                        <option value="insumo">Só insumos</option>
+                        <option value="produto">Só produtos</option>
+                    </select>
+                </div>
+                <button id="gen-shopping" class="add-btn success">Gerar lista</button>
+                <button id="export-shopping" class="add-btn" style="display:none">Exportar CSV</button>
+                <span id="shopping-summary" style="font-size:13px;color:#92400e;font-weight:600"></span>
+            </div>
+            <div id="shopping-result"></div>
+        </div>
+
+        <!-- Tabela unificada -->
+        <div class="section-card">
+            <div class="cons-filter">
+                <input type="text" id="u-search" placeholder="Buscar produto ou insumo…">
+                <select id="u-tipo">
+                    <option value="">Produtos e insumos</option>
+                    <option value="produto">Só produtos (com preço de venda)</option>
+                    <option value="insumo">Só insumos</option>
+                </select>
+                <select id="u-status-filter">
+                    <option value="">Todo estoque</option>
+                    <option value="baixo">Estoque baixo</option>
+                    <option value="atencao">Atenção</option>
+                    <option value="ok">OK</option>
+                </select>
+                <select id="u-cat-filter"><option value="">Todas categorias</option></select>
+                <span class="cons-count" id="u-count"></span>
+            </div>
+            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:640px;overflow-y:auto">
+                <table class="cons-table" id="tbl-unified">
+                    <thead><tr>
+                        <th>Item</th><th>Categoria</th>
+                        <th style="text-align:right">Custo</th>
+                        <th style="text-align:right">Venda</th>
+                        <th style="text-align:right">Margem</th>
+                        <th style="text-align:right">Atual</th>
+                        <th style="text-align:right">Mínimo</th>
+                        <th>Status</th>
+                    </tr></thead>
+                    <tbody id="u-tbody"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -266,196 +260,164 @@
         function fmtBRL(v) { return 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
         function fmtDateBR(s) { if(!s) return '—'; const p=s.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:'—'; }
 
-        // ── Sub-tabs switching ──
-        document.querySelectorAll('.sub-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
-                tab.classList.add('active');
-                $('sub-' + tab.dataset.sub).classList.add('active');
+        // ── Carrega estoque.json (fonte única: item + venda + custo + estoque) ──
+        let allItems = [];   // do estoque.json: nome, categoria, precoVenda, precoCusto, estoqueAtual, estoqueMinimo, status
+        let lastShopping = [];
+
+        const statusLabels = { baixo: 'Baixo', atencao: 'Atenção', ok: 'OK' };
+        function tipoDe(i) { return (i.precoVenda > 0) ? 'produto' : 'insumo'; }
+        function fmtQty(n) { return Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 }); }
+
+        async function loadData() {
+            try {
+                const res = await fetch('/data/estoque.json');
+                const d = await res.json();
+                allItems = d.itens || [];
+                $('cardapio-sync-info').textContent = d.syncedAt
+                    ? `Sincronizado do Consumer POS em ${fmtDateBR(d.syncedAt.split('T')[0])} — ${allItems.length} itens`
+                    : '';
+                renderKpis(d);
+                buildCatFilter();
+                renderTable();
+            } catch (e) {
+                console.warn('Erro ao carregar estoque:', e);
+                $('cardapio-sync-info').textContent = 'Erro ao carregar dados de estoque.';
+            }
+        }
+        loadData();
+
+        function renderKpis(d) {
+            const produtos = allItems.filter(i => i.precoVenda > 0).length;
+            const insumos = allItems.length - produtos;
+            $('unified-kpis').innerHTML = `
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Itens</div><div class="cons-kpi-value">${allItems.length}</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Produtos / Insumos</div><div class="cons-kpi-value">${produtos} / ${insumos}</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Estoque Baixo</div><div class="cons-kpi-value" style="color:#ef4444">${d.estoqueBaixo || 0}</div></div>
+                <div class="cons-kpi-card"><div class="cons-kpi-label">Atenção</div><div class="cons-kpi-value" style="color:#f59e0b">${d.estoqueAtencao || 0}</div></div>
+            `;
+        }
+
+        function buildCatFilter() {
+            const cats = [...new Set(allItems.map(i => i.categoria).filter(Boolean))].sort();
+            $('u-cat-filter').innerHTML = '<option value="">Todas categorias</option>' +
+                cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+        }
+
+        // ── Tabela unificada ──
+        function renderTable() {
+            const search = ($('u-search').value || '').toLowerCase();
+            const tipo = $('u-tipo').value;
+            const statusFilter = $('u-status-filter').value;
+            const catFilter = $('u-cat-filter').value;
+
+            let rows = allItems;
+            if (search) rows = rows.filter(i => (i.nome || '').toLowerCase().includes(search));
+            if (tipo) rows = rows.filter(i => tipoDe(i) === tipo);
+            if (statusFilter) rows = rows.filter(i => i.status === statusFilter);
+            if (catFilter) rows = rows.filter(i => i.categoria === catFilter);
+
+            rows = rows.slice().sort((a, b) => {
+                const order = { baixo: 0, atencao: 1, ok: 2 };
+                return (order[a.status] ?? 9) - (order[b.status] ?? 9) || (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
             });
+
+            $('u-count').textContent = `${rows.length} ite${rows.length !== 1 ? 'ns' : 'm'}`;
+            $('u-tbody').innerHTML = rows.map(i => {
+                const venda = i.precoVenda > 0 ? fmtBRL(i.precoVenda) : '—';
+                const custo = i.precoCusto > 0 ? fmtBRL(i.precoCusto) : '—';
+                let margem = '—';
+                if (i.precoVenda > 0 && i.precoCusto > 0) {
+                    const m = ((i.precoVenda - i.precoCusto) / i.precoVenda) * 100;
+                    const col = m < 0 ? '#ef4444' : m < 30 ? '#f59e0b' : '#10b981';
+                    margem = `<span style="color:${col};font-weight:600">${m.toFixed(0)}%</span>`;
+                }
+                const badge = i.estoqueMinimo > 0 ? `<span class="stock-badge stock-${i.status}">${statusLabels[i.status] || '—'}</span>` : '—';
+                return `<tr>
+                    <td>${escapeHtml(i.nome)}</td>
+                    <td>${escapeHtml((i.categoria || '—').replace(/\s*Inativo$/i, ''))}</td>
+                    <td style="text-align:right">${custo}</td>
+                    <td style="text-align:right">${venda}</td>
+                    <td style="text-align:right">${margem}</td>
+                    <td style="text-align:right;font-weight:600">${fmtQty(i.estoqueAtual)}</td>
+                    <td style="text-align:right">${i.estoqueMinimo > 0 ? fmtQty(i.estoqueMinimo) : '—'}</td>
+                    <td>${badge}</td>
+                </tr>`;
+            }).join('');
+        }
+        ['u-search', 'u-tipo', 'u-status-filter', 'u-cat-filter'].forEach(id => {
+            $(id).addEventListener(id === 'u-search' ? 'input' : 'change', renderTable);
         });
 
-        // ── Load all data from Consumer POS sync ──
-        let cardapioData = null;
-        let consumerProdutos = [];
-        let consumerInsumos = [];
-        let estoqueData = [];
+        // ── Lista de compras automática ──
+        function gerarListaCompras() {
+            const threshold = parseFloat($('buy-threshold').value); // compra se atual <= minimo*threshold
+            const target = parseFloat($('buy-target').value);       // repõe até minimo*target
+            const tipoFiltro = $('buy-tipo').value;
 
-        async function loadAllData() {
-            try {
-                const [cardRes, prodRes, estRes] = await Promise.all([
-                    fetch('/data/cardapio.json'),
-                    fetch('/data/produtos-consumer.json'),
-                    fetch('/data/estoque.json')
-                ]);
-                cardapioData = await cardRes.json();
-                const prodData = await prodRes.json();
-                consumerProdutos = prodData.produtos || [];
-                consumerInsumos = prodData.insumos || [];
-                const estData = await estRes.json();
-                estoqueData = estData.itens || [];
-
-                renderCardapio();
-                renderConsumerProdutos();
-                renderConsumerInsumos();
-                renderEstoque(estData);
-            } catch (e) {
-                console.warn('Erro ao carregar dados Consumer:', e);
-            }
-        }
-        loadAllData();
-
-        // ── Cardápio (read-only from Consumer POS) ──
-        function renderCardapio() {
-            if (!cardapioData) return;
-            const cats = cardapioData.categories || [];
-            const totalProdutos = cats.reduce((s, c) => s + c.items.length, 0);
-            const syncInfo = cardapioData.syncedAt ? `Sync: ${fmtDateBR(cardapioData.syncedAt.split('T')[0])} — Fonte: ${cardapioData.source || 'Consumer POS'}` : '';
-
-            $('cardapio-sync-info').textContent = syncInfo;
-            $('cardapio-kpis').innerHTML = `
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Itens no Cardápio</div><div class="cons-kpi-value">${totalProdutos}</div></div>
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Categorias</div><div class="cons-kpi-value">${cats.length}</div></div>
-            `;
-
-            const sel = $('cardapio-cat-filter');
-            sel.innerHTML = '<option value="">Todas categorias</option>' + cats.map(c => `<option value="${escapeHtml(c.category)}">${escapeHtml(c.category)}</option>`).join('');
-
-            function render() {
-                const search = ($('cardapio-search')?.value || '').toLowerCase();
-                const catFilter = $('cardapio-cat-filter')?.value || '';
-
-                let filteredCats = cats;
-                if (catFilter) filteredCats = filteredCats.filter(c => c.category === catFilter);
-
-                let totalShown = 0;
-                const container = $('cardapio-categories');
-                container.innerHTML = filteredCats.map(cat => {
-                    let items = cat.items || [];
-                    if (search) items = items.filter(i => (i.name||'').toLowerCase().includes(search));
-                    if (items.length === 0) return '';
-                    totalShown += items.length;
-
-                    const rows = items.map(i =>
-                        `<tr><td>${escapeHtml(i.name)}</td><td style="text-align:right;white-space:nowrap">${fmtBRL(i.price)}</td></tr>`
-                    ).join('');
-
-                    return `<div class="section-card" style="margin-bottom:12px">
-                        <h3 style="font-size:.85em;font-weight:700;color:#4f1964;margin-bottom:8px">${escapeHtml(cat.category)} <span style="font-weight:400;color:#999;font-size:.85em">(${items.length})</span></h3>
-                        <div style="overflow-x:auto"><table class="cons-table"><thead><tr><th>Item</th><th style="text-align:right;width:100px">Preço</th></tr></thead><tbody>${rows}</tbody></table></div>
-                    </div>`;
-                }).join('');
-
-                $('cardapio-count').textContent = `${totalShown} ite${totalShown !== 1 ? 'ns' : 'm'}`;
-            }
-            render();
-            $('cardapio-search')?.addEventListener('input', render);
-            sel.addEventListener('change', render);
-        }
-
-        // ── Produtos Consumer ──
-        function renderConsumerProdutos() {
-            const cats = [...new Set(consumerProdutos.map(p => p.categoria).filter(Boolean))].sort();
-
-            $('prod-kpis').innerHTML = `
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Total Produtos</div><div class="cons-kpi-value">${consumerProdutos.length}</div></div>
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Categorias</div><div class="cons-kpi-value">${cats.length}</div></div>
-            `;
-
-            const sel = $('prod-cat-filter');
-            sel.innerHTML = '<option value="">Todas categorias</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-
-            function render() {
-                const search = ($('prod-search')?.value || '').toLowerCase();
-                const catFilter = $('prod-cat-filter')?.value || '';
-                let filtered = consumerProdutos;
-                if (search) filtered = filtered.filter(p => (p.nome||'').toLowerCase().includes(search));
-                if (catFilter) filtered = filtered.filter(p => p.categoria === catFilter);
-
-                $('prod-count').textContent = `${filtered.length} produto${filtered.length!==1?'s':''}`;
-                $('prod-tbody').innerHTML = filtered.map(p =>
-                    `<tr><td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.categoria||'—')}</td><td style="text-align:right">${fmtBRL(p.precoVenda)}</td></tr>`
-                ).join('');
-            }
-            render();
-            $('prod-search')?.addEventListener('input', render);
-            sel.addEventListener('change', render);
-        }
-
-        // ── Insumos ──
-        function renderConsumerInsumos() {
-            const cats = [...new Set(consumerInsumos.map(i => i.categoria).filter(Boolean))].sort();
-
-            $('ins-kpis').innerHTML = `
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Total Insumos</div><div class="cons-kpi-value">${consumerInsumos.length}</div></div>
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Categorias</div><div class="cons-kpi-value">${cats.length}</div></div>
-            `;
-
-            const sel = $('ins-cat-filter');
-            sel.innerHTML = '<option value="">Todas categorias</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-
-            function render() {
-                const search = ($('ins-search')?.value || '').toLowerCase();
-                const catFilter = $('ins-cat-filter')?.value || '';
-                let filtered = consumerInsumos;
-                if (search) filtered = filtered.filter(i => (i.nome||'').toLowerCase().includes(search));
-                if (catFilter) filtered = filtered.filter(i => i.categoria === catFilter);
-
-                $('ins-count').textContent = `${filtered.length} insumo${filtered.length!==1?'s':''}`;
-                $('ins-tbody').innerHTML = filtered.map(i =>
-                    `<tr><td>${escapeHtml(i.nome)}</td><td>${escapeHtml(i.categoria||'—')}</td></tr>`
-                ).join('');
-            }
-            render();
-            $('ins-search')?.addEventListener('input', render);
-            sel.addEventListener('change', render);
-        }
-
-        // ── Estoque ──
-        function renderEstoque(estData) {
-            const total = estoqueData.length;
-            const comMinimo = estData.comMinimo || 0;
-            const baixo = estData.estoqueBaixo || 0;
-            const atencao = estData.estoqueAtencao || 0;
-
-            $('estoque-kpis').innerHTML = `
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Itens com Estoque</div><div class="cons-kpi-value">${total}</div></div>
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Com Mínimo Definido</div><div class="cons-kpi-value">${comMinimo}</div></div>
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Estoque Baixo</div><div class="cons-kpi-value" style="color:#ef4444">${baixo}</div></div>
-                <div class="cons-kpi-card"><div class="cons-kpi-label">Atenção</div><div class="cons-kpi-value" style="color:#f59e0b">${atencao}</div></div>
-            `;
-
-            const cats = [...new Set(estoqueData.map(i => i.categoria).filter(Boolean))].sort();
-            const catSel = $('estoque-cat-filter');
-            catSel.innerHTML = '<option value="">Todas categorias</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-
-            function render() {
-                const search = ($('estoque-search')?.value || '').toLowerCase();
-                const statusFilter = $('estoque-status-filter')?.value || '';
-                const catFilter = $('estoque-cat-filter')?.value || '';
-                let filtered = estoqueData;
-                if (search) filtered = filtered.filter(i => (i.nome||'').toLowerCase().includes(search));
-                if (statusFilter) filtered = filtered.filter(i => i.status === statusFilter);
-                if (catFilter) filtered = filtered.filter(i => i.categoria === catFilter);
-
-                filtered = filtered.sort((a,b) => {
-                    const order = {baixo:0, atencao:1, ok:2};
-                    return (order[a.status]||9) - (order[b.status]||9) || (a.nome||'').localeCompare(b.nome||'','pt-BR');
+            const lista = allItems
+                .filter(i => i.estoqueMinimo > 0)
+                .filter(i => !tipoFiltro || tipoDe(i) === tipoFiltro)
+                .filter(i => i.estoqueAtual <= i.estoqueMinimo * threshold)
+                .map(i => {
+                    const alvo = i.estoqueMinimo * target;
+                    const comprar = Math.max(0, Math.ceil(alvo - i.estoqueAtual));
+                    const custoEstimado = comprar * (i.precoCusto || 0);
+                    return { ...i, comprar, custoEstimado };
+                })
+                .filter(i => i.comprar > 0)
+                .sort((a, b) => {
+                    const order = { baixo: 0, atencao: 1, ok: 2 };
+                    return (order[a.status] ?? 9) - (order[b.status] ?? 9) || b.custoEstimado - a.custoEstimado;
                 });
 
-                $('estoque-count').textContent = `${filtered.length} ite${filtered.length!==1?'ns':'m'}`;
-                const statusLabels = {baixo:'Baixo', atencao:'Atenção', ok:'OK'};
-                $('estoque-tbody').innerHTML = filtered.map(i => {
-                    const badge = `<span class="stock-badge stock-${i.status}">${statusLabels[i.status]||'—'}</span>`;
-                    return `<tr><td>${escapeHtml(i.nome)}</td><td>${escapeHtml(i.categoria||'—')}</td><td style="text-align:right;font-weight:600">${i.estoqueAtual}</td><td style="text-align:right">${i.estoqueMinimo > 0 ? i.estoqueMinimo : '—'}</td><td>${i.estoqueMinimo > 0 ? badge : '—'}</td></tr>`;
-                }).join('');
-            }
-            render();
-            $('estoque-search')?.addEventListener('input', render);
-            $('estoque-status-filter')?.addEventListener('change', render);
-            catSel.addEventListener('change', render);
+            lastShopping = lista;
+            const totalCusto = lista.reduce((s, i) => s + i.custoEstimado, 0);
+
+            $('shopping-summary').textContent = lista.length
+                ? `${lista.length} itens · custo estimado ${fmtBRL(totalCusto)}`
+                : 'Nenhum item precisa de compra com esse critério.';
+            $('export-shopping').style.display = lista.length ? 'inline-flex' : 'none';
+
+            $('shopping-result').innerHTML = lista.length === 0 ? '' :
+                `<div style="overflow-x:auto;margin-top:6px;background:#fff;border-radius:8px"><table class="cons-table"><thead><tr>
+                    <th>Item</th><th>Categoria</th><th style="text-align:right">Atual</th><th style="text-align:right">Mínimo</th>
+                    <th style="text-align:right">Comprar</th><th style="text-align:right">Custo unit.</th><th style="text-align:right">Custo total</th>
+                </tr></thead><tbody>${
+                    lista.map(i => `<tr>
+                        <td>${escapeHtml(i.nome)}</td>
+                        <td>${escapeHtml((i.categoria || '—').replace(/\s*Inativo$/i, ''))}</td>
+                        <td style="text-align:right">${fmtQty(i.estoqueAtual)}</td>
+                        <td style="text-align:right">${fmtQty(i.estoqueMinimo)}</td>
+                        <td style="text-align:right;font-weight:700;color:#92400e">${fmtQty(i.comprar)}</td>
+                        <td style="text-align:right">${i.precoCusto > 0 ? fmtBRL(i.precoCusto) : '—'}</td>
+                        <td style="text-align:right;font-weight:600">${i.custoEstimado > 0 ? fmtBRL(i.custoEstimado) : '—'}</td>
+                    </tr>`).join('')
+                }<tr style="background:#fffbeb;font-weight:700"><td colspan="6" style="text-align:right">Total estimado</td><td style="text-align:right">${fmtBRL(totalCusto)}</td></tr></tbody></table></div>`;
         }
+
+        function exportarCSV() {
+            if (!lastShopping.length) return;
+            const headers = ['Item', 'Categoria', 'Estoque Atual', 'Estoque Minimo', 'Comprar', 'Custo Unitario', 'Custo Total'];
+            const rows = lastShopping.map(i => [
+                i.nome, (i.categoria || '').replace(/\s*Inativo$/i, ''),
+                i.estoqueAtual, i.estoqueMinimo, i.comprar,
+                (i.precoCusto || 0).toFixed(2), i.custoEstimado.toFixed(2)
+            ]);
+            const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+            const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            const hoje = new Date().toISOString().split('T')[0];
+            a.download = `lista-compras-javari-${hoje}.csv`;
+            a.click();
+            showMessage('Lista exportada!');
+        }
+
+        $('gen-shopping').addEventListener('click', gerarListaCompras);
+        $('export-shopping').addEventListener('click', exportarCSV);
+        ['buy-threshold', 'buy-target', 'buy-tipo'].forEach(id => $(id).addEventListener('change', () => {
+            if (lastShopping.length || $('shopping-summary').textContent) gerarListaCompras();
+        }));
     </script>
 </body>
 </html>
