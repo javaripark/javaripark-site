@@ -11,9 +11,19 @@ app.use(express.json({ limit: '2mb' }));
 // CORS — permite o dashboard (HTTPS) chamar o serviço
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, x-send-pin');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// Allowlist de origem (defesa extra; só bloqueia navegador de origem não-listada)
+app.use((req, res, next) => {
+  if (config.allowedOrigins.length === 0) return next();
+  const origin = req.headers.origin;
+  if (origin && !config.allowedOrigins.includes(origin)) {
+    return res.status(403).json({ error: 'origem_nao_permitida' });
+  }
   next();
 });
 
@@ -43,7 +53,11 @@ app.get('/qr', (req, res) => {
 });
 
 // Enfileira mensagens: { messages: [{ to, message, nome }] }
+// Exige o PIN de envio (se configurado) — protege o disparo mesmo com token vazado.
 app.post('/enqueue', (req, res) => {
+  if (config.sendPin && req.headers['x-send-pin'] !== config.sendPin) {
+    return res.status(401).json({ error: 'pin_invalido' });
+  }
   const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
   if (messages.length === 0) return res.status(400).json({ error: 'sem_mensagens' });
   const added = enqueue(messages);

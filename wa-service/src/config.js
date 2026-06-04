@@ -17,6 +17,13 @@ export const config = {
   warmupDays: num('WARMUP_DAYS', 7),
   optoutKeywords: (process.env.OPTOUT_KEYWORDS || 'PARAR,SAIR,CANCELAR,REMOVER,STOP')
     .split(',').map(s => s.trim().toUpperCase()).filter(Boolean),
+  // PIN de envio: se definido, o /enqueue exige o header x-send-pin.
+  // Protege os disparos mesmo que o token (público no dashboard) vaze.
+  sendPin: process.env.SEND_PIN || '',
+  // Allowlist de origens (defesa extra contra abuso via navegador de outros sites).
+  // Vazio = aceita qualquer origem (o PIN é a proteção principal).
+  allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
+    .split(',').map(s => s.trim()).filter(Boolean),
 };
 
 if (!config.authToken || config.authToken.startsWith('troque-isto')) {
