@@ -39,6 +39,10 @@ FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "central-de-reservas
 FIRESTORE_PATH_FAT = f"artifacts/{FIREBASE_PROJECT_ID}/public/data/faturamento"
 FIRESTORE_PATH_FIN = f"artifacts/{FIREBASE_PROJECT_ID}/public/data/financeiro"
 
+# Histórico mensal de vendas por produto (preenchido em query_sales_data,
+# consumido em write_static_json). Global p/ não alterar assinaturas.
+SALES_PRODUCT_MONTHLY = {}
+
 # ---------------------------------------------------------------------------
 # Google Drive: download backup by day-of-week strategy
 # ---------------------------------------------------------------------------
@@ -551,6 +555,8 @@ def query_sales_data(db_path):
                 day_categories = defaultdict(lambda: defaultdict(lambda: {"faturamento": 0, "qtd": 0}))
                 # Track products per category per day for topProdutosPorCategoria
                 day_cat_products = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "faturamento": 0})))
+                # Histórico mensal por produto: nome -> mes(YYYY-MM) -> {qtd, receita, categoria}
+                product_monthly = defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "receita": 0, "categoria": ""}))
 
                 for row in cur.fetchall():
                     dt = row[0]
@@ -569,6 +575,12 @@ def query_sales_data(db_path):
                     day_categories[date_str][cat_name]["qtd"] += qty
                     day_cat_products[date_str][cat_name][prod_name]["qtd"] += qty
                     day_cat_products[date_str][cat_name][prod_name]["faturamento"] += total
+
+                    mes = date_str[:7]
+                    pm = product_monthly[prod_name][mes]
+                    pm["qtd"] += qty
+                    pm["receita"] += total
+                    pm["categoria"] = cat_name
 
                 for date_str in daily_data:
                     prods = day_products.get(date_str, [])
@@ -592,6 +604,17 @@ def query_sales_data(db_path):
                         )
                         top_by_cat[cat] = items_sorted[:10]
                     daily_data[date_str]["topProdutosPorCategoria"] = top_by_cat
+
+                # Converte histórico mensal em estrutura serializável (global)
+                SALES_PRODUCT_MONTHLY.clear()
+                for pname, meses in product_monthly.items():
+                    SALES_PRODUCT_MONTHLY[pname] = {
+                        "categoria": next((v["categoria"] for v in meses.values() if v["categoria"]), ""),
+                        "meses": [
+                            {"mes": m, "qtd": round(meses[m]["qtd"], 2), "receita": round(meses[m]["receita"], 2)}
+                            for m in sorted(meses.keys())
+                        ],
+                    }
 
             except Exception as e:
                 print(f"  Product query failed: {e}")
@@ -1307,6 +1330,14 @@ def write_static_json(daily_data, financial_data, db_path, repo_root):
             print(f"  Wrote {card_path} ({len(cardapio['categories'])} categorias)")
 
         con.close()
+
+        # vendas-produtos.json — histórico mensal de vendas por produto
+        if SALES_PRODUCT_MONTHLY:
+            vp_path = os.path.join(data_dir, "vendas-produtos.json")
+            with open(vp_path, "w", encoding="utf-8") as f:
+                json.dump({"syncedAt": now_iso, "produtos": SALES_PRODUCT_MONTHLY}, f, ensure_ascii=False)
+            n_meses = sum(len(v["meses"]) for v in SALES_PRODUCT_MONTHLY.values())
+            print(f"  Wrote {vp_path} ({len(SALES_PRODUCT_MONTHLY)} produtos, {n_meses} linhas mês)")
     except Exception as e:
         print(f"  Warning: could not extract clientes/produtos/estoque: {e}")
         import traceback
