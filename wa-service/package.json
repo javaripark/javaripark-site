@@ -1,0 +1,17 @@
+{
+  "name": "javari-wa-service",
+  "version": "1.0.0",
+  "description": "Serviço de envio de WhatsApp do Javari StrEat Park (Baileys + fila com trava anti-ban)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "pino": "^9.5.0",
+    "qrcode": "^1.5.4"
+  }
+}
