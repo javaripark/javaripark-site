@@ -157,6 +157,19 @@
             <a href="/admin/dashboard.html">Dashboard</a>
         </nav>
 
+        <details class="card" id="wa-config-card">
+            <summary style="cursor:pointer;font-weight:700;font-size:.75em;color:#555;text-transform:uppercase;letter-spacing:.3px;display:flex;align-items:center;gap:8px">
+                <span>⚙ Reconfirmação por WhatsApp</span>
+                <span id="wa-status-badge" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:#e5e7eb;color:#666;text-transform:none;letter-spacing:0">verificando…</span>
+            </summary>
+            <div style="margin-top:12px">
+                <p style="font-size:12px;color:#888;margin-bottom:10px">As reconfirmações são enviadas pela fila do serviço (com ritmo anti-ban). URL e token já vêm configurados. Digite o <strong>PIN de envio</strong> uma vez neste aparelho.</p>
+                <input type="password" id="wa-pin" placeholder="PIN de envio" style="width:100%;max-width:240px;padding:9px 12px;border:1px solid #fcd34d;border-radius:8px;font-size:13px;background:#fffbeb;margin-right:8px">
+                <button id="wa-save-btn" class="btn-secondary" style="vertical-align:top">Salvar PIN</button>
+                <span id="wa-status-detail" style="font-size:12px;color:#888;margin-left:8px"></span>
+            </div>
+        </details>
+
         <div class="card">
             <h3>Visão Geral</h3>
             <div class="kpi-grid" style="margin-bottom:0">
@@ -187,6 +200,8 @@
             <label for="reservation-date" class="field-label">Data</label>
             <input type="date" id="reservation-date" class="field-input" />
             <p id="date-reservations-indicator" class="calendar-indicator"></p>
+            <button id="reconfirm-day-btn" class="btn-secondary" style="margin-top:10px;background:#25D366;color:#fff;border-color:#25D366">Reconfirmar pendentes do dia</button>
+            <span id="reconfirm-day-info" style="font-size:12px;color:#888;margin-left:8px"></span>
         </div>
 
         <div class="kpi-grid">
@@ -501,6 +516,56 @@
             messageBox.style.animation = 'fadeInOut 3s forwards';
         }
 
+        // ── Integração com o serviço de WhatsApp (mesma config do dashboard) ──
+        const WA_EP_KEY = 'javari_wa_endpoint', WA_TK_KEY = 'javari_wa_token', WA_PIN_KEY = 'javari_wa_pin';
+        const WA_DEFAULT_ENDPOINT = 'https://macbook-pro-de-rene.tailf78ede.ts.net';
+        const WA_DEFAULT_TOKEN = '4d5bc973c37ce3e9ed21989556ea1f578ad642d35aaee8097b8b4f1d1ae3afdb';
+        function waCfg() { return { endpoint: (localStorage.getItem(WA_EP_KEY) || '').replace(/\/+$/, ''), token: localStorage.getItem(WA_TK_KEY) || '', pin: localStorage.getItem(WA_PIN_KEY) || '' }; }
+        function waSendHeaders() { const c = waCfg(); const h = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.token }; if (c.pin) h['x-send-pin'] = c.pin; return h; }
+
+        function reconfirmMsg(res) {
+            const nome = (res.Nome || '').trim().split(' ')[0] || 'tudo bem';
+            return `Olá, ${nome}!\n\nEstamos enviando esta mensagem para reconfirmar a sua reserva conosco e atualizar a sua expectativa de convidados.\n\nTudo certo pra vivermos esse momento? O número de pessoas que você nos informou segue o mesmo? 🥰\n\nO seu retorno é importante e garante que a sua reserva não seja alterada por falta dessa reconfirmação.\n\nAbraços e até mais!\n\nRodrigo - Javari Park\nr. Javari, 112 - Mooca (SP)\n@javaripark`;
+        }
+
+        async function waCheckStatus() {
+            const { endpoint, token } = waCfg();
+            const badge = $('wa-status-badge'), detail = $('wa-status-detail');
+            const set = (t, bg, c) => { badge.textContent = t; badge.style.background = bg; badge.style.color = c; };
+            if (!endpoint || !token) { set('não configurado', '#e5e7eb', '#666'); return; }
+            try {
+                const r = await fetch(endpoint + '/status', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (!r.ok) throw new Error(r.status);
+                const d = await r.json();
+                if (d.wa.connected) {
+                    set('conectado', '#d1fae5', '#065f46');
+                    detail.textContent = `Nº ${d.wa.me || '?'} · hoje: ${d.fila.enviadosHoje}/${d.fila.limiteDia} · fila: ${d.fila.pendentes}`;
+                    if (!waCfg().pin) detail.textContent += ' · defina o PIN ↑';
+                } else { set('desconectado', '#fee2e2', '#991b1b'); detail.textContent = ''; }
+            } catch (e) { set('offline', '#fee2e2', '#991b1b'); detail.textContent = 'Serviço inacessível.'; }
+        }
+
+        // Envia uma reconfirmação pela fila e marca ReconfirmadoEm. Retorna true se enfileirou.
+        async function enviarReconfirmacao(res, silent = false) {
+            const { endpoint, token, pin } = waCfg();
+            if (!endpoint || !token) { if (!silent) showMessage('Serviço de WhatsApp não configurado.', 'error'); return false; }
+            if (!pin) { if (!silent) { showMessage('Defina o PIN de envio (painel ⚙ no topo).', 'error'); $('wa-config-card').open = true; $('wa-pin').focus(); } return false; }
+            const num = (res.Whatsapp || '').replace(/\D/g, '');
+            if (num.length < 10) { if (!silent) showMessage('Reserva sem telefone válido.', 'error'); return false; }
+            try {
+                const r = await fetch(endpoint + '/enqueue', {
+                    method: 'POST', headers: waSendHeaders(),
+                    body: JSON.stringify({ messages: [{ to: res.Whatsapp, nome: `${res.Nome || ''} ${res.Sobrenome || ''}`.trim(), message: reconfirmMsg(res) }] })
+                });
+                const d = await r.json();
+                if (!r.ok) { if (!silent) showMessage(d.error === 'pin_invalido' ? 'PIN incorreto.' : 'Erro: ' + (d.error || r.status), 'error'); return false; }
+                // marca como reconfirmado (enviado à fila)
+                const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
+                await updateDoc(doc(ref, res.id), { ReconfirmadoEm: new Date().toISOString() });
+                return true;
+            } catch (e) { if (!silent) showMessage('Falha ao conectar no serviço: ' + e.message, 'error'); return false; }
+        }
+
         function stripCountryCode(digits) {
             // Remove +55 or 55 prefix if present (Brazilian country code)
             if (digits.length > 11 && digits.startsWith('55')) digits = digits.substring(2);
@@ -565,6 +630,7 @@
                 $('total-reservations-display').textContent = currentReservations.length;
                 $('total-people-display').textContent = totalPeople;
                 updateOccupancy(totalPeople);
+                updateReconfirmDayInfo();
             }, (err) => {
                 console.error('Erro reservas:', err);
                 showMessage('Erro ao carregar reservas: ' + err.message, 'error');
@@ -802,15 +868,14 @@
         }
 
         async function sendWhatsAppReconfirmation(res) {
-            let num = stripCountryCode((res.Whatsapp || '').replace(/\D/g, ''));
-            num = '55' + num; // wa.me needs country code
-            const msg = `Olá!%0A%0AEstamos enviando esta mensagem para reconfirmar a sua reserva conosco e atualizar a sua expectativa de convidados.%0A%0ATudo certo pra vivermos esse momento? O número de pessoas que você nos informou segue o mesmo? 🥰%0A%0AO seu retorno é importante e garante que a sua reserva não seja alterada por falta dessa reconfirmação.%0A%0AAbraços e até mais!%0A%0ARodrigo - Javari Park%0Ar. Javari, 112 - Mooca (SP)%0A@javaripark`;
-            window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
-            try {
-                const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
-                await updateDoc(doc(ref, res.id), { ReconfirmadoEm: new Date().toISOString() });
-                showMessage('Reconfirmação enviada e registrada!', 'success');
-            } catch (err) { showMessage('Erro ao registrar reconfirmação: ' + err.message, 'error'); }
+            const btn = $('btn-reconfirm-whatsapp');
+            btn.disabled = true; const txt = btn.textContent; btn.textContent = 'Enviando…';
+            const ok = await enviarReconfirmacao(res);
+            btn.disabled = false; btn.textContent = txt;
+            if (ok) {
+                showMessage('Reconfirmação enfileirada! Será enviada pelo serviço.', 'success');
+                $('reservation-details-modal').style.display = 'none';
+            }
         }
 
         async function deleteReservation(docId) {
@@ -973,6 +1038,47 @@
         });
         ['reservation-form-modal','reservation-details-modal','report-modal','extras-list-modal','capacity-config-modal'].forEach(id => {
             $(id).addEventListener('click', (e) => { if (e.target === $(id)) $(id).style.display = 'none'; });
+        });
+
+        // ── WhatsApp: init config + reconfirmação em massa ──
+        // Pré-config: popula endpoint/token a partir dos defaults (uma vez)
+        if (WA_DEFAULT_ENDPOINT && !localStorage.getItem(WA_EP_KEY)) localStorage.setItem(WA_EP_KEY, WA_DEFAULT_ENDPOINT);
+        if (WA_DEFAULT_TOKEN && !localStorage.getItem(WA_TK_KEY)) localStorage.setItem(WA_TK_KEY, WA_DEFAULT_TOKEN);
+        $('wa-pin').value = localStorage.getItem(WA_PIN_KEY) || '';
+        $('wa-save-btn').addEventListener('click', () => {
+            localStorage.setItem(WA_PIN_KEY, $('wa-pin').value.trim());
+            showMessage('PIN salvo.', 'success'); waCheckStatus();
+        });
+        if (!localStorage.getItem(WA_PIN_KEY)) $('wa-config-card').open = true; // abre se PIN não definido
+        waCheckStatus();
+
+        function updateReconfirmDayInfo() {
+            const pend = currentReservations.filter(r => !r.ReconfirmadoEm && (r.Whatsapp || '').replace(/\D/g, '').length >= 10).length;
+            const jaReconf = currentReservations.filter(r => r.ReconfirmadoEm).length;
+            const info = $('reconfirm-day-info');
+            const btn = $('reconfirm-day-btn');
+            if (info) info.textContent = currentReservations.length ? `${pend} pendente(s) · ${jaReconf} já reconfirmada(s)` : '';
+            if (btn) btn.style.display = pend > 0 ? '' : 'none';
+        }
+        window.updateReconfirmDayInfo = updateReconfirmDayInfo;
+
+        $('reconfirm-day-btn').addEventListener('click', async () => {
+            const pendentes = currentReservations.filter(r => !r.ReconfirmadoEm && (r.Whatsapp || '').replace(/\D/g, '').length >= 10);
+            if (pendentes.length === 0) { showMessage('Nenhuma reserva pendente de reconfirmação (com telefone) neste dia.', 'info'); return; }
+            const dStr = dateFormatter.format(new Date(selectedDate + 'T00:00:00'));
+            showConfirmation(`Reconfirmar ${pendentes.length} reserva(s) de ${dStr}?\n\nAs mensagens vão pra fila e são enviadas com o ritmo anti-ban (pode levar alguns minutos).`, async () => {
+                const btn = $('reconfirm-day-btn'); btn.disabled = true; btn.textContent = 'Enviando…';
+                let ok = 0, fail = 0;
+                for (const r of pendentes) {
+                    const sent = await enviarReconfirmacao(r, true);
+                    sent ? ok++ : fail++;
+                    if (!sent && fail === 1) { break; } // primeira falha (provável PIN/config) — para e avisa
+                }
+                btn.disabled = false; btn.textContent = 'Reconfirmar pendentes do dia';
+                if (ok > 0) showMessage(`${ok} reconfirmação(ões) enfileirada(s).${fail ? ' Algumas falharam.' : ''}`, 'success');
+                else { showMessage('Não foi possível enfileirar. Verifique o PIN/serviço (painel ⚙).', 'error'); $('wa-config-card').open = true; }
+                waCheckStatus();
+            }, () => {});
         });
 
         // Init date picker
