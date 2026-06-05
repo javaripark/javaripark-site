@@ -20,6 +20,20 @@ let state = {
   me: null,          // número conectado
 };
 
+// Cache de mensagens enviadas (id -> conteúdo). Necessário pro getMessage:
+// quando o WhatsApp do destinatário pede reenvio (falha de descriptografia),
+// o Baileys precisa devolver o conteúdo original — senão fica "Aguardando esta mensagem".
+const sentMessages = new Map();
+const SENT_CACHE_MAX = 1000;
+function cacheSent(id, message) {
+  if (!id || !message) return;
+  sentMessages.set(id, message);
+  if (sentMessages.size > SENT_CACHE_MAX) {
+    const firstKey = sentMessages.keys().next().value;
+    sentMessages.delete(firstKey);
+  }
+}
+
 export function getWaState() {
   return { connected: state.connected, hasQr: !!state.qrDataUrl, me: state.me };
 }
@@ -71,6 +85,11 @@ export async function startWA() {
       logger,
       printQRInTerminal: false,
       markOnlineOnConnect: false,
+      // Responde a pedidos de reenvio do destinatário (corrige "Aguardando esta mensagem")
+      getMessage: async (key) => {
+        const msg = sentMessages.get(key.id);
+        return msg || undefined;
+      },
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -127,7 +146,9 @@ export async function sendText(rawNumber, message) {
   try {
     const [check] = await sock.onWhatsApp(norm.digits);
     if (!check?.exists) return { ok: false, reason: 'sem_whatsapp' };
-    await sock.sendMessage(check.jid, { text: message });
+    const sent = await sock.sendMessage(check.jid, { text: message });
+    // Guarda no cache pro getMessage poder reenviar se o destinatário pedir
+    if (sent?.key?.id) cacheSent(sent.key.id, sent.message);
     return { ok: true, jid: check.jid };
   } catch (e) {
     return { ok: false, reason: 'erro_envio', detail: String(e?.message || e) };
