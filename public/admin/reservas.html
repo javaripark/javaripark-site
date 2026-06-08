@@ -324,7 +324,7 @@
                     <input type="hidden" id="reservation-doc-id" name="docId">
                     <div class="form-group">
                         <label for="form-date">Data:</label>
-                        <input type="text" id="form-date" name="date" class="field-readonly" readonly required>
+                        <input type="date" id="form-date" name="date" class="field-input" required>
                     </div>
                     <div class="form-group">
                         <label for="form-sector">Setor Desejado:</label>
@@ -773,16 +773,14 @@
         }
 
         // Build sector options for the select
-        function buildSectorOptions(currentSector, editDocId) {
+        const ALL_SECTORS = ['1','2','3','4','5','6','7','8','9','Bus Lounge','Extras'];
+
+        // Monta o select de setores marcando os ocupados. Seleciona o desejado se livre,
+        // senão o primeiro disponível. Retorna true se o setor desejado está livre.
+        function buildSectorOptions(occupiedSectors, desiredSector) {
             const sel = $('form-sector');
             sel.innerHTML = '';
-
-            const allSectors = ['1','2','3','4','5','6','7','8','9','Bus Lounge','Extras'];
-            const occupiedSectors = currentReservations
-                .filter(r => r.Setor !== 'Extras' && r.id !== editDocId)
-                .map(r => r.Setor);
-
-            allSectors.forEach(s => {
+            ALL_SECTORS.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s;
                 opt.textContent = s === 'Extras' ? 'Extras (sem setor fixo)' : 'Setor ' + s;
@@ -792,25 +790,63 @@
                 }
                 sel.appendChild(opt);
             });
-
-            sel.value = currentSector;
+            const desired = [...sel.options].find(o => o.value === desiredSector);
+            const desiredFree = !!desired && !desired.disabled;
+            if (desiredFree) sel.value = desiredSector;
+            else { const free = [...sel.options].find(o => !o.disabled); if (free) sel.value = free.value; }
+            return desiredFree;
         }
+
+        // Setores ocupados na data SELECIONADA (já em memória), excluindo a própria reserva
+        function occupiedFromCurrent(excludeDocId) {
+            return currentReservations.filter(r => r.Setor !== 'Extras' && r.id !== excludeDocId).map(r => r.Setor);
+        }
+
+        // Reconstrói o select com base na disponibilidade de UMA data qualquer (busca no Firestore
+        // se não for a data já carregada). Avisa se o setor desejado estiver ocupado nessa data.
+        async function loadSectorsForDate(dateIso, desiredSector, excludeDocId) {
+            let occupied;
+            if (dateIso === selectedDate) {
+                occupied = occupiedFromCurrent(excludeDocId);
+            } else {
+                try {
+                    const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
+                    const snap = await getDocs(query(ref, where("Data", "==", dateIso)));
+                    occupied = [];
+                    snap.forEach(d => { if (d.id !== excludeDocId) { const r = d.data(); if (r.Setor !== 'Extras') occupied.push(r.Setor); } });
+                } catch (err) { showMessage('Erro ao verificar disponibilidade: ' + err.message, 'error'); return; }
+            }
+            const desiredFree = buildSectorOptions(occupied, desiredSector);
+            if (desiredSector && desiredSector !== 'Extras' && !desiredFree) {
+                const dBr = dateFormatter.format(new Date(dateIso + 'T00:00:00'));
+                showMessage(`Setor ${desiredSector} está ocupado em ${dBr}. Escolha outro setor disponível.`, 'info');
+            }
+        }
+
+        // Quando a data muda no formulário: valida o dia e recarrega a disponibilidade de setores
+        $('form-date').addEventListener('change', async () => {
+            const dateIso = $('form-date').value;
+            if (!dateIso) return;
+            const dow = new Date(dateIso + 'T00:00:00').getDay();
+            if (dow === 1 || dow === 2) { showMessage('Reservas não são permitidas às segundas e terças-feiras.', 'error'); return; }
+            const excludeDocId = $('reservation-doc-id').value || null;
+            await loadSectorsForDate(dateIso, $('form-sector').value, excludeDocId);
+        });
 
         // Reservation form
         function openReservationForm(date, sector, edit = null) {
-            const d = new Date(date + 'T00:00:00');
-            const dow = d.getDay();
+            const dow = new Date(date + 'T00:00:00').getDay();
             if (dow === 1 || dow === 2) { showMessage('Reservas não são permitidas às segundas e terças-feiras.', 'error'); return; }
 
             const form = $('reservation-form');
             form.reset();
-            $('reservation-doc-id').value = '';
-            $('form-date').value = dateFormatter.format(d);
+            $('reservation-doc-id').value = edit ? edit.id : '';
+            $('form-date').value = date;  // ISO YYYY-MM-DD (input type=date)
+            const desired = edit ? edit.Setor : sector;
+            buildSectorOptions(occupiedFromCurrent(edit ? edit.id : null), desired);
 
             if (edit) {
                 $('form-modal-title').textContent = 'Editar Reserva';
-                $('reservation-doc-id').value = edit.id;
-                buildSectorOptions(edit.Setor, edit.id);
                 $('first-name').value = edit.Nome || '';
                 $('last-name').value = edit.Sobrenome || '';
                 $('num-people').value = edit['Quantidade de Pessoas'] || '';
@@ -819,7 +855,6 @@
                 $('observations').value = edit.Observacoes || '';
             } else {
                 $('form-modal-title').textContent = 'Registrar Nova Reserva';
-                buildSectorOptions(sector, null);
             }
             $('reservation-form-modal').style.display = 'flex';
         }
@@ -829,8 +864,10 @@
             normalizeNameFields();  // garante Title Case + split mesmo sem blur (ex: Enter)
             const docId = $('reservation-doc-id').value;
             const fd = new FormData($('reservation-form'));
-            const parts = fd.get('date').split('/');
-            const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            const isoDate = fd.get('date');  // input type=date já entrega YYYY-MM-DD
+            if (!isoDate) { showMessage('Selecione a data.', 'error'); return; }
+            const dow = new Date(isoDate + 'T00:00:00').getDay();
+            if (dow === 1 || dow === 2) { showMessage('Reservas não são permitidas às segundas e terças-feiras.', 'error'); return; }
             const data = {
                 Data: isoDate,
                 Setor: fd.get('sector'),
@@ -842,15 +879,20 @@
             };
             try {
                 const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
+                // Conflito de setor na data (exceto Extras), ignorando a própria reserva ao editar
+                if (data.Setor !== 'Extras') {
+                    const snap = await getDocs(query(ref, where("Data", "==", data.Data), where("Setor", "==", data.Setor)));
+                    const conflito = snap.docs.some(d => d.id !== docId);
+                    if (conflito) {
+                        const dBr = dateFormatter.format(new Date(data.Data + 'T00:00:00'));
+                        showMessage(`Setor ${data.Setor} já reservado para ${dBr}. Escolha outro setor.`, 'error');
+                        return;
+                    }
+                }
                 if (docId) {
                     await updateDoc(doc(ref, docId), data);
                     showMessage('Reserva atualizada com sucesso!', 'success');
                 } else {
-                    if (data.Setor !== 'Extras') {
-                        const q2 = query(ref, where("Data", "==", data.Data), where("Setor", "==", data.Setor));
-                        const snap = await getDocs(q2);
-                        if (!snap.empty) { showMessage(`Setor ${data.Setor} já reservado para esta data.`, 'error'); return; }
-                    }
                     await addDoc(ref, data);
                     showMessage('Reserva registrada com sucesso!', 'success');
                 }
