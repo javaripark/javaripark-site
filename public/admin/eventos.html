@@ -178,9 +178,10 @@
             </div>
             <div class="card" id="sim-insights" style="font-size:13px;color:#444;line-height:1.7"></div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:24px;flex-wrap:wrap">
-                <input id="sim-cenario-nome" placeholder="Nome do cenário p/ salvar" style="max-width:230px">
-                <button class="btn btn-primary" id="sim-save">Salvar cenário</button>
-                <button class="btn btn-gold" id="sim-pdf">📄 Exportar proposta (PDF)</button>
+                <input id="sim-cenario-nome" placeholder="Nome do cenário p/ salvar" style="max-width:200px">
+                <button class="btn btn-ghost btn-sm" id="sim-save">Salvar cenário</button>
+                <button class="btn btn-sm" style="background:#f0ebf3;color:#4f1964" id="sim-pdf">📄 PDF</button>
+                <button class="btn" style="background:#25D366;color:#fff" id="sim-link">🔗 Gerar proposta (link)</button>
             </div>
         </div>
 
@@ -238,6 +239,18 @@
             </div>
         </div>
     </div>
+    <div class="modal-ov" id="link-modal">
+        <div class="modal-box">
+            <h3>Proposta gerada 🎉</h3>
+            <p>Mande este link para o cliente. Ele abre uma proposta visual e interativa — com fotos do espaço, galeria e botão de WhatsApp direto pra sua linha.</p>
+            <input id="link-url" readonly style="margin-bottom:14px;font-size:13px">
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="link-copy">Copiar link</button>
+                <a class="btn btn-ghost" id="link-open" target="_blank" style="text-align:center;text-decoration:none">Abrir proposta</a>
+                <button class="btn btn-sm" style="background:none;color:#999" id="link-close">Fechar</button>
+            </div>
+        </div>
+    </div>
     <div class="toast" id="toast"></div>
 
     <script type="module">
@@ -251,7 +264,7 @@
         const fbCfg={ apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18", authDomain:"central-de-reservas-jsp.firebaseapp.com", projectId:"central-de-reservas-jsp", storageBucket:"central-de-reservas-jsp.firebasestorage.app", appId:"1:574859111927:web:83df67ed1865a59c0392f2" };
         const db=getFirestore(initializeApp(fbCfg));
         const BASE='artifacts/central-de-reservas-jsp/public/data';
-        const PK_COL=BASE+'/eventos_pacotes', CEN_COL=BASE+'/eventos_cenarios', CFG_COL=BASE+'/eventos_config';
+        const PK_COL=BASE+'/eventos_pacotes', CEN_COL=BASE+'/eventos_cenarios', CFG_COL=BASE+'/eventos_config', PROP_COL=BASE+'/eventos_propostas';
         const brl=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
         const fmtDateBR=s=>{ if(!s)return''; const p=String(s).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
         function toast(m){ const t=$('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2600); }
@@ -395,6 +408,16 @@
             const nome=$('sim-cenario-nome').value.trim()||`${c.p.nome} · ${c.pax}px`;
             try{ await addDoc(collection(db,CEN_COL),{nome,empresa:$('sim-empresa').value,contato:$('sim-contato').value,dataEvento:$('sim-data').value,pacote:c.p.nome,tipo:c.p.tipo,pessoas:c.pax,duracao:$('sim-duracao').value,preco:c.preco,equipe:JSON.parse(JSON.stringify(equipe)),extras:JSON.parse(JSON.stringify(extras)),custoFB:c.custoFB,receita:c.receita,lucro:c.lucro,margem:c.margem,criadoEm:new Date().toISOString()}); toast('Cenário salvo'); $('sim-cenario-nome').value=''; loadCenarios(); }catch(e){ toast('Erro: '+e.message); }
         });
+
+        // ---------- Gerar proposta (link público) ----------
+        $('sim-link').addEventListener('click',async()=>{
+            const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
+            fieldsToCFG();
+            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cfg:{...CFG}, criadoEm:new Date().toISOString() };
+            try{ const ref=await addDoc(collection(db,PROP_COL),data); const url=location.origin+'/proposta.html?id='+ref.id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); }catch(e){ toast('Erro: '+e.message); }
+        });
+        $('link-copy').addEventListener('click',()=>{ const i=$('link-url'); i.select(); navigator.clipboard?.writeText(i.value).then(()=>toast('Link copiado')).catch(()=>{ document.execCommand('copy'); toast('Link copiado'); }); });
+        $('link-close').addEventListener('click',()=>$('link-modal').classList.remove('open'));
 
         // ---------- Cenários ----------
         async function loadCenarios(){
