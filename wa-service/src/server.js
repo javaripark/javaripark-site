@@ -3,7 +3,7 @@ import express from 'express';
 import { config } from './config.js';
 import { startWA, getWaState, getQrDataUrl } from './wa.js';
 import { startQueue, queueStatus } from './queue.js';
-import { enqueue, readLog, addOptOut, getOptOuts } from './store.js';
+import { enqueue, readLog, addOptOut, getOptOuts, getAdReferral } from './store.js';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -76,6 +76,15 @@ function requirePin(req, res, next) {
 app.get('/log', requirePin, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 100, 1000);
   res.json({ log: readLog(limit) });
+});
+
+// Consulta se um telefone chegou via anúncio (click-to-WhatsApp) — protegido por PIN.
+// Usado pelo form de reservas pra auto-marcar a origem.
+app.get('/ad-referral', requirePin, (req, res) => {
+  const num = String(req.query.phone || '').replace(/\D/g, '');
+  if (!num) return res.status(400).json({ error: 'telefone_invalido' });
+  const referral = getAdReferral(num);
+  res.json({ found: !!referral, referral: referral || null });
 });
 
 // Opt-out manual (mutação — protegido por PIN)

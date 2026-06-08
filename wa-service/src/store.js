@@ -103,6 +103,35 @@ export function addOptOut(numDigits) {
   return false;
 }
 
+// ── Referral de anúncio (click-to-WhatsApp) ──
+// Mapa { telefoneDigits: {adId, title, body, sourceUrl, sourceType, ctwaClid, mediaType, capturedAt} }
+// Guarda o último anúncio de onde o número falou, pra cruzar com a reserva.
+const REFERRAL_FILE = path.join(DATA_DIR, 'ad-referrals.json');
+
+export function recordAdReferral(phoneDigits, info) {
+  const num = String(phoneDigits || '').replace(/\D/g, '');
+  if (!num || !info) return false;
+  const map = readJson(REFERRAL_FILE, {});
+  map[num] = { ...info, capturedAt: new Date().toISOString() };
+  writeJson(REFERRAL_FILE, map);
+  return true;
+}
+
+// Busca tolerante: casa pelos últimos 10 dígitos (ignora código de país 55 e variações do 9º dígito)
+export function getAdReferral(phoneDigits) {
+  const num = String(phoneDigits || '').replace(/\D/g, '');
+  if (!num) return null;
+  const map = readJson(REFERRAL_FILE, {});
+  if (map[num]) return map[num];
+  const tail = s => String(s).replace(/\D/g, '').slice(-10);
+  const t = tail(num);
+  if (t.length < 8) return null;
+  for (const k of Object.keys(map)) {
+    if (tail(k) === t) return map[k];
+  }
+  return null;
+}
+
 // ── Log de envios (append JSONL) ──
 export function logSend(entry) {
   fs.appendFileSync(LOG_FILE, JSON.stringify({ ...entry, ts: new Date().toISOString() }) + '\n');

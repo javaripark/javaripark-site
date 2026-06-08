@@ -6,7 +6,31 @@ import pino from 'pino';
 import qrcode from 'qrcode';
 import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { config } from './config.js';
-import { isOptedOut, addOptOut } from './store.js';
+import { isOptedOut, addOptOut, recordAdReferral } from './store.js';
+
+// Extrai o marcador de anúncio (click-to-WhatsApp) de uma mensagem recebida.
+// O Baileys expõe isso em contextInfo.externalAdReply de algum subtipo de mensagem.
+// Varre todos os subtipos defensivamente — retorna null se não houver.
+function extractAdReferral(message) {
+  if (!message || typeof message !== 'object') return null;
+  for (const key of Object.keys(message)) {
+    const sub = message[key];
+    const ctx = sub && typeof sub === 'object' ? sub.contextInfo : null;
+    const ext = ctx && ctx.externalAdReply;
+    if (ext && (ext.sourceId || ext.sourceUrl || ext.title || ext.ctwaClid)) {
+      return {
+        adId: ext.sourceId || '',
+        title: ext.title || '',
+        body: ext.body || '',
+        sourceUrl: ext.sourceUrl || '',
+        sourceType: ext.sourceType || '',
+        ctwaClid: ext.ctwaClid || ctx.ctwaClid || '',
+        mediaType: ext.mediaType || '',
+      };
+    }
+  }
+  return null;
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const AUTH_DIR = path.join(__dirname, '..', 'auth');
@@ -120,11 +144,20 @@ export async function startWA() {
     sock.ev.on('messages.upsert', ({ messages }) => {
       for (const m of messages) {
         if (!m.message || m.key.fromMe) continue;
+        const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
         const text = m.message.conversation || m.message.extendedTextMessage?.text || '';
         if (isOptOutMessage(text)) {
-          const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
           if (num && addOptOut(num)) console.log(`🚫 Opt-out automático: ${num}`);
         }
+        // Captura marcador de anúncio (lead via click-to-WhatsApp). Nunca pode quebrar o handler.
+        try {
+          const ad = extractAdReferral(m.message);
+          if (ad && num) {
+            recordAdReferral(num, ad);
+            console.log(`📣 Lead de anúncio: ${num} ← "${ad.title || ad.adId || ad.ctwaClid || 'ad'}"`);
+            console.log('   externalAdReply:', JSON.stringify(ad));  // log p/ validar com lead real
+          }
+        } catch (e) { console.warn('ad-referral parse falhou:', e?.message); }
       }
     });
 

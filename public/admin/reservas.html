@@ -347,6 +347,15 @@
                         <input type="text" id="whatsapp" name="whatsapp" placeholder="Ex: (11) 98765-4321" required>
                     </div>
                     <div class="form-group">
+                        <label for="origem">Origem da reserva:</label>
+                        <select id="origem" name="origem">
+                            <option value="">— não informado —</option>
+                            <option value="anuncio">Anúncio (Meta/Instagram)</option>
+                            <option value="organico">Não veio de anúncio</option>
+                        </select>
+                        <small id="origem-hint" style="display:none;color:#16a34a;font-size:12px;margin-top:4px"></small>
+                    </div>
+                    <div class="form-group">
                         <label for="observations">Observações:</label>
                         <textarea id="observations" name="observations" rows="3" placeholder="Adicione quaisquer observações sobre a reserva..."></textarea>
                     </div>
@@ -840,6 +849,8 @@
 
             const form = $('reservation-form');
             form.reset();
+            pendingAdRef = null;
+            clearOrigemHint();
             $('reservation-doc-id').value = edit ? edit.id : '';
             $('form-date').value = date;  // ISO YYYY-MM-DD (input type=date)
             const desired = edit ? edit.Setor : sector;
@@ -852,6 +863,12 @@
                 $('num-people').value = edit['Quantidade de Pessoas'] || '';
                 $('whatsapp').value = edit.Whatsapp || '';
                 formatPhoneInput($('whatsapp'));
+                $('origem').value = edit.Origem || '';
+                if (edit.AnuncioRef) {
+                    pendingAdRef = edit.AnuncioRef;
+                    const h = $('origem-hint');
+                    if (h) { h.textContent = '✓ Origem: anúncio' + (edit.AnuncioRef.title ? ` "${edit.AnuncioRef.title}"` : ''); h.style.display = 'block'; }
+                }
                 $('observations').value = edit.Observacoes || '';
             } else {
                 $('form-modal-title').textContent = 'Registrar Nova Reserva';
@@ -875,8 +892,10 @@
                 Sobrenome: fd.get('lastName'),
                 'Quantidade de Pessoas': parseInt(fd.get('numPeople')),
                 Whatsapp: fd.get('whatsapp'),
-                Observacoes: fd.get('observations') || ''
+                Observacoes: fd.get('observations') || '',
+                Origem: fd.get('origem') || ''
             };
+            if (data.Origem === 'anuncio' && pendingAdRef) data.AnuncioRef = pendingAdRef;
             try {
                 const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
                 // Conflito de setor na data (exceto Extras), ignorando a própria reserva ao editar
@@ -1072,6 +1091,41 @@
 
         // WhatsApp input mask
         $('whatsapp').addEventListener('input', (e) => formatPhoneInput(e.target));
+
+        // ── Origem da reserva: auto-detecção via serviço de WhatsApp (click-to-WhatsApp) ──
+        // Reusa a config salva pelo dashboard (mesma origem). Se ausente/offline, o campo manual segue valendo.
+        let pendingAdRef = null;
+        function waCfgReservas() {
+            return {
+                endpoint: (localStorage.getItem('javari_wa_endpoint') || 'https://macbook-pro-de-rene.tailf78ede.ts.net').replace(/\/+$/, ''),
+                token: localStorage.getItem('javari_wa_token') || '4d5bc973c37ce3e9ed21989556ea1f578ad642d35aaee8097b8b4f1d1ae3afdb',
+                pin: localStorage.getItem('javari_wa_pin') || ''
+            };
+        }
+        function clearOrigemHint() { const h = $('origem-hint'); if (h) { h.style.display = 'none'; h.textContent = ''; } }
+        async function checkAdOrigin() {
+            const digits = $('whatsapp').value.replace(/\D/g, '');
+            if (digits.length < 8) return;
+            // Não sobrescreve uma escolha manual já feita pelo usuário.
+            if ($('origem').value && $('origem').value !== 'anuncio') return;
+            const cfg = waCfgReservas();
+            if (!cfg.endpoint || !cfg.token) return;
+            try {
+                const r = await fetch(`${cfg.endpoint}/ad-referral?phone=${encodeURIComponent(digits)}`, {
+                    headers: { 'Authorization': 'Bearer ' + cfg.token, 'x-send-pin': cfg.pin }
+                });
+                if (!r.ok) return;
+                const j = await r.json();
+                if (j.found && j.referral) {
+                    $('origem').value = 'anuncio';
+                    pendingAdRef = j.referral;
+                    const h = $('origem-hint');
+                    if (h) { h.textContent = '✓ Detectado: chegou pelo anúncio' + (j.referral.title ? ` "${j.referral.title}"` : ''); h.style.display = 'block'; }
+                }
+            } catch (e) { /* serviço offline: silencioso, manual segue funcionando */ }
+        }
+        $('whatsapp').addEventListener('blur', checkAdOrigin);
+        $('origem').addEventListener('change', () => { if ($('origem').value !== 'anuncio') { pendingAdRef = null; clearOrigemHint(); } });
 
         // ── Normalização de nomes (Title Case) + split automático ──
         const NAME_LOWER = new Set(['de','da','do','das','dos','e','di','du','del','la','van','von','y']);
