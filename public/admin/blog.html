@@ -139,8 +139,6 @@
                 <input type="text" id="search-input" placeholder="Buscar posts..." />
             </div>
             <button class="add-btn" id="new-post-btn">+ Novo Post</button>
-            <button class="add-btn secondary" id="export-json-btn">Exportar JSON</button>
-            <button class="add-btn secondary" id="import-json-btn">Importar do JSON</button>
         </div>
 
         <div class="post-list" id="post-list">
@@ -451,28 +449,6 @@
             closeModal('confirm-modal');
         });
 
-        // Export JSON
-        $('export-json-btn').addEventListener('click', () => {
-            if (posts.length === 0) { showMessage('Nenhum post para exportar.', 'error'); return; }
-            const exportData = posts.map(p => ({
-                slug: p.slug,
-                title: p.title,
-                date: p.date,
-                category: p.category,
-                author: p.author,
-                featuredImage: p.featuredImage,
-                images: p.images || [],
-                content: p.content,
-                excerpt: p.excerpt
-            }));
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'blog-posts.json';
-            link.click();
-            showMessage('JSON exportado!');
-        });
-
         // Search
         let searchTimer;
         $('search-input').addEventListener('input', () => {
@@ -492,38 +468,6 @@
         });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => closeModal(m.id));
-        });
-
-        // Import from static JSON
-        $('import-json-btn').addEventListener('click', async () => {
-            if (!confirm('Importar posts de /data/blog-posts.json para o Firestore?\nPosts existentes com mesmo slug serão atualizados.')) return;
-            try {
-                const res = await fetch('/data/blog-posts.json');
-                const jsonPosts = await res.json();
-                if (!jsonPosts || jsonPosts.length === 0) { showMessage('Nenhum post no JSON.', 'error'); return; }
-                let count = 0;
-                for (const p of jsonPosts) {
-                    const docId = p.slug;
-                    const ref = doc(db, `artifacts/${appId}/public/data/blog`, docId);
-                    await setDoc(ref, {
-                        title: p.title || '',
-                        slug: p.slug || '',
-                        date: p.date || '',
-                        category: p.category || 'Javari Park',
-                        author: p.author || 'rene',
-                        featuredImage: p.featuredImage || '',
-                        images: p.images || [],
-                        content: p.content || '',
-                        excerpt: p.excerpt || '',
-                        updatedAt: new Date().toISOString()
-                    }, { merge: true });
-                    count++;
-                }
-                showMessage(`${count} posts importados com sucesso!`);
-            } catch (err) {
-                console.error(err);
-                showMessage('Erro na importação: ' + err.message, 'error');
-            }
         });
 
         // Init
