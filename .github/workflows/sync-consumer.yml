@@ -52,7 +52,13 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             git commit -m "data: sync Consumer POS $(date -u +%Y-%m-%d)"
-            git push
+            # Push resiliente: se o remoto avançou durante o run, rebaseia e tenta de novo (até 5x)
+            for i in 1 2 3 4 5; do
+              if git push; then break; fi
+              echo "push rejeitado (tentativa $i) — rebaseando…"
+              git pull --rebase --autostash origin main || true
+              sleep 3
+            done
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
