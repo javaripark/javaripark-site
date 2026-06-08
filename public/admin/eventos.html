@@ -369,15 +369,19 @@
         $('sim-equipe-add').addEventListener('click',()=>{ equipe.push({funcao:'Nova função',qtd:1,custoUnit:150}); renderEquipe(); simular(); });
 
         // ---------- Custos extras (música ao vivo etc.) ----------
-        let extras=[{desc:'Música ao vivo',valor:0}];
+        let extras=[{desc:'Música ao vivo',valor:0,repassar:false}];
         const extrasTotal=()=>extras.reduce((s,e)=>s+(e.valor||0),0);
+        const extrasAbsorvidos=()=>extras.reduce((s,e)=>s+(e.repassar?0:(e.valor||0)),0);
+        const extrasRepassados=()=>extras.reduce((s,e)=>s+(e.repassar?(e.valor||0):0),0);
         function renderExtras(){
-            $('sim-extras-tbl').innerHTML=`<thead><tr><th>Descrição</th><th class="amount">Valor (R$)</th><th></th></tr></thead><tbody>${
-                extras.map((e,ix)=>`<tr><td><input data-x="${ix}" data-k="desc" value="${e.desc}" style="padding:5px 8px;font-size:12px"></td><td class="amount"><input data-x="${ix}" data-k="valor" type="number" min="0" value="${e.valor}" style="padding:5px 8px;font-size:12px;max-width:110px;text-align:right"></td><td class="amount"><button class="btn btn-danger btn-sm" data-rmx="${ix}">×</button></td></tr>`).join('')
-            }<tr><td><strong>Total extras</strong></td><td class="amount"><strong>${brl(extrasTotal())}</strong></td><td></td></tr></tbody>`;
-            $('sim-extras-tbl').querySelectorAll('input[data-x]').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.x,k=inp.dataset.k; extras[i][k]=k==='valor'?(parseFloat(inp.value)||0):inp.value; simular(); }));
+            $('sim-extras-tbl').innerHTML=`<thead><tr><th>Descrição</th><th class="amount">Valor (R$)</th><th>Cobrança</th><th></th></tr></thead><tbody>${
+                extras.map((e,ix)=>`<tr><td><input data-x="${ix}" data-k="desc" value="${e.desc}" style="padding:5px 8px;font-size:12px"></td><td class="amount"><input data-x="${ix}" data-k="valor" type="number" min="0" value="${e.valor}" style="padding:5px 8px;font-size:12px;max-width:100px;text-align:right"></td><td><select data-x="${ix}" data-k="repassar" style="padding:5px 8px;font-size:12px"><option value="absorver"${!e.repassar?' selected':''}>Absorver</option><option value="repassar"${e.repassar?' selected':''}>Repassar ao cliente</option></select></td><td class="amount"><button class="btn btn-danger btn-sm" data-rmx="${ix}">×</button></td></tr>`).join('')
+            }<tr><td><strong>Total extras</strong></td><td class="amount"><strong>${brl(extrasTotal())}</strong></td><td colspan="2" style="font-size:11px;color:#888">repassado ${brl(extrasRepassados())} · absorvido ${brl(extrasAbsorvidos())}</td></tr></tbody>`;
+            $('sim-extras-tbl').querySelectorAll('input[data-x]').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.x,k=inp.dataset.k; extras[i][k]=k==='valor'?(parseFloat(inp.value)||0):inp.value; simular(); refreshExtrasTotals(); }));
+            $('sim-extras-tbl').querySelectorAll('select[data-x]').forEach(s=>s.addEventListener('change',()=>{ extras[+s.dataset.x].repassar=(s.value==='repassar'); renderExtras(); simular(); }));
             $('sim-extras-tbl').querySelectorAll('[data-rmx]').forEach(b=>b.addEventListener('click',()=>{ extras.splice(+b.dataset.rmx,1); renderExtras(); simular(); }));
         }
+        function refreshExtrasTotals(){ const f=$('sim-extras-tbl').querySelector('tbody tr:last-child'); if(f){ f.children[1].querySelector('strong').textContent=brl(extrasTotal()); f.children[2].textContent=`repassado ${brl(extrasRepassados())} · absorvido ${brl(extrasAbsorvidos())}`; } }
         $('sim-extras-add').addEventListener('click',()=>{ extras.push({desc:'Novo custo',valor:0}); renderExtras(); simular(); });
 
         // ---------- Simulador ----------
@@ -389,10 +393,11 @@
             const isOpen=p.tipo==='open';
             const custoFBpp=isOpen?p.custo:(pax>0?p.custo/pax:0);
             const custoFB=isOpen?p.custo*pax:p.custo;
-            const eq=equipeTotal(), ex=extrasTotal(), overhead=ohpp*pax;
-            const receita=isOpen?preco*pax:preco;
-            const lucro=receita-custoFB-eq-ex-overhead;
-            return {p,pax,preco,ohpp,isOpen,custoFBpp,custoFB,eq,ex,overhead,receita,lucro,margem:receita>0?lucro/receita*100:0};
+            const eq=equipeTotal(), exAbs=extrasAbsorvidos(), exRep=extrasRepassados(), ex=exAbs+exRep, overhead=ohpp*pax;
+            const pkgReceita=isOpen?preco*pax:preco;
+            const receita=pkgReceita+exRep;       // repassados entram no que o cliente paga
+            const lucro=receita-custoFB-eq-ex-overhead;  // = pkgReceita - custoFB - eq - exAbs - overhead
+            return {p,pax,preco,ohpp,isOpen,custoFBpp,custoFB,eq,ex,exAbs,exRep,overhead,pkgReceita,receita,lucro,margem:receita>0?lucro/receita*100:0};
         }
         function simular(){
             const c=calc();
@@ -400,13 +405,13 @@
             $('r-receita').textContent=brl(c.receita);
             $('r-fb').textContent=brl(c.custoFB); $('r-fb-sub').textContent=c.isOpen?`${brl(c.p.custo)}/pessoa`:'fixo';
             $('r-equipe').textContent=brl(c.eq); $('r-equipe-sub').textContent=c.pax>0?`${brl(c.eq/c.pax)}/pessoa`:'';
-            $('r-extras').textContent=brl(c.ex); $('r-extras-sub').textContent=c.pax>0&&c.ex?`${brl(c.ex/c.pax)}/pessoa`:'';
+            $('r-extras').textContent=brl(c.ex); $('r-extras-sub').textContent=c.ex?`${brl(c.exRep)} repassado · ${brl(c.exAbs)} absorvido`:'';
             $('r-overhead').textContent=brl(c.overhead);
             $('r-lucro').textContent=brl(c.lucro); $('r-lucro').className='kpi-value '+(c.lucro>=0?'pos':'neg'); $('r-lucro-sub').textContent=c.pax>0?`${brl(c.lucro/c.pax)}/pessoa`:'';
             $('r-margem').textContent=c.receita>0?c.margem.toFixed(1)+'%':'—'; $('r-margem').className='kpi-value '+(c.margem>=0?'pos':'neg');
             let ins='';
             if(c.isOpen){
-                const fixo=c.eq+c.ex, contrib=c.preco-c.custoFBpp-c.ohpp;
+                const fixo=c.eq+c.exAbs, contrib=c.preco-c.custoFBpp-c.ohpp;
                 const be=contrib>0?Math.ceil(fixo/contrib):null;
                 ins+=be!=null?`<div>⚖️ <strong>Ponto de equilíbrio:</strong> ${be} pessoas (cobre equipe + extras fixos).</div>`:`<div class="neg">⚠️ Preço não cobre o custo variável por pessoa.</div>`;
                 const m=(parseFloat($('sim-margem').value)||0)/100;
@@ -479,9 +484,12 @@
             (c.p.itens||[]).forEach(i=>{ ensure(5); d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(70,70,70); d.text(`•  ${i.nome}`,M+2,y); d.text(c.isOpen?`${i.qtd} /pessoa`:`${i.qtd} un`,W-M,y,{align:'right'}); y+=5; });
             // Investimento
             head('Investimento');
-            ensure(7); d.setFont('helvetica','normal'); d.setFontSize(11); d.setTextColor(40,40,40);
-            if(c.isOpen){ d.text(`${brl(c.preco)} por pessoa  ×  ${c.pax} pessoas`,M,y); y+=6; }
-            ensure(9); d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(79,25,100); d.text('Total: '+brl(c.receita),M,y); y+=8;
+            d.setFont('helvetica','normal'); d.setFontSize(10.5); d.setTextColor(50,50,50);
+            ensure(6);
+            if(c.isOpen){ d.text(`Pacote: ${brl(c.preco)} por pessoa × ${c.pax} pessoas`,M,y); } else { d.text('Pacote (fechado)',M,y); }
+            d.text(brl(c.pkgReceita),W-M,y,{align:'right'}); y+=6;
+            extras.filter(e=>e.repassar&&(e.valor||0)>0).forEach(e=>{ ensure(6); d.setFont('helvetica','normal'); d.setFontSize(10.5); d.setTextColor(50,50,50); d.text('+ '+e.desc,M,y); d.text(brl(e.valor),W-M,y,{align:'right'}); y+=5.5; });
+            y+=1; ensure(9); d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(79,25,100); d.text('Total: '+brl(c.receita),M,y); y+=8;
             // Pagamento, condições, revista
             head('Forma de pagamento'); para(CFG.pagamento);
             head('Condições gerais'); bullets(CFG.condicoes);
