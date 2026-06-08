@@ -709,8 +709,9 @@
         // ── Data loading ──
         async function loadAllData() {
             try {
+                const cb = '?v=' + Date.now();  // cache-bust: sempre pega o dado mais recente
                 const [salesRes, finRes, cliRes] = await Promise.all([
-                    fetch('/data/faturamento.json'), fetch('/data/financeiro.json'), fetch('/data/clientes.json')
+                    fetch('/data/faturamento.json' + cb), fetch('/data/financeiro.json' + cb), fetch('/data/clientes.json' + cb)
                 ]);
                 allDailyData = await salesRes.json();
                 financialData = await finRes.json();

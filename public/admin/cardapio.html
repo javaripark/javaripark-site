@@ -319,7 +319,7 @@
 
         async function loadData() {
             try {
-                const res = await fetch('/data/estoque.json');
+                const res = await fetch('/data/estoque.json?v=' + Date.now());
                 const d = await res.json();
                 allItems = d.itens || [];
                 $('cardapio-sync-info').textContent = d.syncedAt
@@ -432,7 +432,7 @@
         let histChart = null;
         async function loadSalesHistory() {
             try {
-                const res = await fetch('/data/vendas-produtos.json');
+                const res = await fetch('/data/vendas-produtos.json?v=' + Date.now());
                 if (!res.ok) return; // arquivo ainda não gerado
                 salesHist = await res.json();
                 const nomes = Object.keys(salesHist.produtos || {}).sort();
