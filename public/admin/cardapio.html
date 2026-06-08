@@ -130,6 +130,16 @@
             .admin-nav a{font-size:13px;padding:13px 8px}
             .section-card{padding:16px}
         }
+        /* Refinamento mobile (≤600px) */
+        @media(max-width:600px){
+            html,body{overflow-x:hidden}
+            .container{padding:10px}
+            .cons-kpi-value{overflow-wrap:anywhere}
+            /* filtros/buscas ocupam a linha toda */
+            .cons-filter input,.cons-filter select{flex:1 1 100%;width:100%;min-width:0}
+            /* evita o zoom do iOS ao focar campos */
+            input,select,textarea{font-size:16px}
+        }
     </style>
 </head>
 <body>

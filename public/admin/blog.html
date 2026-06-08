@@ -99,6 +99,16 @@
         @media(min-width:1000px){
             .kpi-value{font-size:1.7em}
         }
+        /* Refinamento mobile (≤600px) */
+        @media(max-width:600px){
+            html,body{overflow-x:hidden}
+            .container{padding:10px}
+            .toolbar{flex-direction:column;align-items:stretch}
+            .toolbar-left{flex-wrap:wrap}
+            .form-row{grid-template-columns:1fr}
+            /* evita o zoom do iOS ao focar campos */
+            input,select,textarea{font-size:16px}
+        }
     </style>
 </head>
 <body>

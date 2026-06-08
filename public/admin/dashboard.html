@@ -149,6 +149,19 @@
         @media(min-width:1000px){
             .kpi-value{font-size:1.7em}
         }
+        /* Refinamento mobile (≤600px) */
+        @media(max-width:600px){
+            html,body{overflow-x:hidden}
+            .container{padding:10px}
+            .kpi-value{overflow-wrap:anywhere}
+            .kpi-sub{overflow-wrap:anywhere}
+            /* filtros/buscas ocupam a linha toda — mais fáceis de tocar */
+            .table-controls input,.table-controls select,.filter-custom input{flex:1 1 100%;width:100%;min-width:0}
+            .filter-custom{flex-wrap:wrap}
+            /* evita o zoom automático do iOS ao focar campos (precisa ≥16px) */
+            input,select,textarea{font-size:16px}
+            .filter-pill{padding:6px 10px;font-size:12px}
+        }
     </style>
 </head>
 <body>

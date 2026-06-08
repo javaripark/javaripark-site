@@ -125,6 +125,16 @@
             .header h1{font-size:1.6em}
             .admin-nav a{font-size:13px;padding:13px 8px}
         }
+        /* Refinamento mobile (≤600px) */
+        @media(max-width:600px){
+            html,body{overflow-x:hidden}
+            .container{padding:10px}
+            /* calendário rola na horizontal em vez de espremer as células ilegíveis */
+            .calendar{overflow-x:auto;-webkit-overflow-scrolling:touch}
+            .cal-grid,.cal-header{min-width:520px}
+            /* evita o zoom do iOS ao focar campos */
+            .form-group input,.form-group textarea,.form-group select{font-size:16px}
+        }
     </style>
 </head>
 <body>
