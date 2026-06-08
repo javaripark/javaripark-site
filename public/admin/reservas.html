@@ -826,6 +826,7 @@
 
         $('reservation-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            normalizeNameFields();  // garante Title Case + split mesmo sem blur (ex: Enter)
             const docId = $('reservation-doc-id').value;
             const fd = new FormData($('reservation-form'));
             const parts = fd.get('date').split('/');
@@ -1029,6 +1030,29 @@
 
         // WhatsApp input mask
         $('whatsapp').addEventListener('input', (e) => formatPhoneInput(e.target));
+
+        // ── Normalização de nomes (Title Case) + split automático ──
+        const NAME_LOWER = new Set(['de','da','do','das','dos','e','di','du','del','la','van','von','y']);
+        function toTitleCase(str) {
+            return String(str || '').trim().toLowerCase().split(/\s+/).filter(Boolean)
+                .map((w, i) => (i > 0 && NAME_LOWER.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
+        }
+        // Normaliza ambos os campos; se o nome vier completo (várias palavras) e o
+        // sobrenome estiver vazio, joga as palavras extras pro sobrenome.
+        function normalizeNameFields() {
+            const fn = $('first-name'), ln = $('last-name');
+            const words = toTitleCase(fn.value).split(/\s+/).filter(Boolean);
+            if (words.length > 1 && !ln.value.trim()) {
+                fn.value = words[0];
+                ln.value = words.slice(1).join(' ');
+            } else {
+                fn.value = toTitleCase(fn.value);
+                ln.value = toTitleCase(ln.value);
+            }
+        }
+        $('first-name').addEventListener('blur', normalizeNameFields);
+        $('last-name').addEventListener('blur', () => { $('last-name').value = toTitleCase($('last-name').value); });
 
         // Date change
         datePicker.addEventListener('change', (e) => {
