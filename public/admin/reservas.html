@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -136,6 +136,19 @@
         }
         @media(min-width:1000px){
             .kpi-value{font-size:1.7em}
+        }
+        /* Refinamento mobile (≤600px) */
+        @media(max-width:600px){
+            html,body{overflow-x:hidden}
+            .container{padding:10px}
+            /* evita o zoom automático do iOS ao focar campos (agora que o zoom é permitido) */
+            input,select,textarea{font-size:16px}
+            /* relatório: range de datas empilha em vez de espremer */
+            #report-modal .date-range-group{flex-direction:column;gap:10px}
+            .report-actions{flex-direction:column}
+            /* Bus Lounge: label menor e quebrando linha pra não cortar no mapa estreito */
+            #bus-lounge{font-size:.5em}
+            #bus-lounge .sector-name{white-space:normal;line-height:1.1}
         }
     </style>
 </head>
