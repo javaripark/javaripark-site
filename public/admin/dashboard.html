@@ -57,6 +57,9 @@
         .card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
         .card h3{font-size:.8em;font-weight:700;color:#555;margin:0 0 10px;text-transform:uppercase;letter-spacing:.3px}
         .chart-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+        /* Top por setor: Bar | Cozinha lado a lado em telas largas, empilhado abaixo */
+        .sector-cols{display:grid;grid-template-columns:1fr;gap:14px}
+        @media(min-width:1024px){.sector-cols{grid-template-columns:1fr 1fr;gap:18px}}
         .chart-box{max-height:320px;position:relative}
 
         /* Tables */
@@ -279,13 +282,15 @@
                 </div>
                 <div class="card">
                     <h3>Top 10 por Setor</h3>
-                    <div style="margin-bottom:12px">
-                        <h4 style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:6px">Bar</h4>
-                        <div id="top5-bar"></div>
-                    </div>
-                    <div>
-                        <h4 style="font-size:11px;font-weight:700;color:#ea580c;text-transform:uppercase;margin-bottom:6px">Cozinha</h4>
-                        <div id="top5-kitchen"></div>
+                    <div class="sector-cols">
+                        <div>
+                            <h4 style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:6px">Bar</h4>
+                            <div id="top5-bar"></div>
+                        </div>
+                        <div>
+                            <h4 style="font-size:11px;font-weight:700;color:#ea580c;text-transform:uppercase;margin-bottom:6px">Cozinha</h4>
+                            <div id="top5-kitchen"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1671,7 +1676,7 @@
                     const pv = volBase>0 ? (p.qtd/volBase*100).toFixed(1) : 0;
                     return `<div style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px">
                         <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><strong style="color:${color}">${i+1}.</strong> ${esc(p.nome)}</div>
-                        <div style="font-size:11px;color:#888;margin-top:1px"><strong style="color:#555">${fmtUn(p.qtd)}</strong> · ${pv}% do volume · <strong style="color:#555">${fmtBRL(p.fat)}</strong></div>
+                        <div style="font-size:11px;color:#888;margin-top:1px"><strong style="color:#555">${fmtUn(p.qtd)}</strong> · ${pv}% vol · <strong style="color:#555">${fmtBRL(p.fat)}</strong></div>
                     </div>`;
                 }).join('');
             }
