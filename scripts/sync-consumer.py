@@ -561,6 +561,8 @@ def query_sales_data(db_path):
                 day_cat_products = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "faturamento": 0})))
                 # Histórico mensal por produto: nome -> mes(YYYY-MM) -> {qtd, receita, categoria}
                 product_monthly = defaultdict(lambda: defaultdict(lambda: {"qtd": 0, "receita": 0, "categoria": ""}))
+                # Total de itens vendidos por dia (soma das quantidades de todos os produtos)
+                day_items_total = defaultdict(float)
 
                 for row in cur.fetchall():
                     dt = row[0]
@@ -575,6 +577,7 @@ def query_sales_data(db_path):
                     total = float(row[4] or 0)
 
                     day_products[date_str].append({"nome": prod_name, "categoria": cat_name, "qtd": qty, "faturamento": total})
+                    day_items_total[date_str] += qty
                     day_categories[date_str][cat_name]["faturamento"] += total
                     day_categories[date_str][cat_name]["qtd"] += qty
                     day_cat_products[date_str][cat_name][prod_name]["qtd"] += qty
@@ -587,6 +590,7 @@ def query_sales_data(db_path):
                     pm["categoria"] = cat_name
 
                 for date_str in daily_data:
+                    daily_data[date_str]["itensVendidos"] = round(day_items_total.get(date_str, 0), 2)
                     prods = day_products.get(date_str, [])
                     prods.sort(key=lambda x: x["faturamento"], reverse=True)
                     daily_data[date_str]["topProdutos"] = prods[:15]
