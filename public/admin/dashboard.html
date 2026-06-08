@@ -198,6 +198,7 @@
             <div class="section-tab active" data-section="vendas">Vendas</div>
             <div class="section-tab" data-section="financeiro">Financeiro</div>
             <div class="section-tab" data-section="clientes">Clientes</div>
+            <div class="section-tab" data-section="anuncios">Anúncios</div>
         </div>
 
         <!-- ==================== VENDAS ==================== -->
@@ -522,6 +523,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==================== ANÚNCIOS (Meta) ==================== -->
+        <div class="section-panel" id="panel-anuncios">
+            <div class="card" style="border-left:3px solid #f59e0b">
+                <p style="font-size:12px;color:#888;margin:0;line-height:1.5">
+                    <strong style="color:#555">Snapshot manual</strong> — exportado do Meta Ads Manager (conta de boosts do Instagram).
+                    <span id="ads-snapshot-label"></span>
+                    Não atualiza sozinho: a conta de promoções do Instagram não libera dados por API. Mande um CSV novo do Ads Manager que eu atualizo.
+                </p>
+            </div>
+
+            <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+                <div class="kpi-card"><div class="kpi-label">Investido</div><div class="kpi-value" id="ads-spent">—</div><div class="kpi-sub" id="ads-period"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Conversas WhatsApp</div><div class="kpi-value" id="ads-conv" style="color:#25D366">—</div><div class="kpi-sub">mensagens iniciadas</div></div>
+                <div class="kpi-card"><div class="kpi-label">Custo / Conversa</div><div class="kpi-value" id="ads-cpc">—</div><div class="kpi-sub">média do período</div></div>
+                <div class="kpi-card"><div class="kpi-label">Alcance</div><div class="kpi-value" id="ads-reach">—</div><div class="kpi-sub" id="ads-impr"></div></div>
+            </div>
+
+            <div class="card">
+                <h3>⏰ Encerramentos próximos</h3>
+                <div id="ads-ends"></div>
+            </div>
+
+            <div class="card">
+                <h3>Campanhas — snapshot</h3>
+                <div id="ads-table" class="table-wrap"></div>
+            </div>
+        </div>
       </div><!-- /dash-content -->
 
         <!-- Client popup -->
@@ -750,6 +779,56 @@
             }
         }
         loadAllData();
+
+        // ── Anúncios (Meta) — snapshot manual ──
+        async function loadAdsSnapshot() {
+            try {
+                const res = await fetch('/data/ads-snapshot.json?v=' + Date.now());
+                if (!res.ok) return;
+                renderAdsSnapshot(await res.json());
+            } catch (e) { console.warn('Erro ao carregar snapshot de anúncios:', e); }
+        }
+        function renderAdsSnapshot(a) {
+            const t = a.totals || {};
+            $('ads-spent').textContent = fmtBRLFull(t.spent);
+            $('ads-conv').textContent = (t.conversations || 0).toLocaleString('pt-BR');
+            $('ads-cpc').textContent = fmtBRLFull(t.costPerConversation);
+            $('ads-reach').textContent = (t.reach || 0).toLocaleString('pt-BR');
+            $('ads-impr').textContent = (t.impressions || 0).toLocaleString('pt-BR') + ' impressões';
+            $('ads-period').textContent = fmtDateBR(a.periodStart) + ' → ' + fmtDateBR(a.periodEnd);
+            $('ads-snapshot-label').textContent = 'Foto de ' + fmtDateBR(a.snapshotDate) + '.';
+
+            const today = fmt(new Date());
+            const ativas = (a.campaigns || []).filter(c => c.status === 'ativa' && c.ends && c.ends >= today)
+                                              .sort((x, y) => x.ends.localeCompare(y.ends));
+            if (ativas.length === 0) {
+                $('ads-ends').innerHTML = '<p class="empty">Nenhuma campanha ativa com término futuro.</p>';
+            } else {
+                $('ads-ends').innerHTML = ativas.map(c => {
+                    const dias = Math.round((new Date(c.ends + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+                    const urg = dias <= 3 ? '#ef4444' : (dias <= 7 ? '#f59e0b' : '#10b981');
+                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;gap:10px">
+                        <span style="font-size:13px;color:#444">${c.name}</span>
+                        <span style="font-size:12px;font-weight:600;color:${urg};white-space:nowrap">${fmtDateBR(c.ends)} · ${dias === 0 ? 'hoje' : dias + 'd'}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            const rows = [...(a.campaigns || [])].sort((x, y) => (x.costPerConv || 9999) - (y.costPerConv || 9999));
+            const cpcs = rows.map(c => c.costPerConv || 0).filter(v => v > 0);
+            const best = Math.min(...cpcs), worst = Math.max(...cpcs);
+            $('ads-table').innerHTML = `<table class="fin-table" id="tbl-ads"><thead><tr><th>Campanha</th><th>Status</th><th class="amount">Investido</th><th class="amount">Conversas</th><th class="amount">Custo/conv</th><th class="amount">Alcance</th><th>CTR</th><th>Término</th></tr></thead><tbody>${
+                rows.map(c => {
+                    const badge = c.status === 'ativa'
+                        ? '<span class="status-badge" style="background:#dcfce7;color:#16a34a">ativa</span>'
+                        : '<span class="status-badge" style="background:#e5e7eb;color:#666">encerrada</span>';
+                    const cpcColor = c.costPerConv === best ? '#16a34a' : (c.costPerConv === worst ? '#ef4444' : '#444');
+                    return `<tr><td>${c.name}</td><td>${badge}</td><td class="amount">${fmtBRLFull(c.spent)}</td><td class="amount">${c.conversations || 0}</td><td class="amount" style="color:${cpcColor};font-weight:700">${fmtBRLFull(c.costPerConv)}</td><td class="amount">${(c.reach || 0).toLocaleString('pt-BR')}</td><td>${(c.ctr || 0).toFixed(2)}%</td><td>${fmtDateBR(c.ends)}</td></tr>`;
+                }).join('')
+            }</tbody></table>${a.inactiveCount ? `<p style="font-size:11px;color:#aaa;margin-top:8px">+ ${a.inactiveCount} campanha sem entrega (R$ 0) omitida.</p>` : ''}`;
+            makeSortable($('tbl-ads'));
+        }
+        loadAdsSnapshot();
 
         // ── Format helpers ──
         function fmtBRL(v) { return 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
