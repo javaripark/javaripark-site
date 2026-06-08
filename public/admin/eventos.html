@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Eventos — Javari StrEat Park</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#333}
@@ -24,37 +25,41 @@
         .section-tab.active{color:#4f1964;border-bottom-color:#4f1964}
         .section-panel{display:none}
         .section-panel.active{display:block}
-        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
         .kpi-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
         .kpi-label{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px}
-        .kpi-value{font-size:1.35em;font-weight:700;color:#222;margin-top:2px}
+        .kpi-value{font-size:1.3em;font-weight:700;color:#222;margin-top:2px}
         .kpi-sub{font-size:11px;color:#aaa;margin-top:2px}
         .card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
         .card h3{font-size:.8em;font-weight:700;color:#555;margin:0 0 10px;text-transform:uppercase;letter-spacing:.3px}
         .fin-table{width:100%;border-collapse:collapse;font-size:12px}
         .fin-table th{text-align:left;padding:8px 10px;background:#f8f9fa;color:#666;font-weight:600;border-bottom:2px solid #eee;white-space:nowrap}
         .fin-table td{padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#444}
-        .fin-table tr:hover td{background:#f8f9fa}
+        .fin-table tr:hover td{background:#fafafa}
         .fin-table .amount{text-align:right;font-weight:600;white-space:nowrap}
+        .fin-table .cat-row td{background:#f5f0f8;color:#4f1964;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
         .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:460px;overflow-y:auto}
         .filter-pill{padding:6px 11px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:#555;white-space:nowrap}
         .filter-pill:hover{border-color:#4f1964;color:#4f1964}
-        .filter-pill.active{background:#4f1964;color:#fff;border-color:#4f1964}
         label{display:block;font-size:12px;font-weight:600;color:#555;margin:10px 0 4px}
-        input,select{padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;width:100%}
+        input,select,textarea{padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;width:100%}
+        textarea{resize:vertical;line-height:1.5}
         .row{display:flex;gap:10px;flex-wrap:wrap}
         .row>div{flex:1;min-width:120px}
         .btn{padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
         .btn-primary{background:#4f1964;color:#fff}
         .btn-ghost{background:#fff;color:#4f1964;border:1px solid #4f1964}
         .btn-danger{background:#fff;color:#ef4444;border:1px solid #f3c4c4}
+        .btn-gold{background:#b8860b;color:#fff}
         .btn-sm{padding:5px 10px;font-size:12px}
+        .qbtn{padding:3px 7px;font-size:11px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer;color:#555;font-weight:600}
+        .qbtn:hover{border-color:#4f1964;color:#4f1964}
         .pos{color:#16a34a}.neg{color:#ef4444}
         .hint{font-size:11px;color:#999;margin-top:4px}
         .pill-tipo{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
         .tipo-open{background:#dcfce7;color:#16a34a}.tipo-item{background:#e0e7ff;color:#4338ca}
         .toast{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,.3)}
-        @media(max-width:600px){input,select{font-size:16px}.card{padding:12px}}
+        @media(max-width:600px){input,select,textarea{font-size:16px}.card{padding:12px}}
     </style>
 </head>
 <body>
@@ -74,13 +79,18 @@
 
         <div class="section-tabs">
             <div class="section-tab active" data-section="pacotes">Pacotes</div>
-            <div class="section-tab" data-section="simulador">Simulador</div>
+            <div class="section-tab" data-section="simulador">Simulador & Proposta</div>
             <div class="section-tab" data-section="cenarios">Cenários</div>
-            <div class="section-tab" data-section="catalogo">Catálogo de custos</div>
+            <div class="section-tab" data-section="config">Configurações</div>
+            <div class="section-tab" data-section="catalogo">Catálogo</div>
         </div>
 
         <!-- ============ PACOTES ============ -->
         <div class="section-panel active" id="panel-pacotes">
+            <div class="card">
+                <h3>Pré-prontos (clique para carregar e ajustar)</h3>
+                <div id="pk-templates" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            </div>
             <div class="card">
                 <h3>Construir pacote</h3>
                 <div class="row">
@@ -96,8 +106,9 @@
                 <div class="row" style="align-items:flex-end">
                     <div style="flex:3"><input id="pk-item-search" list="pk-itens-list" placeholder="Buscar item do catálogo…">
                         <datalist id="pk-itens-list"></datalist></div>
-                    <div style="max-width:110px"><input id="pk-item-qtd" type="number" min="0" step="0.5" value="1" placeholder="qtd"></div>
-                    <div style="max-width:120px"><button class="btn btn-ghost" id="pk-add-btn">+ Adicionar</button></div>
+                    <div style="max-width:90px"><input id="pk-item-qtd" type="number" min="0" step="0.5" value="1"></div>
+                    <div style="display:flex;gap:4px"><button class="qbtn" data-setq="1">1</button><button class="qbtn" data-setq="5">5</button><button class="qbtn" data-setq="10">10</button></div>
+                    <div><button class="btn btn-ghost" id="pk-add-btn">+ Adicionar</button></div>
                 </div>
                 <div class="table-wrap" style="margin-top:12px"><table class="fin-table" id="pk-itens-tbl"></table></div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px">
@@ -114,37 +125,50 @@
             </div>
         </div>
 
-        <!-- ============ SIMULADOR ============ -->
+        <!-- ============ SIMULADOR & PROPOSTA ============ -->
         <div class="section-panel" id="panel-simulador">
             <div class="card">
-                <h3>Simular evento</h3>
+                <h3>Dados da proposta</h3>
                 <div class="row">
-                    <div><label>Pacote</label><select id="sim-pacote"></select></div>
+                    <div><label>Empresa / Cliente</label><input id="sim-empresa" placeholder="Nome da empresa"></div>
+                    <div><label>Contato (nome / WhatsApp)</label><input id="sim-contato" placeholder="Ex: Maria — (11) 9...."></div>
+                </div>
+                <div class="row">
+                    <div style="max-width:170px"><label>Data do evento</label><input id="sim-data" type="date"></div>
                     <div style="max-width:130px"><label>Nº de pessoas</label><input id="sim-pessoas" type="number" min="1" value="50"></div>
                     <div style="max-width:130px"><label>Duração (h)</label><input id="sim-duracao" type="number" min="1" step="0.5" value="4"></div>
                 </div>
+            </div>
+            <div class="card">
+                <h3>Pacote & preço</h3>
                 <div class="row">
-                    <div><label id="sim-preco-label">Preço de venda (por pessoa)</label><input id="sim-preco" type="number" min="0" step="1" value="120"></div>
-                    <div style="max-width:160px"><label>Overhead por pessoa (R$)</label><input id="sim-overhead" type="number" min="0" step="1" value="8"></div>
-                    <div style="max-width:160px"><label>Margem-alvo (%) <span class="hint" style="display:inline">p/ sugerir preço</span></label><input id="sim-margem" type="number" min="0" max="90" step="1" value="45"></div>
+                    <div><label>Pacote</label><select id="sim-pacote"></select></div>
+                    <div style="max-width:170px"><label id="sim-preco-label">Preço de venda (por pessoa)</label><input id="sim-preco" type="number" min="0" step="1" value="120"></div>
+                    <div style="max-width:140px"><label>Overhead/pessoa</label><input id="sim-overhead" type="number" min="0" step="1" value="8"></div>
+                    <div style="max-width:140px"><label>Margem-alvo (%)</label><input id="sim-margem" type="number" min="0" max="90" step="1" value="45"></div>
                 </div>
                 <label style="margin-top:14px">Equipe da noite (editável)</label>
                 <div class="table-wrap"><table class="fin-table" id="sim-equipe-tbl"></table></div>
                 <button class="btn btn-ghost btn-sm" id="sim-equipe-add" style="margin-top:8px">+ Função</button>
+                <label style="margin-top:16px">Custos extras (música ao vivo, decoração…)</label>
+                <div class="table-wrap"><table class="fin-table" id="sim-extras-tbl"></table></div>
+                <button class="btn btn-ghost btn-sm" id="sim-extras-add" style="margin-top:8px">+ Custo extra</button>
             </div>
 
             <div class="kpi-grid">
                 <div class="kpi-card"><div class="kpi-label">Receita</div><div class="kpi-value" id="r-receita">—</div></div>
                 <div class="kpi-card"><div class="kpi-label">Custo F&B</div><div class="kpi-value" id="r-fb">—</div><div class="kpi-sub" id="r-fb-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Equipe</div><div class="kpi-value" id="r-equipe">—</div><div class="kpi-sub" id="r-equipe-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Extras</div><div class="kpi-value" id="r-extras">—</div><div class="kpi-sub" id="r-extras-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Overhead</div><div class="kpi-value" id="r-overhead">—</div></div>
                 <div class="kpi-card"><div class="kpi-label">Lucro líquido</div><div class="kpi-value" id="r-lucro">—</div><div class="kpi-sub" id="r-lucro-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Margem</div><div class="kpi-value" id="r-margem">—</div></div>
             </div>
             <div class="card" id="sim-insights" style="font-size:13px;color:#444;line-height:1.6"></div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:20px">
-                <input id="sim-cenario-nome" placeholder="Nome do cenário p/ salvar" style="max-width:260px">
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:20px;flex-wrap:wrap">
+                <input id="sim-cenario-nome" placeholder="Nome do cenário p/ salvar" style="max-width:220px">
                 <button class="btn btn-primary" id="sim-save">Salvar cenário</button>
+                <button class="btn btn-gold" id="sim-pdf">📄 Exportar proposta (PDF)</button>
             </div>
         </div>
 
@@ -153,6 +177,43 @@
             <div class="card">
                 <h3>Cenários salvos</h3>
                 <div class="table-wrap"><table class="fin-table" id="cen-tbl"></table></div>
+            </div>
+        </div>
+
+        <!-- ============ CONFIGURAÇÕES ============ -->
+        <div class="section-panel" id="panel-config">
+            <div class="card">
+                <h3>Identidade (aparece no PDF)</h3>
+                <div class="row">
+                    <div><label>Nome</label><input id="cfg-nome"></div>
+                    <div><label>Endereço</label><input id="cfg-endereco"></div>
+                </div>
+                <div class="row">
+                    <div><label>Telefone / WhatsApp</label><input id="cfg-telefone"></div>
+                    <div><label>Site</label><input id="cfg-site"></div>
+                    <div><label>Instagram</label><input id="cfg-instagram"></div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Forma de pagamento</h3>
+                <textarea id="cfg-pagamento" rows="3"></textarea>
+            </div>
+            <div class="card">
+                <h3>Condições gerais</h3>
+                <textarea id="cfg-condicoes" rows="5"></textarea>
+            </div>
+            <div class="card">
+                <h3>Revista pessoal — introdução</h3>
+                <textarea id="cfg-revista-intro" rows="3"></textarea>
+                <div class="row">
+                    <div><label>Itens autorizados (um por linha)</label><textarea id="cfg-autorizados" rows="8"></textarea></div>
+                    <div><label>Itens proibidos (um por linha)</label><textarea id="cfg-proibidos" rows="8"></textarea></div>
+                </div>
+                <label>Observação final</label>
+                <textarea id="cfg-revista-obs" rows="3"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+                <button class="btn btn-primary" id="cfg-save">Salvar configurações</button>
             </div>
         </div>
 
@@ -172,9 +233,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ---- Auth gate (mesmo padrão do sistema) ----
         const AUTH_KEY = 'javari_admin_auth';
         const session = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
         if (!session) location.href = '/admin/index.html';
@@ -183,207 +243,269 @@
 
         const fbCfg = { apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18", authDomain:"central-de-reservas-jsp.firebaseapp.com", projectId:"central-de-reservas-jsp", storageBucket:"central-de-reservas-jsp.firebasestorage.app", appId:"1:574859111927:web:83df67ed1865a59c0392f2" };
         const db = getFirestore(initializeApp(fbCfg));
-        const PK_COL = 'artifacts/central-de-reservas-jsp/public/data/eventos_pacotes';
-        const CEN_COL = 'artifacts/central-de-reservas-jsp/public/data/eventos_cenarios';
+        const BASE = 'artifacts/central-de-reservas-jsp/public/data';
+        const PK_COL = BASE+'/eventos_pacotes', CEN_COL = BASE+'/eventos_cenarios', CFG_COL = BASE+'/eventos_config';
 
         const brl = v => 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const fmtDateBR = s => { if(!s) return ''; const p=String(s).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
         function toast(m){ const t=$('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2600); }
 
-        // ---- Tabs ----
         document.querySelectorAll('.section-tab').forEach(tab => tab.addEventListener('click', () => {
             document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
             document.querySelectorAll('.section-panel').forEach(p=>p.classList.remove('active'));
-            tab.classList.add('active');
-            $('panel-'+tab.dataset.section).classList.add('active');
+            tab.classList.add('active'); $('panel-'+tab.dataset.section).classList.add('active');
         }));
 
-        // ---- Catálogo ----
+        // ---------- Catálogo ----------
         let CATALOGO = [];
         async function loadCatalogo(){
-            try {
-                const r = await fetch('/data/produtos-consumer.json?v='+Date.now());
-                const d = await r.json();
-                CATALOGO = (d.produtos||[]).filter(p => (p.precoVenda||0)>0 || (p.precoCusto||0)>0);
-            } catch(e){ console.warn('catálogo', e); CATALOGO=[]; }
-            // datalist do construtor
-            $('pk-itens-list').innerHTML = CATALOGO.map(p=>`<option value="${p.nome.replace(/"/g,'&quot;')}">`).join('');
-            // filtro de categoria
-            const cats = [...new Set(CATALOGO.map(p=>p.categoria||'—'))].sort();
-            $('cat-cat').innerHTML = '<option value="">Todas categorias</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+            try { const r=await fetch('/data/produtos-consumer.json?v='+Date.now()); const d=await r.json();
+                CATALOGO=(d.produtos||[]).filter(p=>(p.precoVenda||0)>0||(p.precoCusto||0)>0); }
+            catch(e){ console.warn('catálogo',e); CATALOGO=[]; }
+            $('pk-itens-list').innerHTML = CATALOGO.map(p=>`<option value="${(p.nome||'').replace(/"/g,'&quot;')}">`).join('');
+            const cats=[...new Set(CATALOGO.map(p=>p.categoria||'—'))].sort();
+            $('cat-cat').innerHTML='<option value="">Todas categorias</option>'+cats.map(c=>`<option>${c}</option>`).join('');
             renderCatalogo();
         }
         function renderCatalogo(){
             const q=($('cat-search').value||'').toLowerCase(), cat=$('cat-cat').value;
-            const rows = CATALOGO.filter(p=>(!q||p.nome.toLowerCase().includes(q))&&(!cat||p.categoria===cat))
-                .sort((a,b)=>a.nome.localeCompare(b.nome)).slice(0,400);
-            $('cat-tbl').innerHTML = `<thead><tr><th>Item</th><th>Categoria</th><th class="amount">Custo</th><th class="amount">Venda</th><th class="amount">CMV</th><th class="amount">Margem</th></tr></thead><tbody>${
-                rows.map(p=>{ const v=p.precoVenda||0,c=p.precoCusto||0,cmv=v>0?(c/v*100):null;
-                    return `<tr><td>${p.nome}</td><td>${p.categoria||'—'}</td><td class="amount">${brl(c)}</td><td class="amount">${brl(v)}</td><td class="amount">${cmv==null?'—':cmv.toFixed(0)+'%'}</td><td class="amount">${brl(v-c)}</td></tr>`;
-                }).join('')}</tbody>`;
+            const rows=CATALOGO.filter(p=>(!q||p.nome.toLowerCase().includes(q))&&(!cat||p.categoria===cat)).sort((a,b)=>(a.categoria||'').localeCompare(b.categoria||'')||a.nome.localeCompare(b.nome)).slice(0,500);
+            let html='<thead><tr><th>Item</th><th>Categoria</th><th class="amount">Custo</th><th class="amount">Venda</th><th class="amount">CMV</th><th class="amount">Margem</th></tr></thead><tbody>';
+            let lastCat=null;
+            rows.forEach(p=>{ const v=p.precoVenda||0,c=p.precoCusto||0,cmv=v>0?(c/v*100):null;
+                if(p.categoria!==lastCat){ html+=`<tr class="cat-row"><td colspan="6">${p.categoria||'—'}</td></tr>`; lastCat=p.categoria; }
+                html+=`<tr><td>${p.nome}</td><td>${p.categoria||'—'}</td><td class="amount">${brl(c)}</td><td class="amount">${brl(v)}</td><td class="amount">${cmv==null?'—':cmv.toFixed(0)+'%'}</td><td class="amount">${brl(v-c)}</td></tr>`;
+            });
+            $('cat-tbl').innerHTML=html+'</tbody>';
         }
-        $('cat-search').addEventListener('input', renderCatalogo);
-        $('cat-cat').addEventListener('change', renderCatalogo);
+        $('cat-search').addEventListener('input',renderCatalogo);
+        $('cat-cat').addEventListener('change',renderCatalogo);
 
-        // ---- Construtor de pacotes ----
-        let pkItens = [];
-        $('pk-tipo').addEventListener('change', () => {
-            $('pk-add-label').textContent = $('pk-tipo').value==='open' ? 'Adicionar item (qtd por pessoa)' : 'Adicionar item (qtd total)';
-            renderPkItens();
-        });
-        $('pk-add-btn').addEventListener('click', () => {
-            const nome = $('pk-item-search').value.trim();
-            const it = CATALOGO.find(p=>p.nome===nome) || CATALOGO.find(p=>p.nome.toLowerCase()===nome.toLowerCase());
-            if (!it) { toast('Item não encontrado no catálogo'); return; }
-            const qtd = parseFloat($('pk-item-qtd').value)||0;
-            if (qtd<=0) { toast('Quantidade inválida'); return; }
-            pkItens.push({ codigo:it.codigo, nome:it.nome, custoUnit:it.precoCusto||0, precoVenda:it.precoVenda||0, qtd });
-            $('pk-item-search').value=''; $('pk-item-qtd').value='1';
-            renderPkItens();
+        // ---------- Construtor ----------
+        let pkItens=[];
+        $('pk-tipo').addEventListener('change',()=>{ $('pk-add-label').textContent=$('pk-tipo').value==='open'?'Adicionar item (qtd por pessoa)':'Adicionar item (qtd total)'; renderPkItens(); });
+        document.querySelectorAll('[data-setq]').forEach(b=>b.addEventListener('click',()=>{ $('pk-item-qtd').value=b.dataset.setq; }));
+        function addItem(nome, qtd){
+            const it=CATALOGO.find(p=>p.nome===nome)||CATALOGO.find(p=>p.nome.toLowerCase()===String(nome).toLowerCase());
+            if(!it) return false;
+            const ex=pkItens.find(i=>i.codigo===it.codigo);
+            if(ex){ ex.qtd+=qtd; } else pkItens.push({codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0,qtd});
+            return true;
+        }
+        $('pk-add-btn').addEventListener('click',()=>{
+            const nome=$('pk-item-search').value.trim(); const qtd=parseFloat($('pk-item-qtd').value)||0;
+            if(qtd<=0){ toast('Quantidade inválida'); return; }
+            if(!addItem(nome,qtd)){ toast('Item não encontrado'); return; }
+            $('pk-item-search').value=''; $('pk-item-qtd').value='1'; renderPkItens();
         });
         function pkCusto(){ return pkItens.reduce((s,i)=>s+i.custoUnit*i.qtd,0); }
         function renderPkItens(){
             const tipo=$('pk-tipo').value;
-            $('pk-itens-tbl').innerHTML = pkItens.length? `<thead><tr><th>Item</th><th class="amount">Custo un.</th><th class="amount">Qtd</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${
-                pkItens.map((i,ix)=>`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td class="amount">${i.qtd}</td><td class="amount">${brl(i.custoUnit*i.qtd)}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`).join('')
-            }</tbody>` : '<tbody><tr><td style="color:#aaa">Nenhum item ainda.</td></tr></tbody>';
-            $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); }));
-            $('pk-custo-label').textContent = tipo==='open' ? `Custo F&B por pessoa: ${brl(pkCusto())}` : `Custo F&B total: ${brl(pkCusto())}`;
+            if(!pkItens.length){ $('pk-itens-tbl').innerHTML='<tbody><tr><td style="color:#aaa">Nenhum item ainda.</td></tr></tbody>'; }
+            else {
+                const byCat={}; pkItens.forEach((i,ix)=>{ (byCat[i.categoria]=byCat[i.categoria]||[]).push({...i,ix}); });
+                let html='<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>Qtd</th><th class="amount">Custo</th><th></th></tr></thead><tbody>';
+                Object.keys(byCat).sort().forEach(cat=>{
+                    html+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`;
+                    byCat[cat].forEach(i=>{ html+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td>
+                        <td><div style="display:flex;align-items:center;gap:3px"><button class="qbtn" data-d="${i.ix}" data-inc="-1">−</button><strong>${i.qtd}</strong><button class="qbtn" data-d="${i.ix}" data-inc="1">+1</button><button class="qbtn" data-d="${i.ix}" data-inc="5">+5</button><button class="qbtn" data-d="${i.ix}" data-inc="10">+10</button></div></td>
+                        <td class="amount">${brl(i.custoUnit*i.qtd)}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${i.ix}">×</button></td></tr>`; });
+                });
+                $('pk-itens-tbl').innerHTML=html+'</tbody>';
+                $('pk-itens-tbl').querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.d; pkItens[i].qtd=Math.max(0,pkItens[i].qtd+(+b.dataset.inc)); if(pkItens[i].qtd===0)pkItens.splice(i,1); renderPkItens(); }));
+                $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); }));
+            }
+            $('pk-custo-label').textContent=tipo==='open'?`Custo F&B por pessoa: ${brl(pkCusto())}`:`Custo F&B total: ${brl(pkCusto())}`;
         }
-        $('pk-clear').addEventListener('click', ()=>{ pkItens=[]; $('pk-nome').value=''; renderPkItens(); });
-        $('pk-save').addEventListener('click', async () => {
+        $('pk-clear').addEventListener('click',()=>{ pkItens=[]; $('pk-nome').value=''; renderPkItens(); });
+        $('pk-save').addEventListener('click',async()=>{
             const nome=$('pk-nome').value.trim();
-            if (!nome) { toast('Dê um nome ao pacote'); return; }
-            if (!pkItens.length) { toast('Adicione ao menos 1 item'); return; }
-            try {
-                await addDoc(collection(db,PK_COL), { nome, tipo:$('pk-tipo').value, itens:pkItens, custo:pkCusto(), criadoEm:new Date().toISOString() });
-                toast('Pacote salvo'); pkItens=[]; $('pk-nome').value=''; renderPkItens(); loadPacotes();
-            } catch(e){ toast('Erro ao salvar: '+e.message); }
+            if(!nome){ toast('Dê um nome ao pacote'); return; }
+            if(!pkItens.length){ toast('Adicione ao menos 1 item'); return; }
+            try{ await addDoc(collection(db,PK_COL),{nome,tipo:$('pk-tipo').value,itens:pkItens,custo:pkCusto(),criadoEm:new Date().toISOString()});
+                toast('Pacote salvo'); pkItens=[]; $('pk-nome').value=''; renderPkItens(); loadPacotes(); }
+            catch(e){ toast('Erro: '+e.message); }
         });
 
-        // ---- Pacotes salvos ----
-        let PACOTES = [];
-        async function loadPacotes(){
-            try { const s=await getDocs(collection(db,PK_COL)); PACOTES=s.docs.map(d=>({id:d.id,...d.data()})); }
-            catch(e){ console.warn('pacotes',e); PACOTES=[]; }
-            $('pk-saved-tbl').innerHTML = PACOTES.length? `<thead><tr><th>Pacote</th><th>Tipo</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${
-                PACOTES.map(p=>`<tr><td>${p.nome}</td><td><span class="pill-tipo tipo-${p.tipo}">${p.tipo==='open'?'open/pessoa':'por item'}</span></td><td class="amount">${brl(p.custo)}${p.tipo==='open'?'/pax':''}</td><td class="amount"><button class="btn btn-danger btn-sm" data-del="${p.id}">excluir</button></td></tr>`).join('')
-            }</tbody>` : '<tbody><tr><td style="color:#aaa">Nenhum pacote salvo.</td></tr></tbody>';
-            $('pk-saved-tbl').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
-                if(!confirm('Excluir este pacote?'))return;
-                await deleteDoc(doc(db,PK_COL,b.dataset.del)); loadPacotes();
+        // ---------- Pré-prontos ----------
+        const TEMPLATES=[
+            {nome:'Open Casa', tipo:'open', itens:[[['caipirinha','barreiro'],3],[['eisenbahn','pilsen','long'],2],[['gin','tonica'],1],[['água','sem gás'],2],[['coxinha'],0.3]]},
+            {nome:'Open Premium', tipo:'open', itens:[[['caipirinha','absolut'],2],[['patagonia','ipa'],2],[['gin','tonica'],2],[['jarra','suco'],0.4],[['dadinho'],0.3]]},
+            {nome:'Híbrido (sem cerveja)', tipo:'open', itens:[[['caipirinha','barreiro'],3],[['gin','tonica'],1],[['água','sem gás'],2],[['coxinha'],0.3]]},
+        ];
+        function renderTemplates(){
+            $('pk-templates').innerHTML=TEMPLATES.map((t,i)=>`<button class="filter-pill" data-tpl="${i}">＋ ${t.nome}</button>`).join('');
+            $('pk-templates').querySelectorAll('[data-tpl]').forEach(b=>b.addEventListener('click',()=>{
+                const t=TEMPLATES[+b.dataset.tpl]; pkItens=[]; $('pk-tipo').value=t.tipo; $('pk-nome').value=t.nome;
+                let faltou=0;
+                t.itens.forEach(([kw,q])=>{ const it=CATALOGO.find(p=>{const n=p.nome.toLowerCase(); return kw.every(k=>n.includes(k));}); if(it)addItem(it.nome,q); else faltou++; });
+                renderPkItens(); if(faltou)toast(`${faltou} item(s) do template não encontrado(s) no catálogo`);
             }));
-            // popula select do simulador
-            $('sim-pacote').innerHTML = PACOTES.length? PACOTES.map(p=>`<option value="${p.id}">${p.nome} (${p.tipo==='open'?'open':'item'})</option>`).join('') : '<option value="">— crie um pacote primeiro —</option>';
+        }
+
+        // ---------- Pacotes salvos ----------
+        let PACOTES=[];
+        async function loadPacotes(){
+            try{ const s=await getDocs(collection(db,PK_COL)); PACOTES=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){ PACOTES=[]; }
+            $('pk-saved-tbl').innerHTML=PACOTES.length?`<thead><tr><th>Pacote</th><th>Tipo</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${
+                PACOTES.map(p=>`<tr><td>${p.nome}</td><td><span class="pill-tipo tipo-${p.tipo}">${p.tipo==='open'?'open/pessoa':'por item'}</span></td><td class="amount">${brl(p.custo)}${p.tipo==='open'?'/pax':''}</td><td class="amount"><button class="btn btn-danger btn-sm" data-del="${p.id}">excluir</button></td></tr>`).join('')
+            }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum pacote salvo.</td></tr></tbody>';
+            $('pk-saved-tbl').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir este pacote?'))return; await deleteDoc(doc(db,PK_COL,b.dataset.del)); loadPacotes(); }));
+            $('sim-pacote').innerHTML=PACOTES.length?PACOTES.map(p=>`<option value="${p.id}">${p.nome} (${p.tipo==='open'?'open':'item'})</option>`).join(''):'<option value="">— crie um pacote primeiro —</option>';
             simular();
         }
 
-        // ---- Equipe (preset do René: 50px = R$1.350) ----
-        let equipe = [
-            {funcao:'Atendimento/Limpeza', qtd:2, custoUnit:150},
-            {funcao:'Bar', qtd:2, custoUnit:150},
-            {funcao:'Recepção', qtd:1, custoUnit:150},
-            {funcao:'Cozinha', qtd:2, custoUnit:150},
-            {funcao:'Gerente', qtd:1, custoUnit:300},
-        ];
-        function equipeTotal(){ return equipe.reduce((s,e)=>s+(e.qtd||0)*(e.custoUnit||0),0); }
+        // ---------- Equipe ----------
+        let equipe=[{funcao:'Atendimento/Limpeza',qtd:2,custoUnit:150},{funcao:'Bar',qtd:2,custoUnit:150},{funcao:'Recepção',qtd:1,custoUnit:150},{funcao:'Cozinha',qtd:2,custoUnit:150},{funcao:'Gerente',qtd:1,custoUnit:300}];
+        const equipeTotal=()=>equipe.reduce((s,e)=>s+(e.qtd||0)*(e.custoUnit||0),0);
         function renderEquipe(){
-            $('sim-equipe-tbl').innerHTML = `<thead><tr><th>Função</th><th class="amount">Qtd</th><th class="amount">R$/un</th><th class="amount">Total</th><th></th></tr></thead><tbody>${
-                equipe.map((e,ix)=>`<tr>
-                    <td><input data-f="${ix}" data-k="funcao" value="${e.funcao}" style="padding:5px 8px;font-size:12px"></td>
-                    <td class="amount"><input data-f="${ix}" data-k="qtd" type="number" min="0" value="${e.qtd}" style="padding:5px 8px;font-size:12px;max-width:64px;text-align:right"></td>
-                    <td class="amount"><input data-f="${ix}" data-k="custoUnit" type="number" min="0" value="${e.custoUnit}" style="padding:5px 8px;font-size:12px;max-width:80px;text-align:right"></td>
-                    <td class="amount">${brl((e.qtd||0)*(e.custoUnit||0))}</td>
-                    <td class="amount"><button class="btn btn-danger btn-sm" data-rme="${ix}">×</button></td></tr>`).join('')
+            $('sim-equipe-tbl').innerHTML=`<thead><tr><th>Função</th><th class="amount">Qtd</th><th class="amount">R$/un</th><th class="amount">Total</th><th></th></tr></thead><tbody>${
+                equipe.map((e,ix)=>`<tr><td><input data-f="${ix}" data-k="funcao" value="${e.funcao}" style="padding:5px 8px;font-size:12px"></td><td class="amount"><input data-f="${ix}" data-k="qtd" type="number" min="0" value="${e.qtd}" style="padding:5px 8px;font-size:12px;max-width:60px;text-align:right"></td><td class="amount"><input data-f="${ix}" data-k="custoUnit" type="number" min="0" value="${e.custoUnit}" style="padding:5px 8px;font-size:12px;max-width:74px;text-align:right"></td><td class="amount">${brl((e.qtd||0)*(e.custoUnit||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rme="${ix}">×</button></td></tr>`).join('')
             }<tr><td><strong>Total equipe</strong></td><td></td><td></td><td class="amount"><strong>${brl(equipeTotal())}</strong></td><td></td></tr></tbody>`;
-            $('sim-equipe-tbl').querySelectorAll('input[data-f]').forEach(inp=>inp.addEventListener('input',()=>{
-                const i=+inp.dataset.f, k=inp.dataset.k;
-                equipe[i][k] = k==='funcao'? inp.value : (parseFloat(inp.value)||0);
-                if(k!=='funcao'){ // atualiza só os totais sem perder foco
-                    inp.closest('tr').querySelector('td.amount:nth-last-child(2)').textContent = brl((equipe[i].qtd||0)*(equipe[i].custoUnit||0));
-                    $('sim-equipe-tbl').querySelector('tbody tr:last-child td.amount strong').textContent = brl(equipeTotal());
-                }
-                simular();
-            }));
+            $('sim-equipe-tbl').querySelectorAll('input[data-f]').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.f,k=inp.dataset.k; equipe[i][k]=k==='funcao'?inp.value:(parseFloat(inp.value)||0); simular(); refreshEquipeTotals(); }));
             $('sim-equipe-tbl').querySelectorAll('[data-rme]').forEach(b=>b.addEventListener('click',()=>{ equipe.splice(+b.dataset.rme,1); renderEquipe(); simular(); }));
         }
-        $('sim-equipe-add').addEventListener('click', ()=>{ equipe.push({funcao:'Nova função',qtd:1,custoUnit:150}); renderEquipe(); simular(); });
+        function refreshEquipeTotals(){ const last=$('sim-equipe-tbl').querySelector('tbody tr:last-child td.amount strong'); if(last)last.textContent=brl(equipeTotal()); }
+        $('sim-equipe-add').addEventListener('click',()=>{ equipe.push({funcao:'Nova função',qtd:1,custoUnit:150}); renderEquipe(); simular(); });
 
-        // ---- Simulador ----
-        ['sim-pacote','sim-pessoas','sim-duracao','sim-preco','sim-overhead','sim-margem'].forEach(id=>$(id).addEventListener('input',simular));
-        $('sim-pacote').addEventListener('change', ()=>{ const p=PACOTES.find(x=>x.id===$('sim-pacote').value); $('sim-preco-label').textContent = (p&&p.tipo==='item')?'Preço de venda (total do evento)':'Preço de venda (por pessoa)'; simular(); });
-        function simular(){
-            const p = PACOTES.find(x=>x.id===$('sim-pacote').value);
-            if (!p) {
-                ['r-receita','r-fb','r-equipe','r-overhead','r-lucro','r-margem'].forEach(id=>{ $(id).textContent='—'; $(id).className='kpi-value'; });
-                ['r-fb-sub','r-equipe-sub','r-lucro-sub'].forEach(id=>$(id).textContent='');
-                $('sim-insights').innerHTML='<span style="color:#aaa">Crie e selecione um pacote para simular.</span>';
-                return;
-            }
-            const pax=Math.max(parseFloat($('sim-pessoas').value)||0,0);
-            const preco=parseFloat($('sim-preco').value)||0;
-            const ohpp=parseFloat($('sim-overhead').value)||0;
-            const margemAlvo=(parseFloat($('sim-margem').value)||0)/100;
-            const isOpen = p.tipo==='open';
-            const custoFBpp = isOpen ? p.custo : (pax>0?p.custo/pax:0);
-            const custoFB = isOpen ? p.custo*pax : p.custo;
-            const eq = equipeTotal();
-            const overhead = ohpp*pax;
-            const receita = isOpen ? preco*pax : preco;
-            const lucro = receita - custoFB - eq - overhead;
-            const margem = receita>0 ? lucro/receita*100 : 0;
-            $('r-receita').textContent = brl(receita);
-            $('r-fb').textContent = brl(custoFB); $('r-fb-sub').textContent = isOpen?`${brl(p.custo)}/pessoa`:'fixo';
-            $('r-equipe').textContent = brl(eq); $('r-equipe-sub').textContent = pax>0?`${brl(eq/pax)}/pessoa`:'';
-            $('r-overhead').textContent = brl(overhead);
-            $('r-lucro').textContent = brl(lucro); $('r-lucro').className='kpi-value '+(lucro>=0?'pos':'neg');
-            $('r-lucro-sub').textContent = pax>0?`${brl(lucro/pax)}/pessoa`:'';
-            $('r-margem').textContent = receita>0?margem.toFixed(1)+'%':'—'; $('r-margem').className='kpi-value '+(margem>=0?'pos':'neg');
-            // break-even + preço sugerido (open)
-            let ins='';
-            if (isOpen) {
-                const contrib = preco - custoFBpp - ohpp; // contribuição por pessoa
-                const be = contrib>0 ? Math.ceil(eq/contrib) : null;
-                ins += be!=null ? `<div>⚖️ <strong>Ponto de equilíbrio:</strong> ${be} pessoas (abaixo disso a equipe não se paga).</div>`
-                                 : `<div class="neg">⚠️ O preço não cobre nem o custo variável por pessoa. Suba o preço ou enxugue o pacote.</div>`;
-                const precoSug = (1-margemAlvo)>0 ? (custoFBpp + ohpp + (pax>0?eq/pax:0))/(1-margemAlvo) : 0;
-                ins += `<div>🎯 Para <strong>${(margemAlvo*100).toFixed(0)}% de margem</strong> com ${pax} pessoas: preço sugerido <strong>${brl(precoSug)}/pessoa</strong>.</div>`;
-            } else {
-                ins += `<div>Pacote por item (custo fixo). Lucro escala com o preço total negociado, não com nº de pessoas.</div>`;
-            }
-            ins += `<div style="margin-top:6px;color:#888">Custo total do evento: ${brl(custoFB+eq+overhead)} · ${pax} pessoas · ${$('sim-duracao').value}h</div>`;
-            $('sim-insights').innerHTML = ins;
+        // ---------- Custos extras (música ao vivo etc.) ----------
+        let extras=[{desc:'Música ao vivo',valor:0}];
+        const extrasTotal=()=>extras.reduce((s,e)=>s+(e.valor||0),0);
+        function renderExtras(){
+            $('sim-extras-tbl').innerHTML=`<thead><tr><th>Descrição</th><th class="amount">Valor (R$)</th><th></th></tr></thead><tbody>${
+                extras.map((e,ix)=>`<tr><td><input data-x="${ix}" data-k="desc" value="${e.desc}" style="padding:5px 8px;font-size:12px"></td><td class="amount"><input data-x="${ix}" data-k="valor" type="number" min="0" value="${e.valor}" style="padding:5px 8px;font-size:12px;max-width:110px;text-align:right"></td><td class="amount"><button class="btn btn-danger btn-sm" data-rmx="${ix}">×</button></td></tr>`).join('')
+            }<tr><td><strong>Total extras</strong></td><td class="amount"><strong>${brl(extrasTotal())}</strong></td><td></td></tr></tbody>`;
+            $('sim-extras-tbl').querySelectorAll('input[data-x]').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.x,k=inp.dataset.k; extras[i][k]=k==='valor'?(parseFloat(inp.value)||0):inp.value; simular(); }));
+            $('sim-extras-tbl').querySelectorAll('[data-rmx]').forEach(b=>b.addEventListener('click',()=>{ extras.splice(+b.dataset.rmx,1); renderExtras(); simular(); }));
         }
-        $('sim-save').addEventListener('click', async () => {
-            const p = PACOTES.find(x=>x.id===$('sim-pacote').value);
-            if (!p) { toast('Selecione um pacote'); return; }
-            const nome=$('sim-cenario-nome').value.trim() || `${p.nome} · ${$('sim-pessoas').value}px`;
-            const pax=parseFloat($('sim-pessoas').value)||0, preco=parseFloat($('sim-preco').value)||0;
+        $('sim-extras-add').addEventListener('click',()=>{ extras.push({desc:'Novo custo',valor:0}); renderExtras(); simular(); });
+
+        // ---------- Simulador ----------
+        ['sim-pessoas','sim-duracao','sim-preco','sim-overhead','sim-margem'].forEach(id=>$(id).addEventListener('input',simular));
+        $('sim-pacote').addEventListener('change',()=>{ const p=PACOTES.find(x=>x.id===$('sim-pacote').value); $('sim-preco-label').textContent=(p&&p.tipo==='item')?'Preço de venda (total)':'Preço de venda (por pessoa)'; simular(); });
+        function calc(){
+            const p=PACOTES.find(x=>x.id===$('sim-pacote').value); if(!p)return null;
+            const pax=Math.max(parseFloat($('sim-pessoas').value)||0,0), preco=parseFloat($('sim-preco').value)||0, ohpp=parseFloat($('sim-overhead').value)||0;
             const isOpen=p.tipo==='open';
-            const custoFB=isOpen?p.custo*pax:p.custo, eq=equipeTotal(), overhead=(parseFloat($('sim-overhead').value)||0)*pax;
-            const receita=isOpen?preco*pax:preco, lucro=receita-custoFB-eq-overhead;
-            try {
-                await addDoc(collection(db,CEN_COL), { nome, pacote:p.nome, tipo:p.tipo, pessoas:pax, duracao:$('sim-duracao').value, preco, equipe:JSON.parse(JSON.stringify(equipe)), equipeTotal:eq, custoFB, overhead, receita, lucro, margem:receita>0?lucro/receita*100:0, criadoEm:new Date().toISOString() });
-                toast('Cenário salvo'); $('sim-cenario-nome').value=''; loadCenarios();
-            } catch(e){ toast('Erro: '+e.message); }
+            const custoFBpp=isOpen?p.custo:(pax>0?p.custo/pax:0);
+            const custoFB=isOpen?p.custo*pax:p.custo;
+            const eq=equipeTotal(), ex=extrasTotal(), overhead=ohpp*pax;
+            const receita=isOpen?preco*pax:preco;
+            const lucro=receita-custoFB-eq-ex-overhead;
+            return {p,pax,preco,ohpp,isOpen,custoFBpp,custoFB,eq,ex,overhead,receita,lucro,margem:receita>0?lucro/receita*100:0};
+        }
+        function simular(){
+            const c=calc();
+            if(!c){ ['r-receita','r-fb','r-equipe','r-extras','r-overhead','r-lucro','r-margem'].forEach(id=>{$(id).textContent='—';$(id).className='kpi-value';}); ['r-fb-sub','r-equipe-sub','r-extras-sub','r-lucro-sub'].forEach(id=>$(id).textContent=''); $('sim-insights').innerHTML='<span style="color:#aaa">Crie e selecione um pacote para simular.</span>'; return; }
+            $('r-receita').textContent=brl(c.receita);
+            $('r-fb').textContent=brl(c.custoFB); $('r-fb-sub').textContent=c.isOpen?`${brl(c.p.custo)}/pessoa`:'fixo';
+            $('r-equipe').textContent=brl(c.eq); $('r-equipe-sub').textContent=c.pax>0?`${brl(c.eq/c.pax)}/pessoa`:'';
+            $('r-extras').textContent=brl(c.ex); $('r-extras-sub').textContent=c.pax>0&&c.ex?`${brl(c.ex/c.pax)}/pessoa`:'';
+            $('r-overhead').textContent=brl(c.overhead);
+            $('r-lucro').textContent=brl(c.lucro); $('r-lucro').className='kpi-value '+(c.lucro>=0?'pos':'neg'); $('r-lucro-sub').textContent=c.pax>0?`${brl(c.lucro/c.pax)}/pessoa`:'';
+            $('r-margem').textContent=c.receita>0?c.margem.toFixed(1)+'%':'—'; $('r-margem').className='kpi-value '+(c.margem>=0?'pos':'neg');
+            let ins='';
+            if(c.isOpen){
+                const fixo=c.eq+c.ex, contrib=c.preco-c.custoFBpp-c.ohpp;
+                const be=contrib>0?Math.ceil(fixo/contrib):null;
+                ins+=be!=null?`<div>⚖️ <strong>Ponto de equilíbrio:</strong> ${be} pessoas (cobre equipe + extras fixos).</div>`:`<div class="neg">⚠️ Preço não cobre o custo variável por pessoa.</div>`;
+                const m=(parseFloat($('sim-margem').value)||0)/100;
+                const precoSug=(1-m)>0?(c.custoFBpp+c.ohpp+(c.pax>0?fixo/c.pax:0))/(1-m):0;
+                ins+=`<div>🎯 Para <strong>${(m*100).toFixed(0)}% de margem</strong> com ${c.pax} pessoas: preço sugerido <strong>${brl(precoSug)}/pessoa</strong>.</div>`;
+            } else ins+=`<div>Pacote por item (custo fixo). Lucro escala com o preço total negociado.</div>`;
+            ins+=`<div style="margin-top:6px;color:#888">Custo total do evento: ${brl(c.custoFB+c.eq+c.ex+c.overhead)} · ${c.pax} pessoas · ${$('sim-duracao').value}h</div>`;
+            $('sim-insights').innerHTML=ins;
+        }
+        $('sim-save').addEventListener('click',async()=>{
+            const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
+            const nome=$('sim-cenario-nome').value.trim()||`${c.p.nome} · ${c.pax}px`;
+            try{ await addDoc(collection(db,CEN_COL),{nome,empresa:$('sim-empresa').value,contato:$('sim-contato').value,dataEvento:$('sim-data').value,pacote:c.p.nome,tipo:c.p.tipo,pessoas:c.pax,duracao:$('sim-duracao').value,preco:c.preco,equipe:JSON.parse(JSON.stringify(equipe)),extras:JSON.parse(JSON.stringify(extras)),equipeTotal:c.eq,extrasTotal:c.ex,custoFB:c.custoFB,overhead:c.overhead,receita:c.receita,lucro:c.lucro,margem:c.margem,criadoEm:new Date().toISOString()});
+                toast('Cenário salvo'); $('sim-cenario-nome').value=''; loadCenarios(); }
+            catch(e){ toast('Erro: '+e.message); }
         });
 
-        // ---- Cenários salvos ----
+        // ---------- Cenários ----------
         async function loadCenarios(){
-            let cen=[];
-            try { const s=await getDocs(collection(db,CEN_COL)); cen=s.docs.map(d=>({id:d.id,...d.data()})); }
-            catch(e){ console.warn('cenarios',e); }
+            let cen=[]; try{ const s=await getDocs(collection(db,CEN_COL)); cen=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){}
             cen.sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
-            $('cen-tbl').innerHTML = cen.length? `<thead><tr><th>Cenário</th><th>Pacote</th><th class="amount">Pessoas</th><th class="amount">Preço</th><th class="amount">Receita</th><th class="amount">Lucro</th><th class="amount">Margem</th><th></th></tr></thead><tbody>${
-                cen.map(c=>`<tr><td>${c.nome}</td><td>${c.pacote} <span class="pill-tipo tipo-${c.tipo}">${c.tipo}</span></td><td class="amount">${c.pessoas}</td><td class="amount">${brl(c.preco)}</td><td class="amount">${brl(c.receita)}</td><td class="amount ${c.lucro>=0?'pos':'neg'}">${brl(c.lucro)}</td><td class="amount ${c.margem>=0?'pos':'neg'}">${(c.margem||0).toFixed(1)}%</td><td class="amount"><button class="btn btn-danger btn-sm" data-delc="${c.id}">excluir</button></td></tr>`).join('')
-            }</tbody>` : '<tbody><tr><td style="color:#aaa">Nenhum cenário salvo ainda.</td></tr></tbody>';
-            $('cen-tbl').querySelectorAll('[data-delc]').forEach(b=>b.addEventListener('click', async ()=>{ if(!confirm('Excluir cenário?'))return; await deleteDoc(doc(db,CEN_COL,b.dataset.delc)); loadCenarios(); }));
+            $('cen-tbl').innerHTML=cen.length?`<thead><tr><th>Cenário</th><th>Empresa</th><th class="amount">Pessoas</th><th class="amount">Preço</th><th class="amount">Receita</th><th class="amount">Lucro</th><th class="amount">Margem</th><th></th></tr></thead><tbody>${
+                cen.map(c=>`<tr><td>${c.nome}</td><td>${c.empresa||'—'}</td><td class="amount">${c.pessoas}</td><td class="amount">${brl(c.preco)}</td><td class="amount">${brl(c.receita)}</td><td class="amount ${c.lucro>=0?'pos':'neg'}">${brl(c.lucro)}</td><td class="amount ${c.margem>=0?'pos':'neg'}">${(c.margem||0).toFixed(1)}%</td><td class="amount"><button class="btn btn-danger btn-sm" data-delc="${c.id}">excluir</button></td></tr>`).join('')
+            }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum cenário salvo.</td></tr></tbody>';
+            $('cen-tbl').querySelectorAll('[data-delc]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir cenário?'))return; await deleteDoc(doc(db,CEN_COL,b.dataset.delc)); loadCenarios(); }));
         }
 
-        // ---- Init ----
-        renderPkItens(); renderEquipe();
+        // ---------- Configurações ----------
+        const CFG_DEFAULT={
+            nome:'Javari Streat Park', endereco:'Rua Javari, 112 - Mooca (SP)', telefone:'(11) 2081-1544', site:'www.javaripark.com.br', instagram:'@javaripark',
+            pagamento:'60% até 15 dias antes da realização do evento (pix)\n40% até 1 dia antes do evento (pix)\nNota fiscal incluída',
+            condicoes:'- Valores aplicados para 175 pessoas mediante entrega de lista de convidados;\n- A casa não trabalha com hora extra, portanto, o horário de fechamento da casa deve ser cumprido integralmente;\n- Consumo extra será cobrado individualmente, a partir dos valores praticados no cardápio;\n- Não é permitida a entrada de bebida e comida de nenhuma espécie;',
+            revistaIntro:'O Javari Streat Park conta com uma equipe de segurança que está autorizada a realizar revistas nos clientes no momento da entrada. O intuito da ação é garantir o bem-estar de todos e o bom funcionamento da casa. Abaixo, listamos alguns itens que são verificados pela nossa equipe:',
+            autorizados:'Máquina fotográfica\nPatins\nSkate\nBicicleta\nLaptops\nCarrinho de bebê\nItens de higiene pessoal\nUtensílios para cuidados com bebê\nAlimentação para bebês',
+            proibidos:'Malas\nAlimentos diversos\nBebidas alcoólicas ou não\nNarguilé\nSubstâncias ilegais de qualquer espécie\nArmas brancas e de fogo\nObjetos cortantes ou perfurantes, tais como canivetes, tesouras de unhas e demais itens pontiagudos\nBolas esportivas\nInstrumentos musicais\nCapacete',
+            revistaObs:'OBS: para os casos de clientes portando itens proibidos, o Javari Streat Park tem o direito de confiscar os objetos no momento da entrada. A retirada ocorre somente na saída do cliente.'
+        };
+        let CFG={...CFG_DEFAULT};
+        const cfgMap={'cfg-nome':'nome','cfg-endereco':'endereco','cfg-telefone':'telefone','cfg-site':'site','cfg-instagram':'instagram','cfg-pagamento':'pagamento','cfg-condicoes':'condicoes','cfg-revista-intro':'revistaIntro','cfg-autorizados':'autorizados','cfg-proibidos':'proibidos','cfg-revista-obs':'revistaObs'};
+        async function loadConfig(){
+            try{ const snap=await getDoc(doc(db,CFG_COL,'main')); if(snap.exists())CFG={...CFG_DEFAULT,...snap.data()}; }catch(e){ console.warn('config',e); }
+            for(const [id,k] of Object.entries(cfgMap)) $(id).value=CFG[k]||'';
+        }
+        $('cfg-save').addEventListener('click',async()=>{
+            for(const [id,k] of Object.entries(cfgMap)) CFG[k]=$(id).value;
+            try{ await setDoc(doc(db,CFG_COL,'main'),CFG); toast('Configurações salvas'); }
+            catch(e){ toast('Erro: '+e.message); }
+        });
+
+        // ---------- PDF ----------
+        let LOGO_DATA=null;
+        async function loadLogo(){ try{ const r=await fetch('/assets/images/logo-horizontal-black.png'); const b=await r.blob(); LOGO_DATA=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);}); }catch(e){ console.warn('logo',e); } }
+        $('sim-pdf').addEventListener('click',()=>{
+            const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
+            const { jsPDF }=window.jspdf; const d=new jsPDF({unit:'mm',format:'a4'});
+            const M=16, W=210, CW=W-2*M, PH=297; let y=M;
+            const ensure=h=>{ if(y+h>PH-M){ d.addPage(); y=M; } };
+            const para=(txt,size=10,style='normal',color=[60,60,60])=>{ d.setFont('helvetica',style); d.setFontSize(size); d.setTextColor(...color); d.splitTextToSize(String(txt||''),CW).forEach(l=>{ ensure(size*0.45+1.5); d.text(l,M,y); y+=size*0.45+1.5; }); };
+            const head=t=>{ y+=3; ensure(9); d.setFillColor(245,240,248); d.rect(M,y-4.5,CW,7,'F'); d.setTextColor(79,25,100); d.setFont('helvetica','bold'); d.setFontSize(10.5); d.text(String(t).toUpperCase(),M+2,y); y+=6; };
+            const bullets=txt=>String(txt||'').split('\n').filter(Boolean).forEach(line=>{ const t=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(60,60,60); d.splitTextToSize('•  '+t,CW-2).forEach((l,i)=>{ ensure(5); d.text(l,M+(i?4:2),y); y+=5; }); });
+            // Logo
+            if(LOGO_DATA){ const lw=46, lh=lw*430/800; try{ d.addImage(LOGO_DATA,'PNG',M,y,lw,lh); }catch(e){} y+=lh+3; }
+            d.setFont('helvetica','bold'); d.setFontSize(15); d.setTextColor(30,30,30); ensure(8); d.text('Proposta de Evento',M,y); y+=7;
+            // Cabeçalho da proposta
+            head('Dados do evento');
+            const linhas=[['Empresa / Cliente',$('sim-empresa').value||'—'],['Contato',$('sim-contato').value||'—'],['Data do evento',fmtDateBR($('sim-data').value)||'—'],['Nº de pessoas',String(c.pax)],['Duração',$('sim-duracao').value+'h']];
+            linhas.forEach(([k,v])=>{ ensure(6); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(90,90,90); d.text(k+':',M,y); d.setFont('helvetica','normal'); d.setTextColor(40,40,40); d.text(String(v),M+45,y); y+=5.5; });
+            // Pacote
+            head('Pacote: '+c.p.nome+(c.isOpen?' (open por pessoa)':' (fechado)'));
+            (c.p.itens||[]).forEach(i=>{ ensure(5); d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(70,70,70); d.text(`•  ${i.nome}`,M+2,y); d.text(c.isOpen?`${i.qtd} /pessoa`:`${i.qtd} un`,W-M,y,{align:'right'}); y+=5; });
+            // Investimento
+            head('Investimento');
+            ensure(7); d.setFont('helvetica','normal'); d.setFontSize(11); d.setTextColor(40,40,40);
+            if(c.isOpen){ d.text(`${brl(c.preco)} por pessoa  ×  ${c.pax} pessoas`,M,y); y+=6; }
+            ensure(9); d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(79,25,100); d.text('Total: '+brl(c.receita),M,y); y+=8;
+            // Pagamento, condições, revista
+            head('Forma de pagamento'); para(CFG.pagamento);
+            head('Condições gerais'); bullets(CFG.condicoes);
+            head('Revista pessoal'); para(CFG.revistaIntro);
+            y+=1; ensure(6); d.setFont('helvetica','bold'); d.setFontSize(9.5); d.setTextColor(22,163,74); d.text('Itens autorizados',M,y); y+=5; bullets(CFG.autorizados);
+            y+=1; ensure(6); d.setFont('helvetica','bold'); d.setFontSize(9.5); d.setTextColor(239,68,68); d.text('Itens proibidos',M,y); y+=5; bullets(CFG.proibidos);
+            y+=1; para(CFG.revistaObs,9,'italic',[110,110,110]);
+            // Rodapé
+            y+=4; ensure(20); d.setDrawColor(220,220,220); d.line(M,y,W-M,y); y+=5;
+            d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(40,40,40); d.text(CFG.nome,M,y); y+=5;
+            d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(90,90,90);
+            [CFG.endereco, 'Tel/WhatsApp: '+CFG.telefone, CFG.site, 'Instagram: '+CFG.instagram].forEach(l=>{ ensure(4.5); d.text(String(l),M,y); y+=4.5; });
+            const fnome=`Proposta-Javari-${($('sim-empresa').value||'evento').replace(/[^a-z0-9]/gi,'-')}.pdf`;
+            d.save(fnome);
+        });
+
+        // ---------- Init ----------
+        renderPkItens(); renderEquipe(); renderExtras();
         await loadCatalogo();
+        renderTemplates();
         await loadPacotes();
         await loadCenarios();
+        await loadConfig();
+        await loadLogo();
     </script>
 </body>
 </html>
