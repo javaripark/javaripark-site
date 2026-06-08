@@ -899,30 +899,37 @@
             });
         }
 
+        function fmtUn(n) { return (Math.round(n||0)).toLocaleString('pt-BR') + ' un'; }
+
         function renderCategoriesChart(data) {
             destroyChart('categories');
             const agg = {};
-            data.forEach(d=>(d.porCategoria||[]).forEach(c=>{agg[c.nome]=(agg[c.nome]||0)+(c.faturamento||0);}));
-            const sorted = Object.entries(agg).sort((a,b)=>b[1]-a[1]);
+            data.forEach(d=>(d.porCategoria||[]).forEach(c=>{ if(!agg[c.nome])agg[c.nome]={fat:0,qtd:0}; agg[c.nome].fat+=(c.faturamento||0); agg[c.nome].qtd+=(c.qtd||0); }));
+            const sorted = Object.entries(agg).sort((a,b)=>b[1].fat-a[1].fat);
             if (sorted.length===0){showEmpty('categories',true);return;}
             showEmpty('categories',false);
+            const totUn = sorted.reduce((s,x)=>s+x[1].qtd,0);
+            const qtys = sorted.map(s=>s[1].qtd);
             const colors = ['#4f1964','#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#64748b'];
             charts.categories = new Chart($('chart-categories'), {
-                type:'bar',data:{labels:sorted.map(s=>s[0]),datasets:[{data:sorted.map(s=>s[1]),backgroundColor:sorted.map((_,i)=>colors[i%colors.length]+'cc'),borderRadius:3}]},
-                options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,aspectRatio:sorted.length>8?0.8:1.2,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL(c.raw)}}},scales:{x:{ticks:{callback:v=>fmtBRL(v)},grid:{color:'#f0f0f0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+                type:'bar',data:{labels:sorted.map(s=>s[0]),datasets:[{data:sorted.map(s=>s[1].fat),backgroundColor:sorted.map((_,i)=>colors[i%colors.length]+'cc'),borderRadius:3}]},
+                options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,aspectRatio:sorted.length>8?0.8:1.2,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const q=qtys[c.dataIndex]; const pv=totUn>0?(q/totUn*100).toFixed(1):0; return [`${fmtUn(q)} (${pv}% do volume)`, fmtBRLFull(c.raw)];}}}},scales:{x:{ticks:{callback:v=>fmtBRL(v)},grid:{color:'#f0f0f0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
             });
         }
 
         function renderProductsChart(data) {
             destroyChart('products');
             const agg = {};
-            data.forEach(d=>(d.topProdutos||[]).forEach(p=>{agg[p.nome]=(agg[p.nome]||0)+(p.faturamento||0);}));
-            const sorted = Object.entries(agg).sort((a,b)=>b[1]-a[1]).slice(0,10);
+            data.forEach(d=>(d.topProdutos||[]).forEach(p=>{ if(!agg[p.nome])agg[p.nome]={fat:0,qtd:0}; agg[p.nome].fat+=(p.faturamento||0); agg[p.nome].qtd+=(p.qtd||0); }));
+            const sorted = Object.entries(agg).sort((a,b)=>b[1].fat-a[1].fat).slice(0,10);
             if (sorted.length===0){showEmpty('products',true);return;}
             showEmpty('products',false);
+            // % do volume = sobre o total de itens do período (itensVendidos); fallback: soma dos exibidos
+            const totUn = data.reduce((s,d)=>s+(d.itensVendidos||0),0) || sorted.reduce((s,x)=>s+x[1].qtd,0);
+            const qtys = sorted.map(s=>s[1].qtd);
             charts.products = new Chart($('chart-products'), {
-                type:'bar',data:{labels:sorted.map(s=>s[0]),datasets:[{data:sorted.map(s=>s[1]),backgroundColor:'rgba(99,102,241,0.65)',borderRadius:3}]},
-                options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,aspectRatio:1.1,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL(c.raw)}}},scales:{x:{ticks:{callback:v=>fmtBRL(v)},grid:{color:'#f0f0f0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+                type:'bar',data:{labels:sorted.map(s=>s[0]),datasets:[{data:sorted.map(s=>s[1].fat),backgroundColor:'rgba(99,102,241,0.65)',borderRadius:3}]},
+                options:{indexAxis:'y',responsive:true,maintainAspectRatio:true,aspectRatio:1.1,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const q=qtys[c.dataIndex]; const pv=totUn>0?(q/totUn*100).toFixed(1):0; return [`${fmtUn(q)} (${pv}% do volume)`, fmtBRLFull(c.raw)];}}}},scales:{x:{ticks:{callback:v=>fmtBRL(v)},grid:{color:'#f0f0f0'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
             });
         }
 
@@ -1608,10 +1615,13 @@
                 });
                 (d.topProdutos || []).forEach(p => {
                     const cat = p.categoria || 'Sem categoria';
-                    if (!prodByCat[p.nome]) prodByCat[p.nome] = { nome: p.nome, cat, fat: 0 };
+                    if (!prodByCat[p.nome]) prodByCat[p.nome] = { nome: p.nome, cat, fat: 0, qtd: 0 };
                     prodByCat[p.nome].fat += (p.faturamento || 0);
+                    prodByCat[p.nome].qtd += (p.qtd || 0);
                 });
             });
+            // Total de itens do período (pra % do volume)
+            const totalPeriodUnits = data.reduce((s,d)=>s+(d.itensVendidos||0),0);
 
             let barTotal = 0, kitchenTotal = 0;
             Object.entries(catTotals).forEach(([name, val]) => {
@@ -1643,10 +1653,13 @@
             function renderTop10(containerId, prods, color) {
                 const el = $(containerId);
                 if (prods.length === 0) { el.innerHTML = '<p class="empty">Sem dados.</p>'; return; }
-                const tot = prods.reduce((s,p)=>s+(p.fat||0),0);
+                const volBase = totalPeriodUnits > 0 ? totalPeriodUnits : prods.reduce((s,p)=>s+(p.qtd||0),0);
                 el.innerHTML = prods.map((p, i) => {
-                    const pct = tot>0 ? (p.fat/tot*100).toFixed(0) : 0;
-                    return `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><strong style="color:${color}">${i+1}.</strong> ${esc(p.nome)}</span><span style="font-weight:600;white-space:nowrap">${fmtBRL(p.fat)} <span style="color:#999;font-weight:400">${pct}%</span></span></div>`;
+                    const pv = volBase>0 ? (p.qtd/volBase*100).toFixed(1) : 0;
+                    return `<div style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px">
+                        <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><strong style="color:${color}">${i+1}.</strong> ${esc(p.nome)}</div>
+                        <div style="font-size:11px;color:#888;margin-top:1px"><strong style="color:#555">${fmtUn(p.qtd)}</strong> · ${pv}% do volume · <strong style="color:#555">${fmtBRL(p.fat)}</strong></div>
+                    </div>`;
                 }).join('');
             }
             renderTop10('top5-bar', barProds, '#7c3aed');
