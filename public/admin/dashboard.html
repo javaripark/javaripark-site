@@ -819,9 +819,9 @@
             const best = Math.min(...cpcs), worst = Math.max(...cpcs);
             $('ads-table').innerHTML = `<table class="fin-table" id="tbl-ads"><thead><tr><th>Campanha</th><th>Status</th><th class="amount">Investido</th><th class="amount">Conversas</th><th class="amount">Custo/conv</th><th class="amount">Alcance</th><th>CTR</th><th>Término</th></tr></thead><tbody>${
                 rows.map(c => {
-                    const badge = c.status === 'ativa'
-                        ? '<span class="status-badge" style="background:#dcfce7;color:#16a34a">ativa</span>'
-                        : '<span class="status-badge" style="background:#e5e7eb;color:#666">encerrada</span>';
+                    const stMap = { ativa: ['#dcfce7', '#16a34a'], pausada: ['#fef3c7', '#b45309'], encerrada: ['#e5e7eb', '#666'] };
+                    const [bg, fg] = stMap[c.status] || stMap.encerrada;
+                    const badge = `<span class="status-badge" style="background:${bg};color:${fg}">${c.status}</span>`;
                     const cpcColor = c.costPerConv === best ? '#16a34a' : (c.costPerConv === worst ? '#ef4444' : '#444');
                     return `<tr><td>${c.name}</td><td>${badge}</td><td class="amount">${fmtBRLFull(c.spent)}</td><td class="amount">${c.conversations || 0}</td><td class="amount" style="color:${cpcColor};font-weight:700">${fmtBRLFull(c.costPerConv)}</td><td class="amount">${(c.reach || 0).toLocaleString('pt-BR')}</td><td>${(c.ctr || 0).toFixed(2)}%</td><td>${fmtDateBR(c.ends)}</td></tr>`;
                 }).join('')
