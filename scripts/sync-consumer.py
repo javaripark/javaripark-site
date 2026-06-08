@@ -310,6 +310,8 @@ def query_sales_data(db_path):
     delete_col = find_column(sales_cols, ["DATADELETE"])
 
     sales_pk = find_column(sales_cols, ["ID", "IDPEDIDO", "CODIGO"])
+    client_col = find_column(sales_cols, ["CODIGOCONTATOCLIENTE", "IDPESSOA", "PESSOA_ID",
+                                           "CLIENTE_ID", "ID_PESSOA", "IDCLIENTE"])
 
     if not date_col or not total_col:
         print(f"ERROR: Could not identify date/total columns in {sales_table}")
@@ -333,15 +335,16 @@ def query_sales_data(db_path):
     # Use CAST(x AS DATE) for TIMESTAMP columns so we aggregate by day
     date_expr = f"CAST({date_col} AS DATE)"
 
-    # 1. Daily revenue and order count
+    # 1. Daily revenue, order count and distinct clients
+    cli_expr = f"COUNT(DISTINCT {client_col})" if client_col else "0"
     sql = f"""
-        SELECT {date_expr}, COUNT(*), SUM({total_col})
+        SELECT {date_expr}, COUNT(*), SUM({total_col}), {cli_expr}
         FROM {sales_table}
         WHERE {total_col} > 0 {status_filter}
         GROUP BY {date_expr}
         ORDER BY {date_expr}
     """
-    print(f"Querying daily revenue...")
+    print(f"Querying daily revenue (clientes via {client_col or 'n/d'})...")
     cur.execute(sql)
     for row in cur.fetchall():
         dt = row[0]
@@ -355,6 +358,7 @@ def query_sales_data(db_path):
         daily_data[date_str] = {
             "faturamento": float(row[2] or 0),
             "qtdVendas": int(row[1] or 0),
+            "clientesUnicos": int(row[3] or 0),
             "ticketMedio": round(float(row[2] or 0) / max(int(row[1] or 1), 1), 2),
             "formasPagamento": {"pix": 0, "credito": 0, "debito": 0, "dinheiro": 0, "outros": 0},
             "porCategoria": [],
