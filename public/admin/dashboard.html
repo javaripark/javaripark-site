@@ -550,6 +550,17 @@
                 <h3>Campanhas — snapshot</h3>
                 <div id="ads-table" class="table-wrap"></div>
             </div>
+
+            <div class="card">
+                <h3>Conversão Anúncio → Reserva</h3>
+                <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+                    <div class="kpi-card"><div class="kpi-label">Reservas de Anúncio</div><div class="kpi-value" id="conv-ads" style="color:#16a34a">—</div><div class="kpi-sub" id="conv-ads-sub"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Custo por Reserva</div><div class="kpi-value" id="conv-cpr">—</div><div class="kpi-sub">gasto ÷ reservas de anúncio</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Conversa → Reserva</div><div class="kpi-value" id="conv-rate">—</div><div class="kpi-sub" id="conv-rate-sub">do total de conversas</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Reservas Marcadas</div><div class="kpi-value" id="conv-marked">—</div><div class="kpi-sub" id="conv-marked-sub"></div></div>
+                </div>
+                <p id="conv-note" style="font-size:11px;color:#aaa;margin-top:10px;line-height:1.5"></p>
+            </div>
         </div>
       </div><!-- /dash-content -->
 
@@ -1902,6 +1913,52 @@
             $('fin-mes-to')?.addEventListener('change', renderResumoMensal);
         }
     </script>
+
+    <!-- Conversão Anúncio → Reserva: lê as reservas do Firestore e cruza com o snapshot de anúncios -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        const fbCfg = {
+            apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
+            authDomain: "central-de-reservas-jsp.firebaseapp.com",
+            projectId: "central-de-reservas-jsp",
+            storageBucket: "central-de-reservas-jsp.firebasestorage.app",
+            appId: "1:574859111927:web:83df67ed1865a59c0392f2"
+        };
+        const brl = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        async function loadConversao() {
+            try {
+                const db = getFirestore(initializeApp(fbCfg, 'dash-conv'));
+                const [snap, ads] = await Promise.all([
+                    getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/reservas')),
+                    fetch('/data/ads-snapshot.json?v=' + Date.now()).then(r => r.json()).catch(() => null)
+                ]);
+                let total = 0, ad = 0, none = 0;
+                snap.forEach(d => {
+                    total++;
+                    const o = (d.data().Origem || '');
+                    if (o === 'anuncio') ad++;
+                    else if (!o) none++;
+                });
+                const conversas = ads?.totals?.conversations || 0;
+                const spent = ads?.totals?.spent || 0;
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+                set('conv-ads', ad);
+                set('conv-ads-sub', total ? `${(ad / total * 100).toFixed(0)}% das ${total} reservas` : 'sem reservas ainda');
+                set('conv-cpr', ad > 0 ? brl(spent / ad) : '—');
+                set('conv-rate', (ad > 0 && conversas) ? `${(ad / conversas * 100).toFixed(1)}%` : '—');
+                set('conv-rate-sub', `de ${conversas} conversas (snapshot)`);
+                set('conv-marked', total - none);
+                set('conv-marked-sub', `${none} sem marcar de ${total}`);
+                const note = document.getElementById('conv-note');
+                if (note) note.textContent = ad === 0
+                    ? 'Marque "Veio de anúncio?" ao cadastrar reservas. Conforme as reservas de anúncio entram, custo por reserva e taxa de conversão aparecem aqui. Custo/conversão usam o gasto e as conversas do snapshot (09/05–07/06) como referência.'
+                    : 'Custo por reserva e conversão usam o gasto (' + brl(spent) + ') e as ' + conversas + ' conversas do snapshot 09/05–07/06. Fica preciso quando o gasto sincronizar por período junto das reservas marcadas.';
+            } catch (e) { console.warn('Conversão anúncio→reserva: falha ao carregar', e?.message); }
+        }
+        loadConversao();
+    </script>
+
     <script src="/js/version-badge.js" defer></script>
 </body>
 </html>
