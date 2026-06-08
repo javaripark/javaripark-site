@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Eventos — Javari StrEat Park</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#333}
+        .container{max-width:1200px;margin:0 auto;padding:12px}
+        .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0;box-shadow:0 4px 12px rgba(79,25,100,.2)}
+        .header h1{color:#fff;font-size:1.3em;font-weight:700;letter-spacing:.5px}
+        .header .logout-btn{position:absolute;top:50%;right:16px;transform:translateY(-50%);background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+        .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 8px rgba(0,0,0,.06);border-radius:0 0 12px 12px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+        .admin-nav a{flex:1;min-width:0;text-align:center;padding:12px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+        .admin-nav a:hover{background:#f8f9fa}
+        .admin-nav a.active{color:#4f1964;border-bottom-color:#4f1964;background:#f5f0f8}
+        .section-tabs{display:flex;gap:0;border-bottom:2px solid #eee;margin-bottom:14px;overflow-x:auto}
+        .section-tab{padding:9px 16px;font-size:13px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+        .section-tab.active{color:#4f1964;border-bottom-color:#4f1964}
+        .section-panel{display:none}
+        .section-panel.active{display:block}
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+        .kpi-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+        .kpi-label{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px}
+        .kpi-value{font-size:1.35em;font-weight:700;color:#222;margin-top:2px}
+        .kpi-sub{font-size:11px;color:#aaa;margin-top:2px}
+        .card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
+        .card h3{font-size:.8em;font-weight:700;color:#555;margin:0 0 10px;text-transform:uppercase;letter-spacing:.3px}
+        .fin-table{width:100%;border-collapse:collapse;font-size:12px}
+        .fin-table th{text-align:left;padding:8px 10px;background:#f8f9fa;color:#666;font-weight:600;border-bottom:2px solid #eee;white-space:nowrap}
+        .fin-table td{padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#444}
+        .fin-table tr:hover td{background:#f8f9fa}
+        .fin-table .amount{text-align:right;font-weight:600;white-space:nowrap}
+        .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:460px;overflow-y:auto}
+        .filter-pill{padding:6px 11px;border-radius:20px;border:1px solid #ddd;background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:#555;white-space:nowrap}
+        .filter-pill:hover{border-color:#4f1964;color:#4f1964}
+        .filter-pill.active{background:#4f1964;color:#fff;border-color:#4f1964}
+        label{display:block;font-size:12px;font-weight:600;color:#555;margin:10px 0 4px}
+        input,select{padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;width:100%}
+        .row{display:flex;gap:10px;flex-wrap:wrap}
+        .row>div{flex:1;min-width:120px}
+        .btn{padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+        .btn-primary{background:#4f1964;color:#fff}
+        .btn-ghost{background:#fff;color:#4f1964;border:1px solid #4f1964}
+        .btn-danger{background:#fff;color:#ef4444;border:1px solid #f3c4c4}
+        .btn-sm{padding:5px 10px;font-size:12px}
+        .pos{color:#16a34a}.neg{color:#ef4444}
+        .hint{font-size:11px;color:#999;margin-top:4px}
+        .pill-tipo{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+        .tipo-open{background:#dcfce7;color:#16a34a}.tipo-item{background:#e0e7ff;color:#4338ca}
+        .toast{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+        @media(max-width:600px){input,select{font-size:16px}.card{padding:12px}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Painel Administrativo</h1>
+            <button class="logout-btn" id="logoutBtn">Sair</button>
+        </header>
+        <nav class="admin-nav">
+            <a href="/admin/reservas.html">Reservas</a>
+            <a href="/admin/agenda.html">Agenda</a>
+            <a href="/admin/cardapio.html">Cardápio</a>
+            <a href="/admin/blog.html">Blog</a>
+            <a href="/admin/eventos.html" class="active">Eventos</a>
+            <a href="/admin/dashboard.html">Dashboard</a>
+        </nav>
+
+        <div class="section-tabs">
+            <div class="section-tab active" data-section="pacotes">Pacotes</div>
+            <div class="section-tab" data-section="simulador">Simulador</div>
+            <div class="section-tab" data-section="cenarios">Cenários</div>
+            <div class="section-tab" data-section="catalogo">Catálogo de custos</div>
+        </div>
+
+        <!-- ============ PACOTES ============ -->
+        <div class="section-panel active" id="panel-pacotes">
+            <div class="card">
+                <h3>Construir pacote</h3>
+                <div class="row">
+                    <div><label>Nome do pacote</label><input id="pk-nome" placeholder="Ex: Open Casa 4h"></div>
+                    <div style="max-width:200px"><label>Tipo</label>
+                        <select id="pk-tipo">
+                            <option value="open">Open (por pessoa)</option>
+                            <option value="item">Por item (fechado)</option>
+                        </select>
+                    </div>
+                </div>
+                <label id="pk-add-label">Adicionar item (qtd por pessoa)</label>
+                <div class="row" style="align-items:flex-end">
+                    <div style="flex:3"><input id="pk-item-search" list="pk-itens-list" placeholder="Buscar item do catálogo…">
+                        <datalist id="pk-itens-list"></datalist></div>
+                    <div style="max-width:110px"><input id="pk-item-qtd" type="number" min="0" step="0.5" value="1" placeholder="qtd"></div>
+                    <div style="max-width:120px"><button class="btn btn-ghost" id="pk-add-btn">+ Adicionar</button></div>
+                </div>
+                <div class="table-wrap" style="margin-top:12px"><table class="fin-table" id="pk-itens-tbl"></table></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px">
+                    <div><strong id="pk-custo-label" style="font-size:15px"></strong></div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-ghost btn-sm" id="pk-clear">Limpar</button>
+                        <button class="btn btn-primary" id="pk-save">Salvar pacote</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Pacotes salvos</h3>
+                <div class="table-wrap"><table class="fin-table" id="pk-saved-tbl"></table></div>
+            </div>
+        </div>
+
+        <!-- ============ SIMULADOR ============ -->
+        <div class="section-panel" id="panel-simulador">
+            <div class="card">
+                <h3>Simular evento</h3>
+                <div class="row">
+                    <div><label>Pacote</label><select id="sim-pacote"></select></div>
+                    <div style="max-width:130px"><label>Nº de pessoas</label><input id="sim-pessoas" type="number" min="1" value="50"></div>
+                    <div style="max-width:130px"><label>Duração (h)</label><input id="sim-duracao" type="number" min="1" step="0.5" value="4"></div>
+                </div>
+                <div class="row">
+                    <div><label id="sim-preco-label">Preço de venda (por pessoa)</label><input id="sim-preco" type="number" min="0" step="1" value="120"></div>
+                    <div style="max-width:160px"><label>Overhead por pessoa (R$)</label><input id="sim-overhead" type="number" min="0" step="1" value="8"></div>
+                    <div style="max-width:160px"><label>Margem-alvo (%) <span class="hint" style="display:inline">p/ sugerir preço</span></label><input id="sim-margem" type="number" min="0" max="90" step="1" value="45"></div>
+                </div>
+                <label style="margin-top:14px">Equipe da noite (editável)</label>
+                <div class="table-wrap"><table class="fin-table" id="sim-equipe-tbl"></table></div>
+                <button class="btn btn-ghost btn-sm" id="sim-equipe-add" style="margin-top:8px">+ Função</button>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card"><div class="kpi-label">Receita</div><div class="kpi-value" id="r-receita">—</div></div>
+                <div class="kpi-card"><div class="kpi-label">Custo F&B</div><div class="kpi-value" id="r-fb">—</div><div class="kpi-sub" id="r-fb-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Equipe</div><div class="kpi-value" id="r-equipe">—</div><div class="kpi-sub" id="r-equipe-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Overhead</div><div class="kpi-value" id="r-overhead">—</div></div>
+                <div class="kpi-card"><div class="kpi-label">Lucro líquido</div><div class="kpi-value" id="r-lucro">—</div><div class="kpi-sub" id="r-lucro-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Margem</div><div class="kpi-value" id="r-margem">—</div></div>
+            </div>
+            <div class="card" id="sim-insights" style="font-size:13px;color:#444;line-height:1.6"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:20px">
+                <input id="sim-cenario-nome" placeholder="Nome do cenário p/ salvar" style="max-width:260px">
+                <button class="btn btn-primary" id="sim-save">Salvar cenário</button>
+            </div>
+        </div>
+
+        <!-- ============ CENÁRIOS ============ -->
+        <div class="section-panel" id="panel-cenarios">
+            <div class="card">
+                <h3>Cenários salvos</h3>
+                <div class="table-wrap"><table class="fin-table" id="cen-tbl"></table></div>
+            </div>
+        </div>
+
+        <!-- ============ CATÁLOGO ============ -->
+        <div class="section-panel" id="panel-catalogo">
+            <div class="card">
+                <h3>Catálogo de custos (real — Consumer POS)</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                    <input id="cat-search" placeholder="Buscar item…" style="flex:1;min-width:160px">
+                    <select id="cat-cat" style="max-width:200px"></select>
+                </div>
+                <div class="table-wrap"><table class="fin-table" id="cat-tbl"></table></div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ---- Auth gate (mesmo padrão do sistema) ----
+        const AUTH_KEY = 'javari_admin_auth';
+        const session = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
+        if (!session) location.href = '/admin/index.html';
+        const $ = id => document.getElementById(id);
+        $('logoutBtn').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href = '/admin/index.html'; });
+
+        const fbCfg = { apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18", authDomain:"central-de-reservas-jsp.firebaseapp.com", projectId:"central-de-reservas-jsp", storageBucket:"central-de-reservas-jsp.firebasestorage.app", appId:"1:574859111927:web:83df67ed1865a59c0392f2" };
+        const db = getFirestore(initializeApp(fbCfg));
+        const PK_COL = 'artifacts/central-de-reservas-jsp/public/data/eventos_pacotes';
+        const CEN_COL = 'artifacts/central-de-reservas-jsp/public/data/eventos_cenarios';
+
+        const brl = v => 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        function toast(m){ const t=$('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2600); }
+
+        // ---- Tabs ----
+        document.querySelectorAll('.section-tab').forEach(tab => tab.addEventListener('click', () => {
+            document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
+            document.querySelectorAll('.section-panel').forEach(p=>p.classList.remove('active'));
+            tab.classList.add('active');
+            $('panel-'+tab.dataset.section).classList.add('active');
+        }));
+
+        // ---- Catálogo ----
+        let CATALOGO = [];
+        async function loadCatalogo(){
+            try {
+                const r = await fetch('/data/produtos-consumer.json?v='+Date.now());
+                const d = await r.json();
+                CATALOGO = (d.produtos||[]).filter(p => (p.precoVenda||0)>0 || (p.precoCusto||0)>0);
+            } catch(e){ console.warn('catálogo', e); CATALOGO=[]; }
+            // datalist do construtor
+            $('pk-itens-list').innerHTML = CATALOGO.map(p=>`<option value="${p.nome.replace(/"/g,'&quot;')}">`).join('');
+            // filtro de categoria
+            const cats = [...new Set(CATALOGO.map(p=>p.categoria||'—'))].sort();
+            $('cat-cat').innerHTML = '<option value="">Todas categorias</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+            renderCatalogo();
+        }
+        function renderCatalogo(){
+            const q=($('cat-search').value||'').toLowerCase(), cat=$('cat-cat').value;
+            const rows = CATALOGO.filter(p=>(!q||p.nome.toLowerCase().includes(q))&&(!cat||p.categoria===cat))
+                .sort((a,b)=>a.nome.localeCompare(b.nome)).slice(0,400);
+            $('cat-tbl').innerHTML = `<thead><tr><th>Item</th><th>Categoria</th><th class="amount">Custo</th><th class="amount">Venda</th><th class="amount">CMV</th><th class="amount">Margem</th></tr></thead><tbody>${
+                rows.map(p=>{ const v=p.precoVenda||0,c=p.precoCusto||0,cmv=v>0?(c/v*100):null;
+                    return `<tr><td>${p.nome}</td><td>${p.categoria||'—'}</td><td class="amount">${brl(c)}</td><td class="amount">${brl(v)}</td><td class="amount">${cmv==null?'—':cmv.toFixed(0)+'%'}</td><td class="amount">${brl(v-c)}</td></tr>`;
+                }).join('')}</tbody>`;
+        }
+        $('cat-search').addEventListener('input', renderCatalogo);
+        $('cat-cat').addEventListener('change', renderCatalogo);
+
+        // ---- Construtor de pacotes ----
+        let pkItens = [];
+        $('pk-tipo').addEventListener('change', () => {
+            $('pk-add-label').textContent = $('pk-tipo').value==='open' ? 'Adicionar item (qtd por pessoa)' : 'Adicionar item (qtd total)';
+            renderPkItens();
+        });
+        $('pk-add-btn').addEventListener('click', () => {
+            const nome = $('pk-item-search').value.trim();
+            const it = CATALOGO.find(p=>p.nome===nome) || CATALOGO.find(p=>p.nome.toLowerCase()===nome.toLowerCase());
+            if (!it) { toast('Item não encontrado no catálogo'); return; }
+            const qtd = parseFloat($('pk-item-qtd').value)||0;
+            if (qtd<=0) { toast('Quantidade inválida'); return; }
+            pkItens.push({ codigo:it.codigo, nome:it.nome, custoUnit:it.precoCusto||0, precoVenda:it.precoVenda||0, qtd });
+            $('pk-item-search').value=''; $('pk-item-qtd').value='1';
+            renderPkItens();
+        });
+        function pkCusto(){ return pkItens.reduce((s,i)=>s+i.custoUnit*i.qtd,0); }
+        function renderPkItens(){
+            const tipo=$('pk-tipo').value;
+            $('pk-itens-tbl').innerHTML = pkItens.length? `<thead><tr><th>Item</th><th class="amount">Custo un.</th><th class="amount">Qtd</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${
+                pkItens.map((i,ix)=>`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td class="amount">${i.qtd}</td><td class="amount">${brl(i.custoUnit*i.qtd)}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`).join('')
+            }</tbody>` : '<tbody><tr><td style="color:#aaa">Nenhum item ainda.</td></tr></tbody>';
+            $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); }));
+            $('pk-custo-label').textContent = tipo==='open' ? `Custo F&B por pessoa: ${brl(pkCusto())}` : `Custo F&B total: ${brl(pkCusto())}`;
+        }
+        $('pk-clear').addEventListener('click', ()=>{ pkItens=[]; $('pk-nome').value=''; renderPkItens(); });
+        $('pk-save').addEventListener('click', async () => {
+            const nome=$('pk-nome').value.trim();
+            if (!nome) { toast('Dê um nome ao pacote'); return; }
+            if (!pkItens.length) { toast('Adicione ao menos 1 item'); return; }
+            try {
+                await addDoc(collection(db,PK_COL), { nome, tipo:$('pk-tipo').value, itens:pkItens, custo:pkCusto(), criadoEm:new Date().toISOString() });
+                toast('Pacote salvo'); pkItens=[]; $('pk-nome').value=''; renderPkItens(); loadPacotes();
+            } catch(e){ toast('Erro ao salvar: '+e.message); }
+        });
+
+        // ---- Pacotes salvos ----
+        let PACOTES = [];
+        async function loadPacotes(){
+            try { const s=await getDocs(collection(db,PK_COL)); PACOTES=s.docs.map(d=>({id:d.id,...d.data()})); }
+            catch(e){ console.warn('pacotes',e); PACOTES=[]; }
+            $('pk-saved-tbl').innerHTML = PACOTES.length? `<thead><tr><th>Pacote</th><th>Tipo</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${
+                PACOTES.map(p=>`<tr><td>${p.nome}</td><td><span class="pill-tipo tipo-${p.tipo}">${p.tipo==='open'?'open/pessoa':'por item'}</span></td><td class="amount">${brl(p.custo)}${p.tipo==='open'?'/pax':''}</td><td class="amount"><button class="btn btn-danger btn-sm" data-del="${p.id}">excluir</button></td></tr>`).join('')
+            }</tbody>` : '<tbody><tr><td style="color:#aaa">Nenhum pacote salvo.</td></tr></tbody>';
+            $('pk-saved-tbl').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
+                if(!confirm('Excluir este pacote?'))return;
+                await deleteDoc(doc(db,PK_COL,b.dataset.del)); loadPacotes();
+            }));
+            // popula select do simulador
+            $('sim-pacote').innerHTML = PACOTES.length? PACOTES.map(p=>`<option value="${p.id}">${p.nome} (${p.tipo==='open'?'open':'item'})</option>`).join('') : '<option value="">— crie um pacote primeiro —</option>';
+            simular();
+        }
+
+        // ---- Equipe (preset do René: 50px = R$1.350) ----
+        let equipe = [
+            {funcao:'Atendimento/Limpeza', qtd:2, custoUnit:150},
+            {funcao:'Bar', qtd:2, custoUnit:150},
+            {funcao:'Recepção', qtd:1, custoUnit:150},
+            {funcao:'Cozinha', qtd:2, custoUnit:150},
+            {funcao:'Gerente', qtd:1, custoUnit:300},
+        ];
+        function equipeTotal(){ return equipe.reduce((s,e)=>s+(e.qtd||0)*(e.custoUnit||0),0); }
+        function renderEquipe(){
+            $('sim-equipe-tbl').innerHTML = `<thead><tr><th>Função</th><th class="amount">Qtd</th><th class="amount">R$/un</th><th class="amount">Total</th><th></th></tr></thead><tbody>${
+                equipe.map((e,ix)=>`<tr>
+                    <td><input data-f="${ix}" data-k="funcao" value="${e.funcao}" style="padding:5px 8px;font-size:12px"></td>
+                    <td class="amount"><input data-f="${ix}" data-k="qtd" type="number" min="0" value="${e.qtd}" style="padding:5px 8px;font-size:12px;max-width:64px;text-align:right"></td>
+                    <td class="amount"><input data-f="${ix}" data-k="custoUnit" type="number" min="0" value="${e.custoUnit}" style="padding:5px 8px;font-size:12px;max-width:80px;text-align:right"></td>
+                    <td class="amount">${brl((e.qtd||0)*(e.custoUnit||0))}</td>
+                    <td class="amount"><button class="btn btn-danger btn-sm" data-rme="${ix}">×</button></td></tr>`).join('')
+            }<tr><td><strong>Total equipe</strong></td><td></td><td></td><td class="amount"><strong>${brl(equipeTotal())}</strong></td><td></td></tr></tbody>`;
+            $('sim-equipe-tbl').querySelectorAll('input[data-f]').forEach(inp=>inp.addEventListener('input',()=>{
+                const i=+inp.dataset.f, k=inp.dataset.k;
+                equipe[i][k] = k==='funcao'? inp.value : (parseFloat(inp.value)||0);
+                if(k!=='funcao'){ // atualiza só os totais sem perder foco
+                    inp.closest('tr').querySelector('td.amount:nth-last-child(2)').textContent = brl((equipe[i].qtd||0)*(equipe[i].custoUnit||0));
+                    $('sim-equipe-tbl').querySelector('tbody tr:last-child td.amount strong').textContent = brl(equipeTotal());
+                }
+                simular();
+            }));
+            $('sim-equipe-tbl').querySelectorAll('[data-rme]').forEach(b=>b.addEventListener('click',()=>{ equipe.splice(+b.dataset.rme,1); renderEquipe(); simular(); }));
+        }
+        $('sim-equipe-add').addEventListener('click', ()=>{ equipe.push({funcao:'Nova função',qtd:1,custoUnit:150}); renderEquipe(); simular(); });
+
+        // ---- Simulador ----
+        ['sim-pacote','sim-pessoas','sim-duracao','sim-preco','sim-overhead','sim-margem'].forEach(id=>$(id).addEventListener('input',simular));
+        $('sim-pacote').addEventListener('change', ()=>{ const p=PACOTES.find(x=>x.id===$('sim-pacote').value); $('sim-preco-label').textContent = (p&&p.tipo==='item')?'Preço de venda (total do evento)':'Preço de venda (por pessoa)'; simular(); });
+        function simular(){
+            const p = PACOTES.find(x=>x.id===$('sim-pacote').value);
+            if (!p) {
+                ['r-receita','r-fb','r-equipe','r-overhead','r-lucro','r-margem'].forEach(id=>{ $(id).textContent='—'; $(id).className='kpi-value'; });
+                ['r-fb-sub','r-equipe-sub','r-lucro-sub'].forEach(id=>$(id).textContent='');
+                $('sim-insights').innerHTML='<span style="color:#aaa">Crie e selecione um pacote para simular.</span>';
+                return;
+            }
+            const pax=Math.max(parseFloat($('sim-pessoas').value)||0,0);
+            const preco=parseFloat($('sim-preco').value)||0;
+            const ohpp=parseFloat($('sim-overhead').value)||0;
+            const margemAlvo=(parseFloat($('sim-margem').value)||0)/100;
+            const isOpen = p.tipo==='open';
+            const custoFBpp = isOpen ? p.custo : (pax>0?p.custo/pax:0);
+            const custoFB = isOpen ? p.custo*pax : p.custo;
+            const eq = equipeTotal();
+            const overhead = ohpp*pax;
+            const receita = isOpen ? preco*pax : preco;
+            const lucro = receita - custoFB - eq - overhead;
+            const margem = receita>0 ? lucro/receita*100 : 0;
+            $('r-receita').textContent = brl(receita);
+            $('r-fb').textContent = brl(custoFB); $('r-fb-sub').textContent = isOpen?`${brl(p.custo)}/pessoa`:'fixo';
+            $('r-equipe').textContent = brl(eq); $('r-equipe-sub').textContent = pax>0?`${brl(eq/pax)}/pessoa`:'';
+            $('r-overhead').textContent = brl(overhead);
+            $('r-lucro').textContent = brl(lucro); $('r-lucro').className='kpi-value '+(lucro>=0?'pos':'neg');
+            $('r-lucro-sub').textContent = pax>0?`${brl(lucro/pax)}/pessoa`:'';
+            $('r-margem').textContent = receita>0?margem.toFixed(1)+'%':'—'; $('r-margem').className='kpi-value '+(margem>=0?'pos':'neg');
+            // break-even + preço sugerido (open)
+            let ins='';
+            if (isOpen) {
+                const contrib = preco - custoFBpp - ohpp; // contribuição por pessoa
+                const be = contrib>0 ? Math.ceil(eq/contrib) : null;
+                ins += be!=null ? `<div>⚖️ <strong>Ponto de equilíbrio:</strong> ${be} pessoas (abaixo disso a equipe não se paga).</div>`
+                                 : `<div class="neg">⚠️ O preço não cobre nem o custo variável por pessoa. Suba o preço ou enxugue o pacote.</div>`;
+                const precoSug = (1-margemAlvo)>0 ? (custoFBpp + ohpp + (pax>0?eq/pax:0))/(1-margemAlvo) : 0;
+                ins += `<div>🎯 Para <strong>${(margemAlvo*100).toFixed(0)}% de margem</strong> com ${pax} pessoas: preço sugerido <strong>${brl(precoSug)}/pessoa</strong>.</div>`;
+            } else {
+                ins += `<div>Pacote por item (custo fixo). Lucro escala com o preço total negociado, não com nº de pessoas.</div>`;
+            }
+            ins += `<div style="margin-top:6px;color:#888">Custo total do evento: ${brl(custoFB+eq+overhead)} · ${pax} pessoas · ${$('sim-duracao').value}h</div>`;
+            $('sim-insights').innerHTML = ins;
+        }
+        $('sim-save').addEventListener('click', async () => {
+            const p = PACOTES.find(x=>x.id===$('sim-pacote').value);
+            if (!p) { toast('Selecione um pacote'); return; }
+            const nome=$('sim-cenario-nome').value.trim() || `${p.nome} · ${$('sim-pessoas').value}px`;
+            const pax=parseFloat($('sim-pessoas').value)||0, preco=parseFloat($('sim-preco').value)||0;
+            const isOpen=p.tipo==='open';
+            const custoFB=isOpen?p.custo*pax:p.custo, eq=equipeTotal(), overhead=(parseFloat($('sim-overhead').value)||0)*pax;
+            const receita=isOpen?preco*pax:preco, lucro=receita-custoFB-eq-overhead;
+            try {
+                await addDoc(collection(db,CEN_COL), { nome, pacote:p.nome, tipo:p.tipo, pessoas:pax, duracao:$('sim-duracao').value, preco, equipe:JSON.parse(JSON.stringify(equipe)), equipeTotal:eq, custoFB, overhead, receita, lucro, margem:receita>0?lucro/receita*100:0, criadoEm:new Date().toISOString() });
+                toast('Cenário salvo'); $('sim-cenario-nome').value=''; loadCenarios();
+            } catch(e){ toast('Erro: '+e.message); }
+        });
+
+        // ---- Cenários salvos ----
+        async function loadCenarios(){
+            let cen=[];
+            try { const s=await getDocs(collection(db,CEN_COL)); cen=s.docs.map(d=>({id:d.id,...d.data()})); }
+            catch(e){ console.warn('cenarios',e); }
+            cen.sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+            $('cen-tbl').innerHTML = cen.length? `<thead><tr><th>Cenário</th><th>Pacote</th><th class="amount">Pessoas</th><th class="amount">Preço</th><th class="amount">Receita</th><th class="amount">Lucro</th><th class="amount">Margem</th><th></th></tr></thead><tbody>${
+                cen.map(c=>`<tr><td>${c.nome}</td><td>${c.pacote} <span class="pill-tipo tipo-${c.tipo}">${c.tipo}</span></td><td class="amount">${c.pessoas}</td><td class="amount">${brl(c.preco)}</td><td class="amount">${brl(c.receita)}</td><td class="amount ${c.lucro>=0?'pos':'neg'}">${brl(c.lucro)}</td><td class="amount ${c.margem>=0?'pos':'neg'}">${(c.margem||0).toFixed(1)}%</td><td class="amount"><button class="btn btn-danger btn-sm" data-delc="${c.id}">excluir</button></td></tr>`).join('')
+            }</tbody>` : '<tbody><tr><td style="color:#aaa">Nenhum cenário salvo ainda.</td></tr></tbody>';
+            $('cen-tbl').querySelectorAll('[data-delc]').forEach(b=>b.addEventListener('click', async ()=>{ if(!confirm('Excluir cenário?'))return; await deleteDoc(doc(db,CEN_COL,b.dataset.delc)); loadCenarios(); }));
+        }
+
+        // ---- Init ----
+        renderPkItens(); renderEquipe();
+        await loadCatalogo();
+        await loadPacotes();
+        await loadCenarios();
+    </script>
+</body>
+</html>
