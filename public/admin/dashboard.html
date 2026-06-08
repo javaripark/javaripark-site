@@ -213,6 +213,7 @@
                 <div class="kpi-card"><div class="kpi-label">Clientes no Período</div><div class="kpi-value" id="kpi-clients">—</div><div class="kpi-sub" id="kpi-clients-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Vendas</div><div class="kpi-value" id="kpi-orders">—</div><div class="kpi-sub" id="kpi-orders-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">—</div><div class="kpi-sub" id="kpi-ticket-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Itens por Cliente</div><div class="kpi-value" id="kpi-items">—</div><div class="kpi-sub" id="kpi-items-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Melhor Dia</div><div class="kpi-value" id="kpi-best-day">—</div><div class="kpi-sub" id="kpi-best-day-sub"></div></div>
             </div>
 
@@ -820,8 +821,8 @@
 
         function renderSalesData(data, from, to) {
             if (data.length === 0) {
-                ['kpi-revenue','kpi-clients','kpi-orders','kpi-ticket','kpi-best-day'].forEach(id => $(id).textContent = '—');
-                ['kpi-revenue-sub','kpi-clients-sub','kpi-orders-sub','kpi-ticket-sub','kpi-best-day-sub'].forEach(id => $(id).textContent = '');
+                ['kpi-revenue','kpi-clients','kpi-orders','kpi-ticket','kpi-items','kpi-best-day'].forEach(id => $(id).textContent = '—');
+                ['kpi-revenue-sub','kpi-clients-sub','kpi-orders-sub','kpi-ticket-sub','kpi-items-sub','kpi-best-day-sub'].forEach(id => $(id).textContent = '');
                 showEmpty('revenue',true); showEmpty('payments',true); showEmpty('categories',true);
                 showEmpty('products',true); showEmpty('hours',true); showEmpty('weekday',true);
                 Object.keys(charts).forEach(k => { if(charts[k]){charts[k].destroy();charts[k]=null;} });
@@ -830,7 +831,9 @@
             const totalRev = data.reduce((s,d)=>s+(d.faturamento||0),0);
             const totalOrd = data.reduce((s,d)=>s+(d.qtdVendas||0),0);
             const totalCli = data.reduce((s,d)=>s+(d.clientesUnicos||0),0);
+            const totalItens = data.reduce((s,d)=>s+(d.itensVendidos||0),0);
             const avgTick = totalOrd>0?totalRev/totalOrd:0;
+            const itensPorCli = totalCli>0 ? totalItens/totalCli : 0;
             const best = data.reduce((b,d)=>(d.faturamento||0)>(b.faturamento||0)?d:b, data[0]);
 
             // período anterior para variação %
@@ -838,17 +841,21 @@
             const pRev = prev ? prev.reduce((s,d)=>s+(d.faturamento||0),0) : 0;
             const pOrd = prev ? prev.reduce((s,d)=>s+(d.qtdVendas||0),0) : 0;
             const pCli = prev ? prev.reduce((s,d)=>s+(d.clientesUnicos||0),0) : 0;
+            const pItens = prev ? prev.reduce((s,d)=>s+(d.itensVendidos||0),0) : 0;
             const pTick = pOrd>0 ? pRev/pOrd : 0;
+            const pItensPorCli = pCli>0 ? pItens/pCli : 0;
 
             $('kpi-revenue').textContent = fmtBRL(totalRev);
             $('kpi-clients').textContent = totalCli > 0 ? totalCli.toLocaleString('pt-BR') : '—';
             $('kpi-orders').textContent = totalOrd.toLocaleString('pt-BR');
             $('kpi-ticket').textContent = fmtBRLFull(avgTick);
+            $('kpi-items').textContent = (totalItens>0 && totalCli>0) ? itensPorCli.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—';
             $('kpi-best-day').textContent = fmtBRL(best.faturamento);
             $('kpi-revenue-sub').innerHTML = `${data.length} dia${data.length!==1?'s':''}${pctVar(totalRev,pRev)}`;
             $('kpi-clients-sub').innerHTML = totalCli>0 ? `~${Math.round(totalCli/Math.max(data.length,1))}/dia${pctVar(totalCli,pCli)}` : 'sem dado de cliente';
             $('kpi-orders-sub').innerHTML = `~${Math.round(totalOrd/Math.max(data.length,1))}/dia${pctVar(totalOrd,pOrd)}`;
             $('kpi-ticket-sub').innerHTML = `vs anterior${pctVar(avgTick,pTick)}`;
+            $('kpi-items-sub').innerHTML = (totalItens>0 && totalCli>0) ? `${totalItens.toLocaleString('pt-BR')} itens${pctVar(itensPorCli,pItensPorCli)}` : 'sem dado';
             $('kpi-best-day-sub').textContent = fmtDateBR(best.date);
 
             renderRevenueChart(data);
