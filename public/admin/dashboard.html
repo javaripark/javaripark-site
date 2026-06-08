@@ -208,8 +208,9 @@
                 </div>
             </div>
 
-            <div class="kpi-grid">
+            <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
                 <div class="kpi-card"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-revenue">—</div><div class="kpi-sub" id="kpi-revenue-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Clientes no Período</div><div class="kpi-value" id="kpi-clients">—</div><div class="kpi-sub" id="kpi-clients-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Vendas</div><div class="kpi-value" id="kpi-orders">—</div><div class="kpi-sub" id="kpi-orders-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">—</div><div class="kpi-sub" id="kpi-ticket-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Melhor Dia</div><div class="kpi-value" id="kpi-best-day">—</div><div class="kpi-sub" id="kpi-best-day-sub"></div></div>
@@ -263,7 +264,7 @@
                     <div class="chart-box"><canvas id="chart-sectors"></canvas></div>
                 </div>
                 <div class="card">
-                    <h3>Top 5 por Setor</h3>
+                    <h3>Top 10 por Setor</h3>
                     <div style="margin-bottom:12px">
                         <h4 style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:6px">Bar</h4>
                         <div id="top5-bar"></div>
@@ -798,10 +799,29 @@
         }
 
         // ── Sales rendering ──
-        function renderSalesData(data) {
+        // Variação % vs período anterior (seta + cor), pra subir nos cards
+        function pctVar(cur, prev) {
+            if (!prev || prev === 0) return '';
+            const v = (cur - prev) / prev * 100;
+            const col = v >= 0 ? '#10b981' : '#ef4444';
+            const arr = v >= 0 ? '▲' : '▼';
+            return ` · <span style="color:${col};font-weight:700">${arr} ${Math.abs(v).toFixed(0)}%</span>`;
+        }
+        // Dados do período imediatamente anterior, de mesma duração (em dias de calendário)
+        function prevPeriodData(from, to) {
+            if (!from || !to) return null;
+            const f = new Date(from + 'T00:00:00'), t = new Date(to + 'T00:00:00');
+            const days = Math.round((t - f) / 86400000) + 1;
+            const prevTo = new Date(f); prevTo.setDate(prevTo.getDate() - 1);
+            const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate() - (days - 1));
+            const pf = fmt(prevFrom), pt = fmt(prevTo);
+            return allDailyData.filter(d => d.date >= pf && d.date <= pt);
+        }
+
+        function renderSalesData(data, from, to) {
             if (data.length === 0) {
-                ['kpi-revenue','kpi-orders','kpi-ticket','kpi-best-day'].forEach(id => $(id).textContent = '—');
-                ['kpi-revenue-sub','kpi-orders-sub','kpi-ticket-sub','kpi-best-day-sub'].forEach(id => $(id).textContent = '');
+                ['kpi-revenue','kpi-clients','kpi-orders','kpi-ticket','kpi-best-day'].forEach(id => $(id).textContent = '—');
+                ['kpi-revenue-sub','kpi-clients-sub','kpi-orders-sub','kpi-ticket-sub','kpi-best-day-sub'].forEach(id => $(id).textContent = '');
                 showEmpty('revenue',true); showEmpty('payments',true); showEmpty('categories',true);
                 showEmpty('products',true); showEmpty('hours',true); showEmpty('weekday',true);
                 Object.keys(charts).forEach(k => { if(charts[k]){charts[k].destroy();charts[k]=null;} });
@@ -809,15 +829,26 @@
             }
             const totalRev = data.reduce((s,d)=>s+(d.faturamento||0),0);
             const totalOrd = data.reduce((s,d)=>s+(d.qtdVendas||0),0);
+            const totalCli = data.reduce((s,d)=>s+(d.clientesUnicos||0),0);
             const avgTick = totalOrd>0?totalRev/totalOrd:0;
             const best = data.reduce((b,d)=>(d.faturamento||0)>(b.faturamento||0)?d:b, data[0]);
 
+            // período anterior para variação %
+            const prev = prevPeriodData(from, to);
+            const pRev = prev ? prev.reduce((s,d)=>s+(d.faturamento||0),0) : 0;
+            const pOrd = prev ? prev.reduce((s,d)=>s+(d.qtdVendas||0),0) : 0;
+            const pCli = prev ? prev.reduce((s,d)=>s+(d.clientesUnicos||0),0) : 0;
+            const pTick = pOrd>0 ? pRev/pOrd : 0;
+
             $('kpi-revenue').textContent = fmtBRL(totalRev);
+            $('kpi-clients').textContent = totalCli > 0 ? totalCli.toLocaleString('pt-BR') : '—';
             $('kpi-orders').textContent = totalOrd.toLocaleString('pt-BR');
             $('kpi-ticket').textContent = fmtBRLFull(avgTick);
             $('kpi-best-day').textContent = fmtBRL(best.faturamento);
-            $('kpi-revenue-sub').textContent = `${data.length} dia${data.length!==1?'s':''}`;
-            $('kpi-orders-sub').textContent = `~${Math.round(totalOrd/Math.max(data.length,1))}/dia`;
+            $('kpi-revenue-sub').innerHTML = `${data.length} dia${data.length!==1?'s':''}${pctVar(totalRev,pRev)}`;
+            $('kpi-clients-sub').innerHTML = totalCli>0 ? `~${Math.round(totalCli/Math.max(data.length,1))}/dia${pctVar(totalCli,pCli)}` : 'sem dado de cliente';
+            $('kpi-orders-sub').innerHTML = `~${Math.round(totalOrd/Math.max(data.length,1))}/dia${pctVar(totalOrd,pOrd)}`;
+            $('kpi-ticket-sub').innerHTML = `vs anterior${pctVar(avgTick,pTick)}`;
             $('kpi-best-day-sub').textContent = fmtDateBR(best.date);
 
             renderRevenueChart(data);
@@ -1596,20 +1627,22 @@
                 });
             }
 
-            // Top 5 per sector
+            // Top 10 per sector
             const allProds = Object.values(prodByCat);
-            const barProds = allProds.filter(p => classifySector(p.cat) === 'bar').sort((a,b) => b.fat-a.fat).slice(0,5);
-            const kitchenProds = allProds.filter(p => classifySector(p.cat) === 'cozinha').sort((a,b) => b.fat-a.fat).slice(0,5);
+            const barProds = allProds.filter(p => classifySector(p.cat) === 'bar').sort((a,b) => b.fat-a.fat).slice(0,10);
+            const kitchenProds = allProds.filter(p => classifySector(p.cat) === 'cozinha').sort((a,b) => b.fat-a.fat).slice(0,10);
 
-            function renderTop5(containerId, prods, color) {
+            function renderTop10(containerId, prods, color) {
                 const el = $(containerId);
                 if (prods.length === 0) { el.innerHTML = '<p class="empty">Sem dados.</p>'; return; }
-                el.innerHTML = prods.map((p, i) =>
-                    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px"><span><strong style="color:${color}">${i+1}.</strong> ${esc(p.nome)}</span><span style="font-weight:600">${fmtBRL(p.fat)}</span></div>`
-                ).join('');
+                const tot = prods.reduce((s,p)=>s+(p.fat||0),0);
+                el.innerHTML = prods.map((p, i) => {
+                    const pct = tot>0 ? (p.fat/tot*100).toFixed(0) : 0;
+                    return `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><strong style="color:${color}">${i+1}.</strong> ${esc(p.nome)}</span><span style="font-weight:600;white-space:nowrap">${fmtBRL(p.fat)} <span style="color:#999;font-weight:400">${pct}%</span></span></div>`;
+                }).join('');
             }
-            renderTop5('top5-bar', barProds, '#7c3aed');
-            renderTop5('top5-kitchen', kitchenProds, '#ea580c');
+            renderTop10('top5-bar', barProds, '#7c3aed');
+            renderTop10('top5-kitchen', kitchenProds, '#ea580c');
         }
 
         // ── Toast + confirm modal (substituem alert/confirm nativos) ──
@@ -1751,5 +1784,6 @@
             $('fin-mes-to')?.addEventListener('change', renderResumoMensal);
         }
     </script>
+    <script src="/js/version-badge.js" defer></script>
 </body>
 </html>

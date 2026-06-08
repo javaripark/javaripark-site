@@ -28,3 +28,4 @@ firebase-debug.*.log
 /admin
 /docs
 /functions
+public/version.json
