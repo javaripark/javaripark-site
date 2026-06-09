@@ -5,7 +5,9 @@ import { createApp } from './src/app.js';
 
 const app = createApp({ awaitProcessing: true });
 
+// invoker public: a Meta chama o webhook sem auth Google; a segurança é a
+// assinatura HMAC (X-Hub-Signature-256) validada no app.
 export const wabot = onRequest(
-  { region: 'us-central1', maxInstances: 1, timeoutSeconds: 120, memory: '256MiB' },
+  { region: 'us-central1', maxInstances: 1, timeoutSeconds: 120, memory: '256MiB', invoker: 'public' },
   app,
 );

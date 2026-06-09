@@ -28,14 +28,20 @@ Pré-requisito: **verificação do negócio** concluída no Business Manager (Ce
 4. **IDs e segredo**: no painel do app → WhatsApp → Configuração da API → copie o **Phone number ID** (`META_PHONE_NUMBER_ID`). Em Configurações → Básico → **Chave Secreta do Aplicativo** (`META_APP_SECRET`).
 5. **Webhook**: suba o serviço (passo 3), exponha a porta 3200 por HTTPS (Tailscale Funnel ou cloudflared, igual ao wa-service) e cadastre no painel: Webhooks → WhatsApp Business Account → URL `https://SEU-TUNEL/webhook` + o token de `META_VERIFY_TOKEN` → assinar o campo **messages**.
 
-## 3. Rodar em produção (máquina do bar)
+## 3. Produção: Firebase Functions (sem máquina ligada)
+
+O serviço roda como Function no projeto `central-de-reservas-jsp` (plano Blaze, free tier cobre o volume):
 
 ```bash
-pm2 start src/server.js --name javari-wa-bot
-pm2 save
+firebase deploy --only functions --force
 ```
 
-`GET /health` responde `{ok:true}` pra monitorar.
+- **URL do webhook (fixa)**: `https://wabot-n7wdbwvdga-uc.a.run.app/webhook`
+- Variáveis vêm do `wa-bot/.env` (aplicadas no deploy). `PORT` não pode existir no .env (reservada na nuvem).
+- Invoker público de propósito: a segurança do webhook é a assinatura HMAC da Meta.
+- Logs: `firebase functions:log` ou console do GCP.
+
+(Modo local `npm start` continua existindo pra desenvolvimento, com túnel.)
 
 ## Custos
 
