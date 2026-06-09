@@ -153,6 +153,10 @@
 
         <!-- ============ SIMULADOR & PROPOSTA ============ -->
         <div class="section-panel" id="panel-simulador">
+            <div id="edit-banner" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#9a3412;align-items:center;justify-content:space-between;gap:10px">
+                <span id="edit-banner-txt"></span>
+                <button class="btn btn-sm" style="background:#fff;border:1px solid #fed7aa;color:#9a3412" id="edit-cancel">Cancelar edição</button>
+            </div>
             <div class="card">
                 <h3>Dados da proposta</h3>
                 <div class="row">
@@ -183,7 +187,7 @@
 
             <div class="kpi-grid">
                 <div class="kpi-card"><div class="kpi-label">Receita</div><div class="kpi-value" id="r-receita">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Custo F&B</div><div class="kpi-value" id="r-fb">—</div><div class="kpi-sub" id="r-fb-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Custo de Consumo</div><div class="kpi-value" id="r-fb">—</div><div class="kpi-sub" id="r-fb-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Equipe</div><div class="kpi-value" id="r-equipe">—</div><div class="kpi-sub" id="r-equipe-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Extras</div><div class="kpi-value" id="r-extras">—</div><div class="kpi-sub" id="r-extras-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Overhead</div><div class="kpi-value" id="r-overhead">—</div></div>
@@ -281,7 +285,7 @@
     </div>
     <div class="modal-ov" id="link-modal">
         <div class="modal-box">
-            <h3>Proposta gerada 🎉</h3>
+            <h3 id="link-title">Proposta gerada 🎉</h3>
             <p>Mande este link para o cliente. Ele abre uma proposta visual e interativa — com fotos do espaço, galeria e botão de WhatsApp direto pra sua linha.</p>
             <input id="link-url" readonly style="margin-bottom:14px;font-size:13px">
             <div class="modal-actions">
@@ -354,7 +358,7 @@
                 $('pk-itens-tbl').querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.d; pkItens[i].qtd=Math.max(0,pkItens[i].qtd+(+b.dataset.inc)); if(pkItens[i].qtd===0)pkItens.splice(i,1); renderPkItens(); renderBrowser(); }));
                 $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); renderBrowser(); }));
             }
-            $('pk-custo-label').textContent=tipo==='open'?`Custo F&B por pessoa: ${brl(pkCusto())}`:`Custo F&B total: ${brl(pkCusto())}`;
+            $('pk-custo-label').textContent=tipo==='open'?`Custo de consumo por pessoa: ${brl(pkCusto())}`:`Custo de consumo total: ${brl(pkCusto())}`;
         }
         $('pk-clear').addEventListener('click',()=>{ pkItens=[]; $('pk-nome').value=''; editingId=null; renderPkItens(); renderBrowser(); });
         $('pk-save').addEventListener('click',async()=>{
@@ -451,11 +455,36 @@
         });
 
         // ---------- Gerar proposta (link público) ----------
+        let editingPropostaId=null;
+        function showEditBanner(empresa){ editingPropostaId&&($('edit-banner-txt').textContent=`✏️ Editando a proposta de "${empresa||'—'}" — ao gerar, o mesmo link é atualizado (status e data de envio preservados).`); $('edit-banner').style.display=editingPropostaId?'flex':'none'; }
+        function clearEditing(){ editingPropostaId=null; $('edit-banner').style.display='none'; }
+        $('edit-cancel').addEventListener('click',clearEditing);
         async function generateLink(coverSrc, galeria){
             const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
             fieldsToCFG();
-            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cover:coverSrc||'cotacao-hero.webp', galeria:galeria||[], cfg:{...CFG}, status:'enviada', criadoEm:new Date().toISOString() };
-            try{ const ref=await addDoc(collection(db,PROP_COL),data); const url=location.origin+'/proposta.html?id='+ref.id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); loadPropostas(); }catch(e){ toast('Erro: '+e.message); }
+            const fields={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cover:coverSrc||'cotacao-hero.webp', galeria:galeria||[], cfg:{...CFG} };
+            try{
+                let id;
+                if(editingPropostaId){
+                    await updateDoc(doc(db,PROP_COL,editingPropostaId),{...fields, atualizadoEm:new Date().toISOString()});
+                    id=editingPropostaId; clearEditing(); $('link-title').textContent='Proposta atualizada ✓';
+                } else {
+                    const ref=await addDoc(collection(db,PROP_COL),{...fields, status:'enviada', criadoEm:new Date().toISOString()});
+                    id=ref.id; $('link-title').textContent='Proposta gerada 🎉';
+                }
+                const url=location.origin+'/proposta.html?id='+id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); loadPropostas();
+            }catch(e){ toast('Erro: '+e.message); }
+        }
+        function loadPropostaToSim(p){
+            document.querySelector('.section-tab[data-section="simulador"]').click();
+            $('sim-empresa').value=p.empresa||''; $('sim-contato').value=p.contato||''; $('sim-data').value=p.dataEvento||''; $('sim-pessoas').value=p.pessoas||''; $('sim-duracao').value=p.duracao||'4'; $('sim-preco').value=p.preco||'';
+            const pk=PACOTES.find(x=>x.nome===p.pacoteNome);
+            if(pk){ $('sim-pacote').value=pk.id; $('sim-pacote').dispatchEvent(new Event('change')); } else toast('Pacote original não existe mais — selecione um pacote.');
+            extras=(p.extrasRepassados&&p.extrasRepassados.length)?p.extrasRepassados.map(e=>({desc:e.desc,valor:e.valor,repassar:true})):[{desc:'Música ao vivo',valor:0,repassar:false}];
+            renderExtras();
+            selCover=p.cover||DEFAULT_COVER; selPhotos=new Set((p.galeria&&p.galeria.length)?p.galeria.map(g=>g.src):DEFAULT_SEL);
+            editingPropostaId=p.id; showEditBanner(p.empresa);
+            simular(); window.scrollTo({top:0,behavior:'smooth'});
         }
         $('link-copy').addEventListener('click',()=>{ const i=$('link-url'); i.select(); navigator.clipboard?.writeText(i.value).then(()=>toast('Link copiado')).catch(()=>{ document.execCommand('copy'); toast('Link copiado'); }); });
         $('link-close').addEventListener('click',()=>$('link-modal').classList.remove('open'));
@@ -486,9 +515,10 @@
             $('pp-vpipe').textContent=brl(sumv(p=>['enviada','negociacao'].includes(st(p))));
             $('pp-vfech').textContent=brl(sumv(p=>st(p)==='fechada'));
             $('pp-tbl').innerHTML=pp.length?`<thead><tr><th>Empresa</th><th>Data evento</th><th class="amount">Pessoas</th><th class="amount">Valor</th><th>Status</th><th>Criada</th><th></th></tr></thead><tbody>${
-                pp.map(p=>`<tr><td>${p.empresa||'—'}</td><td>${fmtDateBR(p.dataEvento)||'—'}</td><td class="amount">${p.pessoas||'—'}</td><td class="amount">${brl(p.total)}</td><td><select data-st="${p.id}" style="padding:5px 9px;font-size:12px">${STATUS_LIST.map(([v,l])=>`<option value="${v}"${st(p)===v?' selected':''}>${l}</option>`).join('')}</select></td><td>${fmtDateBR((p.criadoEm||'').slice(0,10))}</td><td class="amount"><a class="btn btn-ghost btn-sm" href="/proposta.html?id=${p.id}" target="_blank" style="text-decoration:none">abrir</a> <button class="btn btn-danger btn-sm" data-delp="${p.id}">×</button></td></tr>`).join('')
+                pp.map(p=>`<tr><td>${p.empresa||'—'}</td><td>${fmtDateBR(p.dataEvento)||'—'}</td><td class="amount">${p.pessoas||'—'}</td><td class="amount">${brl(p.total)}</td><td><select data-st="${p.id}" style="padding:5px 9px;font-size:12px">${STATUS_LIST.map(([v,l])=>`<option value="${v}"${st(p)===v?' selected':''}>${l}</option>`).join('')}</select></td><td>${fmtDateBR((p.criadoEm||'').slice(0,10))}</td><td class="amount"><button class="btn btn-ghost btn-sm" data-editp="${p.id}">editar</button> <a class="btn btn-ghost btn-sm" href="/proposta.html?id=${p.id}" target="_blank" style="text-decoration:none">abrir</a> <button class="btn btn-danger btn-sm" data-delp="${p.id}">×</button></td></tr>`).join('')
             }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhuma proposta enviada ainda. Gere uma na aba Simulador & Proposta.</td></tr></tbody>';
             $('pp-tbl').querySelectorAll('[data-st]').forEach(s=>s.addEventListener('change',async()=>{ try{ await updateDoc(doc(db,PROP_COL,s.dataset.st),{status:s.value}); loadPropostas(); }catch(e){ toast('Erro: '+e.message); } }));
+            $('pp-tbl').querySelectorAll('[data-editp]').forEach(b=>b.addEventListener('click',()=>{ const p=pp.find(x=>x.id===b.dataset.editp); if(p)loadPropostaToSim(p); }));
             $('pp-tbl').querySelectorAll('[data-delp]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir esta proposta do pipeline?'))return; await deleteDoc(doc(db,PROP_COL,b.dataset.delp)); loadPropostas(); }));
         }
 
@@ -552,7 +582,7 @@
             $('export-gallery').querySelectorAll('[data-src]').forEach(el=>el.addEventListener('click',()=>{ const s=el.dataset.src; if(selPhotos.has(s))selPhotos.delete(s); else selPhotos.add(s); el.classList.toggle('sel'); $('export-count').textContent=`(${selPhotos.size})`; }));
             $('export-count').textContent=`(${selPhotos.size})`;
         }
-        function openExport(){ const c=calc(); if(!c){ toast('Selecione um pacote'); return; } selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); selCover=CFG.cover||DEFAULT_COVER; renderExport(); $('export-default').checked=false; $('export-modal').classList.add('open'); }
+        function openExport(){ const c=calc(); if(!c){ toast('Selecione um pacote'); return; } if(!editingPropostaId){ selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); selCover=CFG.cover||DEFAULT_COVER; } renderExport(); $('export-default').checked=false; $('export-modal').classList.add('open'); }
         $('sim-export').addEventListener('click',openExport);
         $('export-cancel').addEventListener('click',()=>$('export-modal').classList.remove('open'));
         async function maybeSaveDefault(){ if($('export-default').checked){ CFG.cover=selCover; CFG.galeria=galeriaSel(); try{ await setDoc(doc(db,CFG_COL,'main'),CFG); CFG_SAVED={...CFG}; toast('Fotos salvas como padrão'); }catch(e){} } }
