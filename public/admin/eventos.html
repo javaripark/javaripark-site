@@ -69,6 +69,16 @@
         .br-item .br-cost{color:#999;font-size:12px;white-space:nowrap}
         .br-item .br-cost b{color:#4f1964;font-size:15px;margin-left:6px}
         .br-item.in .br-cost b{color:#16a34a}
+        /* Photo picker */
+        .photo-grp{font-size:11px;font-weight:700;color:#4f1964;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px}
+        .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
+        .ph{position:relative;border-radius:10px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;border:3px solid transparent;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+        .ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+        .ph:hover img{transform:scale(1.05)}
+        .ph.sel{border-color:#4f1964}
+        .ph .chk{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#bbb}
+        .ph.sel .chk{background:#4f1964;color:#fff}
+        .ph .cap{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:10px;font-weight:600}
         /* Modal */
         .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:18px}
         .modal-ov.open{display:flex}
@@ -199,6 +209,11 @@
                 <h3>Identidade (aparece no PDF)</h3>
                 <div class="row"><div><label>Nome</label><input id="cfg-nome"></div><div><label>Endereço</label><input id="cfg-endereco"></div></div>
                 <div class="row"><div><label>Telefone / WhatsApp</label><input id="cfg-telefone"></div><div><label>Site</label><input id="cfg-site"></div><div><label>Instagram</label><input id="cfg-instagram"></div></div>
+            </div>
+            <div class="card">
+                <h3>Fotos da proposta (galeria)</h3>
+                <p class="hint" style="margin:-6px 0 6px">Clique nas fotos pra incluir/tirar da galeria do orçamento. Já vêm marcadas as recomendadas. <span id="photo-count" style="font-weight:700;color:#4f1964"></span></p>
+                <div id="photo-grid"></div>
             </div>
             <div class="card"><h3>Forma de pagamento</h3><textarea id="cfg-pagamento" rows="3"></textarea></div>
             <div class="card"><h3>Condições gerais</h3><textarea id="cfg-condicoes" rows="5"></textarea></div>
@@ -413,7 +428,7 @@
         $('sim-link').addEventListener('click',async()=>{
             const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
             fieldsToCFG();
-            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cfg:{...CFG}, criadoEm:new Date().toISOString() };
+            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, galeria:CFG.galeria||[], cfg:{...CFG}, criadoEm:new Date().toISOString() };
             try{ const ref=await addDoc(collection(db,PROP_COL),data); const url=location.origin+'/proposta.html?id='+ref.id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); }catch(e){ toast('Erro: '+e.message); }
         });
         $('link-copy').addEventListener('click',()=>{ const i=$('link-url'); i.select(); navigator.clipboard?.writeText(i.value).then(()=>toast('Link copiado')).catch(()=>{ document.execCommand('copy'); toast('Link copiado'); }); });
@@ -439,11 +454,55 @@
             revistaObs:'OBS: para os casos de clientes portando itens proibidos, o Javari Streat Park tem o direito de confiscar os objetos no momento da entrada. A retirada ocorre somente na saída do cliente.' };
         let CFG={...CFG_DEFAULT}, CFG_SAVED={...CFG_DEFAULT};
         const cfgMap={'cfg-nome':'nome','cfg-endereco':'endereco','cfg-telefone':'telefone','cfg-site':'site','cfg-instagram':'instagram','cfg-pagamento':'pagamento','cfg-condicoes':'condicoes','cfg-revista-intro':'revistaIntro','cfg-autorizados':'autorizados','cfg-proibidos':'proibidos','cfg-revista-obs':'revistaObs'};
-        function fieldsToCFG(){ for(const [id,k] of Object.entries(cfgMap)) CFG[k]=$(id).value; }
+        function fieldsToCFG(){ for(const [id,k] of Object.entries(cfgMap)) CFG[k]=$(id).value; syncGaleria(); }
         function cfgToFields(src){ for(const [id,k] of Object.entries(cfgMap)) $(id).value=src[k]||''; }
+        // --- Fotos da proposta (galeria) ---
+        const PHOTO_LIB=[
+            {src:'quintal/quintal-aniversario.webp',cap:'Aniversários no quintal',g:'Espaço'},
+            {src:'quintal/quintal-happyhour.webp',cap:'Happy hour',g:'Espaço'},
+            {src:'quintal/quintal-oasis.webp',cap:'O quintal',g:'Espaço'},
+            {src:'quintal/quintal-hero.webp',cap:'O espaço',g:'Espaço'},
+            {src:'quintal/quintal-bora.webp',cap:'Vem pro Javari',g:'Espaço'},
+            {src:'quintal/quintal-tribos.webp',cap:'Pra todas as turmas',g:'Espaço'},
+            {src:'quintal/quintal-reservas.webp',cap:'Reservado pra você',g:'Espaço'},
+            {src:'quintal/quintal-pets-kids.webp',cap:'Pets & kids',g:'Espaço'},
+            {src:'quintal/quintal-01.webp',cap:'Ambiente',g:'Espaço'},
+            {src:'quintal/quintal-02.webp',cap:'Ambiente',g:'Espaço'},
+            {src:'quintal/quintal-03.webp',cap:'Ambiente',g:'Espaço'},
+            {src:'quintal/quintal-04.webp',cap:'Ambiente',g:'Espaço'},
+            {src:'quintal/quintal-05.webp',cap:'Ambiente',g:'Espaço'},
+            {src:'quintal/quintal-06.webp',cap:'Ambiente',g:'Espaço'},
+            {src:'bus-lounge/bus-01.webp',cap:'Bus Lounge',g:'Bus Lounge'},
+            {src:'bus-lounge/bus-02.webp',cap:'Bus Lounge',g:'Bus Lounge'},
+            {src:'bus-lounge/bus-03.webp',cap:'Bus Lounge',g:'Bus Lounge'},
+            {src:'drinks/cerveja-trincando.webp',cap:'Sempre trincando',g:'Drinks'},
+            {src:'drinks/drink-01.webp',cap:'Drinks da casa',g:'Drinks'},
+            {src:'drinks/drink-02.webp',cap:'Drinks da casa',g:'Drinks'},
+            {src:'drinks/drink-03.webp',cap:'Drinks da casa',g:'Drinks'},
+            {src:'drinks/drink-04.webp',cap:'Drinks da casa',g:'Drinks'},
+            {src:'drinks/bebidas-infantis.webp',cap:'Bebidas infantis',g:'Drinks'},
+            {src:'clientes/cliente-01.webp',cap:'Quem comemora aqui',g:'Eventos'},
+            {src:'clientes/cliente-02.webp',cap:'Quem comemora aqui',g:'Eventos'},
+            {src:'clientes/cliente-03.webp',cap:'Quem comemora aqui',g:'Eventos'},
+            {src:'clientes/cliente-04.webp',cap:'Quem comemora aqui',g:'Eventos'},
+            {src:'clientes/fotos-01.webp',cap:'Eventos',g:'Eventos'},
+            {src:'clientes/fotos-03.webp',cap:'Eventos',g:'Eventos'},
+            {src:'clientes/galeria-01.webp',cap:'Eventos',g:'Eventos'},
+            {src:'clientes/galeria-03.webp',cap:'Eventos',g:'Eventos'},
+            {src:'clientes/galeria-05.webp',cap:'Eventos',g:'Eventos'},
+        ];
+        const DEFAULT_SEL=['quintal/quintal-aniversario.webp','quintal/quintal-happyhour.webp','bus-lounge/bus-01.webp','quintal/quintal-oasis.webp','drinks/cerveja-trincando.webp','drinks/drink-01.webp','clientes/cliente-01.webp','quintal/quintal-bora.webp'];
+        let selPhotos=new Set(DEFAULT_SEL);
+        function syncGaleria(){ CFG.galeria=PHOTO_LIB.filter(p=>selPhotos.has(p.src)).map(p=>({src:p.src,cap:p.cap})); const pc=$('photo-count'); if(pc)pc.textContent=`${selPhotos.size} selecionadas`; }
+        function renderPhotoGrid(){
+            const grps=[...new Set(PHOTO_LIB.map(p=>p.g))];
+            $('photo-grid').innerHTML=grps.map(g=>`<div class="photo-grp">${g}</div><div class="photo-grid">${PHOTO_LIB.filter(p=>p.g===g).map(p=>`<div class="ph${selPhotos.has(p.src)?' sel':''}" data-src="${p.src}"><img loading="lazy" src="/assets/images/${p.src}" alt=""><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('')}</div>`).join('');
+            $('photo-grid').querySelectorAll('[data-src]').forEach(el=>el.addEventListener('click',()=>{ const s=el.dataset.src; if(selPhotos.has(s))selPhotos.delete(s); else selPhotos.add(s); el.classList.toggle('sel'); syncGaleria(); }));
+            syncGaleria();
+        }
         // edição ao vivo aplica à cotação atual (CFG) — usada no PDF
         Object.keys(cfgMap).forEach(id=>$(id).addEventListener('input',fieldsToCFG));
-        async function loadConfig(){ try{ const snap=await getDoc(doc(db,CFG_COL,'main')); if(snap.exists()){ CFG_SAVED={...CFG_DEFAULT,...snap.data()}; } }catch(e){} CFG={...CFG_SAVED}; cfgToFields(CFG); }
+        async function loadConfig(){ try{ const snap=await getDoc(doc(db,CFG_COL,'main')); if(snap.exists()){ CFG_SAVED={...CFG_DEFAULT,...snap.data()}; } }catch(e){} CFG={...CFG_SAVED}; cfgToFields(CFG); selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); renderPhotoGrid(); }
         $('cfg-save').addEventListener('click',()=>{ fieldsToCFG(); $('cfg-modal').classList.add('open'); });
         $('cfg-cancel').addEventListener('click',()=>$('cfg-modal').classList.remove('open'));
         $('cfg-session').addEventListener('click',()=>{ fieldsToCFG(); $('cfg-modal').classList.remove('open'); toast('Aplicado só nesta cotação'); });

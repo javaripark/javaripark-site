@@ -126,7 +126,7 @@
         const $=id=>document.getElementById(id);
         const brl=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
         const fmtDateBR=s=>{ if(!s)return''; const p=String(s).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
-        const GALERIA=[['quintal/quintal-aniversario.webp','Aniversários no quintal'],['quintal/quintal-happyhour.webp','Happy hour'],['bus-lounge/bus-01.webp','Bus Lounge'],['quintal/quintal-oasis.webp','O quintal'],['drinks/cerveja-trincando.webp','Sempre trincando'],['drinks/drink-01.webp','Drinks da casa'],['clientes/cliente-01.webp','Quem já comemorou aqui'],['quintal/quintal-bora.webp','Vem pro Javari']];
+        const DEFAULT_GALERIA=[{src:'quintal/quintal-aniversario.webp',cap:'Aniversários no quintal'},{src:'quintal/quintal-happyhour.webp',cap:'Happy hour'},{src:'bus-lounge/bus-01.webp',cap:'Bus Lounge'},{src:'quintal/quintal-oasis.webp',cap:'O quintal'},{src:'drinks/cerveja-trincando.webp',cap:'Sempre trincando'},{src:'drinks/drink-01.webp',cap:'Drinks da casa'},{src:'clientes/cliente-01.webp',cap:'Quem já comemorou aqui'},{src:'quintal/quintal-bora.webp',cap:'Vem pro Javari'}];
         function itemIcon(n){ n=(n||'').toLowerCase(); if(/caipir|gin|drink|vodka|negroni|aperol|cocktail/.test(n))return'🍹'; if(/cerveja|chopp|heineken|brahma|eisenbahn|ipa|long neck|lager|pilsen|amstel|patagonia/.test(n))return'🍺'; if(/água|agua|refri|suco|coca|guaran|tônica|jarra/.test(n))return'🥤'; if(/coxinha|baguete|porç|porc|petisc|frita|dadinho|torresmo|isca|bolinho|linguiç|calabres/.test(n))return'🍴'; return'🎈'; }
         function waNumber(tel){ let d=String(tel||'').replace(/\D/g,'').replace(/^0+/,''); if(d.length<=11) d='55'+d; return d; }
 
@@ -144,7 +144,8 @@
             $('h-meta').innerHTML = [p.dataEvento?`<span>📅 ${fmtDateBR(p.dataEvento)}</span>`:'', p.pessoas?`<span>👥 ${p.pessoas} pessoas</span>`:'', p.duracao?`<span>⏰ ${p.duracao}h</span>`:''].join('');
             $('detalhes').innerHTML = [['Pacote',p.pacoteNome||'—'],['Pessoas',p.pessoas||'—'],['Data',fmtDateBR(p.dataEvento)||'a definir']].map(([l,v])=>`<div class="card"><div class="lbl">${l}</div><div class="val">${v}</div></div>`).join('');
             $('pacote').innerHTML = (p.itens||[]).map(i=>`<div class="item"><div class="ic">${itemIcon(i.nome)}</div><div class="nm">${i.nome}</div><div class="qt">${p.isOpen?`${i.qtd} /pessoa`:`${i.qtd} un`}</div></div>`).join('') || '<p style="color:var(--muted)">Pacote personalizado.</p>';
-            $('galeria').innerHTML = GALERIA.map(([src,cap])=>`<figure><img loading="lazy" src="/assets/images/${src}" alt="${cap}"><figcaption>${cap}</figcaption></figure>`).join('');
+            const galeria = (p.galeria&&p.galeria.length)?p.galeria:DEFAULT_GALERIA;
+            $('galeria').innerHTML = galeria.map(g=>`<figure><img loading="lazy" src="/assets/images/${g.src}" alt="${g.cap||''}"><figcaption>${g.cap||''}</figcaption></figure>`).join('');
             const lines=[]; lines.push([p.isOpen?`Pacote · ${brl(p.preco)} × ${p.pessoas} pessoas`:'Pacote (fechado)', brl(p.pkgReceita)]); (p.extrasRepassados||[]).forEach(e=>lines.push([e.desc, brl(e.valor)]));
             $('invest-lines').innerHTML = lines.map(([l,v])=>`<div class="line"><span>${l}</span><span>${v}</span></div>`).join('');
             $('invest-total').textContent = brl(p.total);
