@@ -56,6 +56,9 @@
         .pk-opt:hover{border-color:#cbb8d6}.pk-opt.sel{border-color:#4f1964;background:#faf7fc}
         .pk-opt .t{font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
         .pk-opt .d{font-size:12px;color:#888;margin-top:4px}
+        .seg{display:flex;gap:6px;background:#f1eef4;border-radius:10px;padding:4px;margin-bottom:6px}
+        .seg-btn{flex:1;padding:9px;border:none;background:none;border-radius:7px;font-size:13px;font-weight:600;color:#7a7a83;cursor:pointer}
+        .seg-btn.active{background:#fff;color:#4f1964;box-shadow:0 1px 3px rgba(0,0,0,.1)}
         /* P&L resumo */
         .resumo{background:#faf9fb;border-radius:12px;padding:16px}
         .r-line{display:flex;justify-content:space-between;padding:7px 0;font-size:14px}
@@ -125,9 +128,19 @@
 
             <div class="step" id="step-2">
                 <div class="card">
-                    <h3>Escolha o pacote</h3>
-                    <input id="cot-pk-search" placeholder="🔎 Filtrar pacote…" style="margin-bottom:12px">
-                    <div id="cot-pk-list" style="max-height:420px;overflow-y:auto"></div>
+                    <h3>Como montar a cotação</h3>
+                    <div class="seg"><button class="seg-btn active" data-mode="pronto">Pacote pronto</button><button class="seg-btn" data-mode="custom">Personalizado</button></div>
+                    <div id="cot-pronto">
+                        <input id="cot-pk-search" placeholder="🔎 Filtrar pacote…" style="margin:12px 0">
+                        <div id="cot-pk-list" style="max-height:420px;overflow-y:auto"></div>
+                    </div>
+                    <div id="cot-custom" style="display:none">
+                        <div class="row" style="margin-top:12px"><div style="max-width:240px"><label style="margin-top:0">Tipo de cobrança</label><select id="cust-tipo"><option value="open">Open (por pessoa)</option><option value="item">Por item (total)</option></select></div></div>
+                        <label style="margin-top:14px">Itens da cotação</label><div class="wrap"><table id="cust-itens-tbl"></table></div>
+                        <strong id="cust-custo-label" style="display:block;margin-top:10px;font-size:14px;color:#4f1964"></strong>
+                        <label style="margin-top:14px">Adicionar itens — busque e clique</label>
+                        <input id="cust-search" placeholder="🔎 Buscar item…"><div class="browser" id="cust-br-list"></div>
+                    </div>
                 </div>
                 <div class="card" id="cot-pk-detalhe" style="display:none"><h3>O que inclui</h3><div id="cot-pk-itens" class="wrap"></div></div>
             </div>
@@ -269,37 +282,40 @@
         let pkItens=[], editingPkId=null;
         const qtdOf=it=> it.modo==='share'?(it.val>0?1/it.val:0):(+it.val||0);
         function ensureConsumo(it){ if(it.modo!=='pp'&&it.modo!=='share'){ if((it.qtd||0)>0&&it.qtd<1){ it.modo='share'; it.val=Math.round(1/it.qtd)||2; } else { it.modo='pp'; it.val=(it.qtd!=null?it.qtd:1); } } it.qtd=qtdOf(it); return it; }
-        function pushItem(it,qtd){ const ex=pkItens.find(x=>x.codigo===it.codigo); if(ex){ if(ex.modo!=='share') ex.val=(+ex.val||0)+1; ex.qtd=qtdOf(ex); return; } const o={codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0}; if(qtd!=null&&qtd>0&&qtd<1){ o.modo='share'; o.val=Math.round(1/qtd)||2; } else { o.modo='pp'; o.val=(qtd!=null?qtd:1); } o.qtd=qtdOf(o); pkItens.push(o); }
+        function pushItemInto(arr,it,qtd){ const ex=arr.find(x=>x.codigo===it.codigo); if(ex){ if(ex.modo!=='share') ex.val=(+ex.val||0)+1; ex.qtd=qtdOf(ex); return; } const o={codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0}; if(qtd!=null&&qtd>0&&qtd<1){ o.modo='share'; o.val=Math.round(1/qtd)||2; } else { o.modo='pp'; o.val=(qtd!=null?qtd:1); } o.qtd=qtdOf(o); arr.push(o); }
+        const pushItem=(it,qtd)=>pushItemInto(pkItens,it,qtd);
         const pkCusto=()=>pkItens.reduce((s,i)=>s+i.custoUnit*(i.qtd||0),0);
-        function renderBrowser(){
-            const q=($('br-search').value||'').toLowerCase();
+        // Browser de itens genérico (reusado no construtor e no personalizado)
+        function renderConsumoBrowser(listId,searchId,items,onAdd){
+            const q=($(searchId).value||'').toLowerCase();
             const rows=CATALOGO.filter(p=>!q||p.nome.toLowerCase().includes(q)).sort((a,b)=>(a.categoria||'').localeCompare(b.categoria||'')||a.nome.localeCompare(b.nome));
             let h='',lc=null;
-            rows.slice(0,600).forEach(p=>{ if(p.categoria!==lc){ h+=`<div class="br-cat">${p.categoria||'—'}</div>`; lc=p.categoria; } const inC=pkItens.find(i=>i.codigo===p.codigo); h+=`<div class="br-item${inC?' in':''}" data-add="${p.codigo}"><span>${p.nome}</span><span class="br-cost">${brl(p.precoCusto||0)}<b>${inC?'✓':'+'}</b></span></div>`; });
-            $('br-list').innerHTML=h||'<div style="color:#aaa;padding:14px">Nada encontrado.</div>';
-            $('br-list').querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>{ const it=CATALOGO.find(p=>String(p.codigo)===el.dataset.add); if(it){ pushItem(it,1); renderPkItens(); renderBrowser(); } });
+            rows.slice(0,600).forEach(p=>{ if(p.categoria!==lc){ h+=`<div class="br-cat">${p.categoria||'—'}</div>`; lc=p.categoria; } const inC=items.find(i=>i.codigo===p.codigo); h+=`<div class="br-item${inC?' in':''}" data-add="${p.codigo}"><span>${p.nome}</span><span class="br-cost">${brl(p.precoCusto||0)}<b>${inC?'✓':'+'}</b></span></div>`; });
+            $(listId).innerHTML=h||'<div style="color:#aaa;padding:14px">Nada encontrado.</div>';
+            $(listId).querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>{ const it=CATALOGO.find(p=>String(p.codigo)===el.dataset.add); if(it) onAdd(it); });
         }
+        // Tabela de itens com modo de consumo genérica
+        function renderConsumoItens(tblId,items,tipo,refreshBrowser,updLabel){
+            const tbl=$(tblId); const rr=()=>renderConsumoItens(tblId,items,tipo,refreshBrowser,updLabel);
+            if(tipo==='open') items.forEach(ensureConsumo);
+            if(!items.length){ tbl.innerHTML='<tbody><tr><td style="color:#aaa">Nenhum item — busque abaixo e clique pra incluir.</td></tr></tbody>'; updLabel(); return; }
+            const byCat={}; items.forEach((i,ix)=>{ (byCat[i.categoria]=byCat[i.categoria]||[]).push(ix); });
+            let h=`<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>${tipo==='open'?'Consumo':'Qtd total'}</th><th class="amount">Custo</th><th></th></tr></thead><tbody>`;
+            Object.keys(byCat).sort().forEach(cat=>{ h+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`; byCat[cat].forEach(ix=>{ const i=items[ix]; let cell;
+                if(tipo==='open'){ cell=`<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><select class="cm-sel" data-i="${ix}" style="padding:4px 6px;font-size:12px;width:auto"><option value="pp"${i.modo==='pp'?' selected':''}>por pessoa</option><option value="share"${i.modo==='share'?' selected':''}>1 a cada</option></select><input class="cm-val" data-i="${ix}" type="number" min="0" step="${i.modo==='pp'?'0.5':'1'}" value="${i.val}" style="max-width:54px;padding:4px 6px;font-size:12px;text-align:right"><span class="cm-lbl" style="font-size:11px;color:#999">${i.modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(i).toFixed(2)}</span></div>`; }
+                else cell=`<div style="display:flex;align-items:center;gap:4px"><button class="qbtn" data-d="${ix}" data-inc="-1">−</button><strong style="min-width:24px;display:inline-block;text-align:center">${i.qtd}</strong><button class="qbtn" data-d="${ix}" data-inc="1">+1</button><button class="qbtn" data-d="${ix}" data-inc="5">+5</button></div>`;
+                h+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td>${cell}</td><td class="amount cst">${brl(i.custoUnit*(i.qtd||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`; }); });
+            tbl.innerHTML=h+'</tbody>';
+            tbl.querySelectorAll('[data-inc]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.d; items[i].qtd=Math.max(0,(items[i].qtd||0)+(+b.dataset.inc)); items[i].val=items[i].qtd; if(items[i].qtd===0)items.splice(i,1); rr(); refreshBrowser(); });
+            tbl.querySelectorAll('.cm-sel').forEach(s=>s.onchange=()=>{ const i=+s.dataset.i; items[i].modo=s.value; if(items[i].modo==='share'&&(!items[i].val||items[i].val<1))items[i].val=2; items[i].qtd=qtdOf(items[i]); rr(); });
+            tbl.querySelectorAll('.cm-val').forEach(inp=>inp.oninput=()=>{ const i=+inp.dataset.i; items[i].val=parseFloat(inp.value)||0; items[i].qtd=qtdOf(items[i]); const tr=inp.closest('tr'); tr.querySelector('.cst').textContent=brl(items[i].custoUnit*items[i].qtd); tr.querySelector('.cm-lbl').textContent=`${items[i].modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(items[i]).toFixed(2)}`; updLabel(); });
+            tbl.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ items.splice(+b.dataset.rm,1); rr(); refreshBrowser(); });
+            updLabel();
+        }
+        function renderBrowser(){ renderConsumoBrowser('br-list','br-search',pkItens,it=>{ pushItem(it,1); renderPkItens(); renderBrowser(); }); }
         $('br-search').oninput=renderBrowser;
-        $('pk-tipo').onchange=renderPkItens;
-        function renderPkItens(){
-            const tipo=$('pk-tipo').value;
-            if(tipo==='open') pkItens.forEach(ensureConsumo);
-            if(!pkItens.length){ $('pk-itens-tbl').innerHTML='<tbody><tr><td style="color:#aaa">Nenhum item — busque abaixo e clique pra incluir.</td></tr></tbody>'; }
-            else{
-                const byCat={}; pkItens.forEach((i,ix)=>{ (byCat[i.categoria]=byCat[i.categoria]||[]).push(ix); });
-                let h=`<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>${tipo==='open'?'Consumo':'Qtd total'}</th><th class="amount">Custo</th><th></th></tr></thead><tbody>`;
-                Object.keys(byCat).sort().forEach(cat=>{ h+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`; byCat[cat].forEach(ix=>{ const i=pkItens[ix]; let cell;
-                    if(tipo==='open'){ cell=`<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><select class="cm-sel" data-i="${ix}" style="padding:4px 6px;font-size:12px;width:auto"><option value="pp"${i.modo==='pp'?' selected':''}>por pessoa</option><option value="share"${i.modo==='share'?' selected':''}>1 a cada</option></select><input class="cm-val" data-i="${ix}" type="number" min="0" step="${i.modo==='pp'?'0.5':'1'}" value="${i.val}" style="max-width:54px;padding:4px 6px;font-size:12px;text-align:right"><span class="cm-lbl" style="font-size:11px;color:#999">${i.modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(i).toFixed(2)}</span></div>`; }
-                    else cell=`<div style="display:flex;align-items:center;gap:4px"><button class="qbtn" data-d="${ix}" data-inc="-1">−</button><strong style="min-width:24px;display:inline-block;text-align:center">${i.qtd}</strong><button class="qbtn" data-d="${ix}" data-inc="1">+1</button><button class="qbtn" data-d="${ix}" data-inc="5">+5</button></div>`;
-                    h+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td>${cell}</td><td class="amount cst">${brl(i.custoUnit*(i.qtd||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`; }); });
-                $('pk-itens-tbl').innerHTML=h+'</tbody>';
-                $('pk-itens-tbl').querySelectorAll('[data-inc]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.d; pkItens[i].qtd=Math.max(0,(pkItens[i].qtd||0)+(+b.dataset.inc)); pkItens[i].val=pkItens[i].qtd; if(pkItens[i].qtd===0)pkItens.splice(i,1); renderPkItens(); renderBrowser(); });
-                $('pk-itens-tbl').querySelectorAll('.cm-sel').forEach(s=>s.onchange=()=>{ const i=+s.dataset.i; pkItens[i].modo=s.value; if(pkItens[i].modo==='share'&&(!pkItens[i].val||pkItens[i].val<1))pkItens[i].val=2; pkItens[i].qtd=qtdOf(pkItens[i]); renderPkItens(); });
-                $('pk-itens-tbl').querySelectorAll('.cm-val').forEach(inp=>inp.oninput=()=>{ const i=+inp.dataset.i; pkItens[i].val=parseFloat(inp.value)||0; pkItens[i].qtd=qtdOf(pkItens[i]); const tr=inp.closest('tr'); tr.querySelector('.cst').textContent=brl(pkItens[i].custoUnit*pkItens[i].qtd); tr.querySelector('.cm-lbl').textContent=`${pkItens[i].modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(pkItens[i]).toFixed(2)}`; updPkLabel(); });
-                $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); renderBrowser(); });
-            }
-            updPkLabel();
-        }
+        $('pk-tipo').onchange=()=>renderPkItens();
+        function renderPkItens(){ renderConsumoItens('pk-itens-tbl',pkItens,$('pk-tipo').value,renderBrowser,updPkLabel); }
         function updPkLabel(){ $('pk-custo-label').textContent=$('pk-tipo').value==='open'?`Custo de consumo por pessoa: ${brl(pkCusto())}`:`Custo total: ${brl(pkCusto())}`; }
         $('pk-clear').onclick=()=>{ pkItens=[]; $('pk-nome').value=''; editingPkId=null; renderPkItens(); renderBrowser(); };
         $('pk-save').onclick=async()=>{ const nome=$('pk-nome').value.trim(); if(!nome)return toast('Dê um nome'); if(!pkItens.length)return toast('Adicione itens'); if($('pk-tipo').value==='open')pkItens.forEach(ensureConsumo); try{ await addDoc(collection(db,PK_COL),{nome,tipo:$('pk-tipo').value,itens:pkItens,custo:pkCusto(),criadoEm:new Date().toISOString()}); toast('Pacote salvo'); pkItens=[]; $('pk-nome').value=''; editingPkId=null; renderPkItens(); renderBrowser(); loadPacotes(); }catch(e){ toast('Erro: '+e.message); } };
@@ -316,24 +332,45 @@
             renderCotPkList();
         }
 
-        // ----- Wizard: passo 2 (escolher pacote) -----
-        let cotPacoteId=null;
+        // ----- Wizard: passo 2 (escolher pacote OU montar personalizado) -----
+        let cotPacoteId=null, prontoPkId=null, cotMode='pronto';
+        let custTipo='open', custItens=[], customPkg=null;
+        const getPkg=id=> id==='__custom__'?customPkg:PACOTES.find(x=>x.id===id);
+        function buildCustomPkg(){ if(custTipo==='open') custItens.forEach(ensureConsumo); customPkg={id:'__custom__',nome:'Cotação personalizada',tipo:custTipo,itens:custItens,custo:custItens.reduce((s,i)=>s+i.custoUnit*(i.qtd||0),0)}; }
+        function cotReady(){ if(cotMode==='custom'){ buildCustomPkg(); return customPkg.itens.length>0; } return !!getPkg(cotPacoteId); }
+        // segmented control
+        document.querySelectorAll('.seg-btn').forEach(b=>b.onclick=()=>setCotMode(b.dataset.mode));
+        function setCotMode(m){
+            cotMode=m;
+            document.querySelectorAll('.seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+            $('cot-pronto').style.display=m==='pronto'?'block':'none';
+            $('cot-custom').style.display=m==='custom'?'block':'none';
+            if(m==='pronto'){ cotPacoteId=prontoPkId; showPkDetalhe(); }
+            else { $('cot-pk-detalhe').style.display='none'; buildCustomPkg(); cotPacoteId='__custom__'; renderCustItens(); renderCustBrowser(); setPrecoLabel(); renderResumo(); }
+        }
         $('cot-pk-search').oninput=renderCotPkList;
         function renderCotPkList(){
             const q=($('cot-pk-search').value||'').toLowerCase();
             const list=PACOTES.filter(p=>!q||p.nome.toLowerCase().includes(q));
-            $('cot-pk-list').innerHTML=list.length?list.map(p=>`<div class="pk-opt${cotPacoteId===p.id?' sel':''}" data-pk="${p.id}"><div class="t"><span>${p.nome}</span><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></div><div class="d">${(p.itens||[]).length} itens · custo ${brl(p.custo)}${p.tipo==='open'?'/pessoa':''}</div></div>`).join(''):'<p class="hint">Nenhum pacote. Crie um na aba Pacotes.</p>';
-            $('cot-pk-list').querySelectorAll('[data-pk]').forEach(el=>el.onclick=()=>{ cotPacoteId=el.dataset.pk; renderCotPkList(); showPkDetalhe(); });
-            if(cotPacoteId&&!list.find(p=>p.id===cotPacoteId)) cotPacoteId=null;
+            $('cot-pk-list').innerHTML=list.length?list.map(p=>`<div class="pk-opt${prontoPkId===p.id?' sel':''}" data-pk="${p.id}"><div class="t"><span>${p.nome}</span><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></div><div class="d">${(p.itens||[]).length} itens · custo ${brl(p.custo)}${p.tipo==='open'?'/pessoa':''}</div></div>`).join(''):'<p class="hint">Nenhum pacote. Crie um na aba Pacotes ou use o modo Personalizado.</p>';
+            $('cot-pk-list').querySelectorAll('[data-pk]').forEach(el=>el.onclick=()=>{ prontoPkId=el.dataset.pk; cotPacoteId=el.dataset.pk; renderCotPkList(); showPkDetalhe(); });
+            if(prontoPkId&&!list.find(p=>p.id===prontoPkId)){ prontoPkId=null; if(cotMode==='pronto')cotPacoteId=null; }
         }
         function showPkDetalhe(){
-            const p=PACOTES.find(x=>x.id===cotPacoteId); if(!p){ $('cot-pk-detalhe').style.display='none'; return; }
+            if(cotMode!=='pronto'){ $('cot-pk-detalhe').style.display='none'; return; }
+            const p=getPkg(cotPacoteId); if(!p){ $('cot-pk-detalhe').style.display='none'; return; }
             $('cot-pk-detalhe').style.display='block';
             $('cot-pk-itens').innerHTML=`<table><tbody>${(p.itens||[]).map(i=>`<tr><td>${i.nome}</td><td class="amount">${p.tipo==='open'?consumoLabel(i)+' /pessoa':i.qtd+' un'}</td></tr>`).join('')}</tbody></table>`;
-            $('sim-preco-label').textContent=p.tipo==='item'?'Preço de venda (total)':'Preço de venda (por pessoa)';
-            renderResumo();
+            setPrecoLabel(); renderResumo();
         }
+        function setPrecoLabel(){ const p=getPkg(cotPacoteId); $('sim-preco-label').textContent=(p&&p.tipo==='item')?'Preço de venda (total)':'Preço de venda (por pessoa)'; }
         function consumoLabel(i){ ensureConsumo(i); return i.modo==='share'?`1 a cada ${i.val}`:`${i.val}`; }
+        // personalizado
+        $('cust-tipo').onchange=()=>{ custTipo=$('cust-tipo').value; renderCustItens(); setPrecoLabel(); };
+        $('cust-search').oninput=renderCustBrowser;
+        function updCustLabel(){ buildCustomPkg(); $('cust-custo-label').textContent=custItens.length?(custTipo==='open'?`Custo de consumo por pessoa: ${brl(customPkg.custo)}`:`Custo total: ${brl(customPkg.custo)}`):''; renderResumo(); }
+        function renderCustItens(){ renderConsumoItens('cust-itens-tbl',custItens,custTipo,renderCustBrowser,updCustLabel); }
+        function renderCustBrowser(){ renderConsumoBrowser('cust-br-list','cust-search',custItens,it=>{ pushItemInto(custItens,it,1); renderCustItens(); renderCustBrowser(); }); }
 
         // ----- Equipe -----
         let equipe=[{funcao:'Atendimento/Limpeza',qtd:2,custoUnit:150},{funcao:'Bar',qtd:2,custoUnit:150},{funcao:'Recepção',qtd:1,custoUnit:150},{funcao:'Cozinha',qtd:2,custoUnit:150},{funcao:'Gerente',qtd:1,custoUnit:300}];
@@ -359,7 +396,7 @@
         // ----- P&L -----
         ['sim-pessoas','sim-duracao','sim-preco','sim-overhead','sim-margem'].forEach(id=>$(id).oninput=renderResumo);
         function calc(){
-            const p=PACOTES.find(x=>x.id===cotPacoteId); if(!p)return null;
+            const p=getPkg(cotPacoteId); if(!p||!(p.itens||[]).length)return null;
             const pax=Math.max(parseFloat($('sim-pessoas').value)||0,0), preco=parseFloat($('sim-preco').value)||0, ohpp=parseFloat($('sim-overhead').value)||0;
             const isOpen=p.tipo==='open', custoFBpp=isOpen?p.custo:(pax>0?p.custo/pax:0), custoFB=isOpen?p.custo*pax:p.custo;
             const eq=equipeTotal(), a=exAbs(), r=exRep(), overhead=ohpp*pax;
@@ -368,7 +405,7 @@
         }
         function renderResumo(){
             const c=calc();
-            if(!c){ ['r-receita','r-fb','r-equipe','r-extras','r-overhead','r-lucro','r-margem'].forEach(id=>$(id).textContent='—'); $('r-insights').textContent='Escolha um pacote no passo anterior.'; return; }
+            if(!c){ ['r-receita','r-fb','r-equipe','r-extras','r-overhead','r-lucro','r-margem'].forEach(id=>$(id).textContent='—'); $('r-insights').textContent='Escolha um pacote ou monte um personalizado no passo anterior.'; return; }
             $('r-receita').textContent=brl(c.receita); $('r-fb').textContent=brl(c.custoFB); $('r-equipe').textContent=brl(c.eq); $('r-extras').textContent=brl(c.ex); $('r-overhead').textContent=brl(c.overhead);
             $('r-lucro').textContent=brl(c.lucro); $('r-lucro').className=c.lucro>=0?'pos':'neg';
             $('r-margem').textContent=c.receita>0?c.margem.toFixed(1)+'%':'—'; $('r-margem').className=c.margem>=0?'pos':'neg';
@@ -406,15 +443,15 @@
             document.querySelectorAll('.stp').forEach(s=>{ const sn=+s.dataset.s; s.classList.toggle('active',sn===n); s.classList.toggle('done',sn<n); });
             $('wz-back').style.visibility=n>1?'visible':'hidden';
             $('wz-next').textContent=n<4?'Próximo →':'Gerar proposta →';
-            if(n===2) renderCotPkList();
-            if(n===3) renderResumo();
+            if(n===2){ renderCotPkList(); if(cotMode==='custom'){ renderCustItens(); renderCustBrowser(); } }
+            if(n===3){ if(cotMode==='custom') buildCustomPkg(); setPrecoLabel(); renderResumo(); }
             if(n===4){ if(!editingPropostaId){ selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); selCover=CFG.cover||DEFAULT_COVER; } $('export-default').checked=false; renderExport(); }
             window.scrollTo({top:0,behavior:'smooth'});
         }
         document.querySelectorAll('.stp').forEach(s=>s.onclick=()=>{ const n=+s.dataset.s; if(n<=step||n===step+1) tryGo(n); });
         $('wz-back').onclick=()=>goStep(Math.max(1,step-1));
         $('wz-next').onclick=()=>{ if(step<4) tryGo(step+1); else gerarProposta(); };
-        function tryGo(n){ if(n>2&&!cotPacoteId){ toast('Escolha um pacote primeiro'); goStep(2); return; } goStep(n); }
+        function tryGo(n){ if(n>2&&!cotReady()){ toast(cotMode==='custom'?'Adicione ao menos um item':'Escolha um pacote primeiro'); goStep(2); return; } goStep(n); }
 
         // ----- Gerar / editar proposta -----
         function cotEditBanner(){ $('cot-edit').style.display=editingPropostaId?'flex':'none'; if(editingPropostaId)$('cot-edit-txt').textContent=`✏️ Editando proposta de "${$('sim-empresa').value||'—'}" — gerar atualiza o mesmo link.`; }
@@ -486,7 +523,14 @@
         }
         function editarProposta(p){
             $('sim-empresa').value=p.empresa||''; $('sim-contato').value=p.contato||''; $('sim-data').value=p.dataEvento||''; $('sim-pessoas').value=p.pessoas||''; $('sim-duracao').value=p.duracao||'4'; $('sim-preco').value=p.preco||'';
-            const pk=PACOTES.find(x=>x.nome===p.pacoteNome); cotPacoteId=pk?pk.id:null; if(!pk)toast('Pacote original não existe mais — escolha um no passo 2.');
+            const pk=PACOTES.find(x=>x.nome===p.pacoteNome);
+            if(pk){ prontoPkId=pk.id; cotPacoteId=pk.id; setCotMode('pronto'); }
+            else { // proposta personalizada (ou pacote removido) → reconstrói no modo personalizado a partir do catálogo
+                custTipo=p.isOpen?'open':'item'; $('cust-tipo').value=custTipo;
+                custItens=(p.itens||[]).map(it=>{ const c=CATALOGO.find(x=>x.nome===it.nome)||{}; const o={codigo:c.codigo,nome:it.nome,categoria:c.categoria||'—',custoUnit:c.precoCusto||0,precoVenda:c.precoVenda||0,qtd:it.qtd}; return ensureConsumo(o); });
+                setCotMode('custom');
+                if(p.pacoteNome&&p.pacoteNome!=='Cotação personalizada') toast('Pacote original não existe mais — recriado como personalizado.');
+            }
             extras=(p.extrasRepassados&&p.extrasRepassados.length)?p.extrasRepassados.map(e=>({desc:e.desc,valor:e.valor,repassar:true})):[{desc:'Música ao vivo',valor:0,repassar:false}]; renderExtras();
             selCover=p.cover||DEFAULT_COVER; selPhotos=new Set((p.galeria&&p.galeria.length)?p.galeria.map(g=>g.src):DEFAULT_SEL);
             editingPropostaId=p.id; cotEditBanner();
