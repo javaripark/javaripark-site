@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Atendente virtual do Javari StrEat Park — WhatsApp Cloud API + Claude (reservas autônomas)",
   "type": "module",
-  "main": "src/server.js",
+  "main": "index.js",
   "scripts": {
     "start": "node src/server.js",
     "chat": "node src/chat.js"
@@ -11,6 +11,10 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "dotenv": "^16.4.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "firebase-functions": "^6.1.0"
+  },
+  "engines": {
+    "node": "20"
   }
 }
