@@ -512,7 +512,8 @@
         // ---------- PDF ----------
         let LOGO_DATA=null;
         async function loadLogo(){ try{ const r=await fetch('/assets/images/logo-horizontal-black.png'); const b=await r.blob(); LOGO_DATA=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);}); }catch(e){} }
-        $('sim-pdf').addEventListener('click',()=>{
+        function webpToJpeg(src, targetAR){ return new Promise(res=>{ const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ let sw=img.naturalWidth, sh=img.naturalHeight, sx=0, sy=0; if(targetAR){ const ar=sw/sh; if(ar>targetAR){ const nw=sh*targetAR; sx=(sw-nw)/2; sw=nw; } else { const nh=sw/targetAR; sy=(sh-nh)/2; sh=nh; } } const cv=document.createElement('canvas'); cv.width=sw; cv.height=sh; cv.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh); try{ res({data:cv.toDataURL('image/jpeg',0.85)}); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src=src; }); }
+        $('sim-pdf').addEventListener('click',async()=>{
             const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
             const { jsPDF }=window.jspdf; const d=new jsPDF({unit:'mm',format:'a4'});
             const M=20, W=210, CW=W-2*M, PH=297; let y=M;
@@ -520,8 +521,10 @@
             const para=(txt,size=10,style='normal',color=[70,70,70],lh=1.5)=>{ d.setFont('helvetica',style); d.setFontSize(size); d.setTextColor(...color); d.splitTextToSize(String(txt||''),CW).forEach(l=>{ ensure(size*0.45*lh+1); d.text(l,M,y); y+=size*0.45*lh+1; }); };
             const head=t=>{ y+=7; ensure(12); d.setFillColor(79,25,100); d.rect(M,y-1,2.6,6.5,'F'); d.setTextColor(79,25,100); d.setFont('helvetica','bold'); d.setFontSize(11.5); d.text(String(t).toUpperCase(),M+6,y+3.6); y+=10; };
             const bullets=txt=>String(txt||'').split('\n').filter(s=>s.trim()).forEach(line=>{ const t=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(70,70,70); d.splitTextToSize(t,CW-6).forEach((l,i)=>{ ensure(5.6); if(i===0){ d.setTextColor(79,25,100); d.text('•',M,y); d.setTextColor(70,70,70); } d.text(l,M+5,y); y+=5.6; }); y+=1.2; });
-            if(LOGO_DATA){ const lw=48, lh=lw*430/800; try{ d.addImage(LOGO_DATA,'PNG',M,y,lw,lh); }catch(e){} y+=lh+5; }
-            d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(25,25,25); ensure(9); d.text('Proposta de Evento',M,y); y+=4;
+            const hh=64; const hero=await webpToJpeg('/assets/images/cotacao-hero.webp', W/hh);
+            if(hero){ try{ d.addImage(hero.data,'JPEG',0,0,W,hh); }catch(e){} d.setFillColor(26,15,30); d.setGState&&d.setGState(new d.GState({opacity:0.4})); d.rect(0,0,W,hh,'F'); d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+8; }
+            if(LOGO_DATA){ const lw=44, lh=lw*430/800; try{ d.addImage(LOGO_DATA,'PNG',M,y,lw,lh); }catch(e){} y+=lh+3; }
+            d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(25,25,25); ensure(9); d.text($('sim-empresa').value?`Proposta — ${$('sim-empresa').value}`:'Proposta de Evento',M,y); y+=4;
             d.setDrawColor(225,220,230); d.line(M,y,W-M,y); y+=2;
             head('Dados do evento');
             [['Empresa / Cliente',$('sim-empresa').value||'—'],['Contato',$('sim-contato').value||'—'],['Data do evento',fmtDateBR($('sim-data').value)||'—'],['Nº de pessoas',String(c.pax)],['Duração',$('sim-duracao').value+'h']].forEach(([k,v])=>{ ensure(6.5); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(110,110,110); d.text(k,M,y); d.setFont('helvetica','normal'); d.setTextColor(40,40,40); d.text(String(v),M+48,y); y+=6.2; });
