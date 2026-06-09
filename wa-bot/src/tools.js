@@ -26,10 +26,21 @@ export const toolDefs = [
         nome: { type: 'string', description: 'Primeiro nome' },
         sobrenome: { type: 'string', description: 'Sobrenome' },
         pessoas: { type: 'integer', description: 'Quantidade de pessoas' },
-        setor: { type: 'string', description: 'Setor 1-9' },
+        setor: { type: 'string', description: 'Setor 1-9, ou "Extras" quando a casa estiver lotada' },
         observacoes: { type: 'string', description: 'Opcional: aniversário, preferências, bolo etc.' },
       },
       required: ['data', 'nome', 'sobrenome', 'pessoas', 'setor'],
+    },
+  },
+  {
+    name: 'consultar_agenda',
+    description: 'Programação/atrações da casa (música ao vivo etc.) nos próximos dias. Use quando perguntarem o que vai rolar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        dataInicio: { type: 'string', description: 'YYYY-MM-DD; padrão hoje' },
+        dias: { type: 'integer', description: 'Quantos dias olhar à frente (padrão 7, máx 14)' },
+      },
     },
   },
   {
@@ -91,7 +102,24 @@ async function consultarDisponibilidade({ data }) {
   const reservas = await queryDocs('reservas', [['Data', data]]);
   const ocupados = reservas.map(r => String(r.Setor)).filter(s => s !== 'Extras');
   const livres = SETORES.filter(s => !ocupados.includes(s));
-  return { aberto: true, setoresLivres: livres, toleranciaChegada: TOLERANCIA[dow] };
+  const out = { aberto: true, setoresLivres: livres, toleranciaChegada: TOLERANCIA[dow] };
+  if (!livres.length) { out.lotado = true; out.dica = 'ofereça reserva extra (setor "Extras"); equipe acomoda no dia'; }
+  return out;
+}
+
+async function consultarAgenda({ dataInicio, dias }) {
+  const inicio = (dataInicio && /^\d{4}-\d{2}-\d{2}$/.test(dataInicio)) ? dataInicio : hojeISO();
+  const n = Math.min(Math.max(parseInt(dias, 10) || 7, 1), 14);
+  const base = new Date(inicio + 'T12:00:00-03:00');
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(base.getTime() + i * 86400000);
+    const iso = d.toISOString().slice(0, 10);
+    const doc = await getDoc(`agenda/${iso}`).catch(() => null);
+    const events = (doc?.events || []).map(e => ({ atracao: e.name, hora: e.time || '', estilo: e.obs || '' }));
+    if (events.length) out.push({ data: iso, atracoes: events });
+  }
+  return { programacao: out, aviso: out.length ? undefined : 'nada cadastrado na agenda nesse período' };
 }
 
 async function registrarReserva(input, ctx) {
@@ -101,17 +129,20 @@ async function registrarReserva(input, ctx) {
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
   if (dow === 1 || dow === 2) return { ok: false, erro: 'fechado às segundas e terças' };
-  if (!SETORES.includes(String(setor))) return { ok: false, erro: 'setor inválido (1-9); Bus Lounge é via equipe humana' };
+  const isExtras = String(setor) === 'Extras';
+  if (!isExtras && !SETORES.includes(String(setor))) return { ok: false, erro: 'setor inválido (1-9 ou Extras); Bus Lounge é via equipe humana' };
   if (!nome?.trim() || !sobrenome?.trim()) return { ok: false, erro: 'nome e sobrenome obrigatórios' };
   const n = parseInt(pessoas, 10);
   if (!n || n < 1 || n > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
 
-  // Re-checa conflito na hora da gravação (outro cliente pode ter pego o setor)
-  const conflito = await queryDocs('reservas', [['Data', data], ['Setor', String(setor)]]);
-  if (conflito.length) {
-    const todas = await queryDocs('reservas', [['Data', data]]);
-    const ocupados = todas.map(r => String(r.Setor));
-    return { ok: false, erro: `setor ${setor} acabou de ser ocupado`, setoresLivres: SETORES.filter(s => !ocupados.includes(s)) };
+  // Re-checa conflito na hora da gravação (Extras não tem trava, como no admin)
+  if (!isExtras) {
+    const conflito = await queryDocs('reservas', [['Data', data], ['Setor', String(setor)]]);
+    if (conflito.length) {
+      const todas = await queryDocs('reservas', [['Data', data]]);
+      const ocupados = todas.map(r => String(r.Setor));
+      return { ok: false, erro: `setor ${setor} acabou de ser ocupado`, setoresLivres: SETORES.filter(s => !ocupados.includes(s)) };
+    }
   }
 
   const id = await addDoc('reservas', {
@@ -217,6 +248,7 @@ async function chamarHumano({ motivo }, ctx) {
 export async function runTool(name, input, ctx) {
   try {
     if (name === 'consultar_disponibilidade') return await consultarDisponibilidade(input);
+    if (name === 'consultar_agenda') return await consultarAgenda(input);
     if (name === 'registrar_reserva') return await registrarReserva(input, ctx);
     if (name === 'buscar_reservas') return await buscarReservas(input, ctx);
     if (name === 'cancelar_reserva') return await cancelarReserva(input, ctx);
