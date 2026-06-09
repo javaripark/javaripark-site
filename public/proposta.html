@@ -157,7 +157,8 @@
             $('btn-pdf').addEventListener('click', ()=>gerarPDF(p));
         }
 
-        function webpToJpeg(src){ return new Promise(res=>{ const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ const cv=document.createElement('canvas'); cv.width=img.naturalWidth; cv.height=img.naturalHeight; cv.getContext('2d').drawImage(img,0,0); try{ res({data:cv.toDataURL('image/jpeg',0.85),w:img.naturalWidth,h:img.naturalHeight}); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src=src; }); }
+        // Converte webp->jpeg. Se targetAR for passado, recorta (cover) pra essa proporção — sem esticar.
+        function webpToJpeg(src, targetAR){ return new Promise(res=>{ const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ let sw=img.naturalWidth, sh=img.naturalHeight, sx=0, sy=0; if(targetAR){ const ar=sw/sh; if(ar>targetAR){ const nw=sh*targetAR; sx=(sw-nw)/2; sw=nw; } else { const nh=sw/targetAR; sy=(sh-nh)/2; sh=nh; } } const cv=document.createElement('canvas'); cv.width=sw; cv.height=sh; cv.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh); try{ res({data:cv.toDataURL('image/jpeg',0.85)}); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src=src; }); }
         async function pngData(src){ try{ const b=await fetch(src).then(r=>r.blob()); return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(b);}); }catch(e){ return null; } }
         async function gerarPDF(p){
             const cfg=p.cfg||{}; const { jsPDF }=window.jspdf; const d=new jsPDF({unit:'mm',format:'a4'});
@@ -167,8 +168,8 @@
             const head=t=>{ y+=7; ensure(11); d.setFillColor(79,25,100); d.rect(M,y-1,2.6,6.5,'F'); d.setTextColor(79,25,100); d.setFont('helvetica','bold'); d.setFontSize(11.5); d.text(String(t).toUpperCase(),M+6,y+3.6); y+=10; };
             const bullets=t=>String(t||'').split('\n').filter(s=>s.trim()).forEach(line=>{ const x=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(70,70,70); d.splitTextToSize(x,CW-6).forEach((l,i)=>{ ensure(5.6); if(i===0){d.setTextColor(79,25,100);d.text('•',M,y);d.setTextColor(70,70,70);} d.text(l,M+5,y); y+=5.6; }); y+=1; });
             // capa com foto
-            const hero=await webpToJpeg('/assets/images/cotacao-hero.webp');
-            if(hero){ const hh=70; try{ d.addImage(hero.data,'JPEG',0,0,W,hh); }catch(e){} d.setFillColor(26,15,30); d.setGState&&d.setGState(new d.GState({opacity:0.45})); d.rect(0,0,W,hh,'F'); d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+12; } else y=M;
+            const hh=64; const hero=await webpToJpeg('/assets/images/cotacao-hero.webp', W/hh);
+            if(hero){ try{ d.addImage(hero.data,'JPEG',0,0,W,hh); }catch(e){} d.setFillColor(26,15,30); d.setGState&&d.setGState(new d.GState({opacity:0.4})); d.rect(0,0,W,hh,'F'); d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+12; } else y=M;
             const logo=await pngData('/assets/images/logo-horizontal-black.png');
             if(logo){ const lw=44; try{ d.addImage(logo,'PNG',M,y-6,lw,lw*430/800); }catch(e){} y+=lw*430/800+2; }
             d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(25,25,25); ensure(8); d.text(p.empresa?`Proposta — ${p.empresa}`:'Proposta de Evento',M,y); y+=4;
