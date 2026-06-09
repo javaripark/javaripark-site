@@ -68,6 +68,7 @@
         .model-card .ml{font-weight:700;font-size:13px;color:#2c2c2c}
         .model-card .ms{font-size:11px;color:#888;margin-top:2px}
         .br-acc{cursor:pointer}.br-acc .br-c{background:#e9e2ef;color:#7a5a8a;border-radius:9px;padding:1px 7px;font-size:10px;margin:0 6px}.br-caret{float:right;font-size:10px;color:#9a7aab}
+        .vnd{color:#16a34a;font-weight:600}
         /* P&L resumo */
         .resumo{background:#faf9fb;border-radius:12px;padding:16px}
         .r-line{display:flex;justify-content:space-between;padding:7px 0;font-size:14px}
@@ -172,7 +173,7 @@
                     <h3>Resultado</h3>
                     <div class="resumo">
                         <div class="r-line"><span>Receita</span><b id="r-receita">—</b></div>
-                        <div class="r-line sub"><span>Consumo (comida & bebida)</span><span id="r-fb">—</span></div>
+                        <div class="r-line sub"><span>Consumo — custo / valor de menu</span><span id="r-fb">—</span></div>
                         <div class="r-line sub"><span>Equipe</span><span id="r-equipe">—</span></div>
                         <div class="r-line sub"><span>Extras</span><span id="r-extras">—</span></div>
                         <div class="r-line sub"><span>Overhead</span><span id="r-overhead">—</span></div>
@@ -295,6 +296,9 @@
         function pushItemInto(arr,it,qtd){ const ex=arr.find(x=>x.codigo===it.codigo); if(ex){ if(ex.modo!=='share') ex.val=(+ex.val||0)+1; ex.qtd=qtdOf(ex); return; } const o={codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0}; if(qtd!=null&&qtd>0&&qtd<1){ o.modo='share'; o.val=Math.round(1/qtd)||2; } else { o.modo='pp'; o.val=(qtd!=null?qtd:1); } o.qtd=qtdOf(o); arr.push(o); }
         const pushItem=(it,qtd)=>pushItemInto(pkItens,it,qtd);
         const pkCusto=()=>pkItens.reduce((s,i)=>s+i.custoUnit*(i.qtd||0),0);
+        const vendaOf=i=> i.precoVenda!=null?i.precoVenda:((CATALOGO.find(x=>x.codigo===i.codigo)||{}).precoVenda||0);
+        const sumCusto=arr=>arr.reduce((s,i)=>s+(i.custoUnit||0)*(i.qtd||0),0);
+        const sumVenda=arr=>arr.reduce((s,i)=>s+vendaOf(i)*(i.qtd||0),0);
         // Browser de itens genérico (reusado no construtor e no personalizado)
         const brExpanded={};
         function renderConsumoBrowser(listId,searchId,items,onAdd){
@@ -305,7 +309,7 @@
             let h='';
             Object.keys(byCat).sort().forEach(cat=>{ const open=q?true:exp.has(cat); const lst=byCat[cat];
                 h+=`<div class="br-cat br-acc" data-cat="${cat}">${cat}<span class="br-c">${lst.length}</span><span class="br-caret">${open?'▾':'▸'}</span></div>`;
-                if(open) lst.slice(0,400).forEach(p=>{ const inC=items.find(i=>i.codigo===p.codigo); h+=`<div class="br-item${inC?' in':''}" data-add="${p.codigo}"><span>${p.nome}</span><span class="br-cost">${brl(p.precoCusto||0)}<b>${inC?'✓':'+'}</b></span></div>`; });
+                if(open) lst.slice(0,400).forEach(p=>{ const inC=items.find(i=>i.codigo===p.codigo); h+=`<div class="br-item${inC?' in':''}" data-add="${p.codigo}"><span>${p.nome}</span><span class="br-cost">${brl(p.precoCusto||0)} <span class="vnd">/ ${brl(p.precoVenda||0)}</span> <b>${inC?'✓':'+'}</b></span></div>`; });
             });
             $(listId).innerHTML=h||'<div style="color:#aaa;padding:14px">Nada encontrado.</div>';
             $(listId).querySelectorAll('.br-acc').forEach(el=>el.onclick=()=>{ const c=el.dataset.cat; exp.has(c)?exp.delete(c):exp.add(c); renderConsumoBrowser(listId,searchId,items,onAdd); });
@@ -317,15 +321,15 @@
             if(tipo==='open') items.forEach(ensureConsumo);
             if(!items.length){ tbl.innerHTML='<tbody><tr><td style="color:#aaa">Nenhum item — busque abaixo e clique pra incluir.</td></tr></tbody>'; updLabel(); return; }
             const byCat={}; items.forEach((i,ix)=>{ (byCat[i.categoria]=byCat[i.categoria]||[]).push(ix); });
-            let h=`<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>${tipo==='open'?'Consumo':'Qtd total'}</th><th class="amount">Custo</th><th></th></tr></thead><tbody>`;
+            let h=`<thead><tr><th>Item</th><th class="amount">Custo / Venda un.</th><th>${tipo==='open'?'Consumo':'Qtd total'}</th><th class="amount">Custo / Venda</th><th></th></tr></thead><tbody>`;
             Object.keys(byCat).sort().forEach(cat=>{ h+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`; byCat[cat].forEach(ix=>{ const i=items[ix]; let cell;
                 if(tipo==='open'){ cell=`<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><select class="cm-sel" data-i="${ix}" style="padding:4px 6px;font-size:12px;width:auto"><option value="pp"${i.modo==='pp'?' selected':''}>por pessoa</option><option value="share"${i.modo==='share'?' selected':''}>1 a cada</option></select><input class="cm-val" data-i="${ix}" type="number" min="0" step="${i.modo==='pp'?'0.5':'1'}" value="${i.val}" style="max-width:54px;padding:4px 6px;font-size:12px;text-align:right"><span class="cm-lbl" style="font-size:11px;color:#999">${i.modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(i).toFixed(2)}</span></div>`; }
                 else cell=`<div style="display:flex;align-items:center;gap:4px"><button class="qbtn" data-d="${ix}" data-inc="-1">−</button><strong style="min-width:24px;display:inline-block;text-align:center">${i.qtd}</strong><button class="qbtn" data-d="${ix}" data-inc="1">+1</button><button class="qbtn" data-d="${ix}" data-inc="5">+5</button></div>`;
-                h+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td>${cell}</td><td class="amount cst">${brl(i.custoUnit*(i.qtd||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`; }); });
+                h+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)} <span class="vnd">/ ${brl(vendaOf(i))}</span></td><td>${cell}</td><td class="amount"><span class="cst">${brl(i.custoUnit*(i.qtd||0))}</span> <span class="vnd vtot">/ ${brl(vendaOf(i)*(i.qtd||0))}</span></td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`; }); });
             tbl.innerHTML=h+'</tbody>';
             tbl.querySelectorAll('[data-inc]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.d; items[i].qtd=Math.max(0,(items[i].qtd||0)+(+b.dataset.inc)); items[i].val=items[i].qtd; if(items[i].qtd===0)items.splice(i,1); rr(); refreshBrowser(); });
             tbl.querySelectorAll('.cm-sel').forEach(s=>s.onchange=()=>{ const i=+s.dataset.i; items[i].modo=s.value; if(items[i].modo==='share'&&(!items[i].val||items[i].val<1))items[i].val=2; items[i].qtd=qtdOf(items[i]); rr(); });
-            tbl.querySelectorAll('.cm-val').forEach(inp=>inp.oninput=()=>{ const i=+inp.dataset.i; items[i].val=parseFloat(inp.value)||0; items[i].qtd=qtdOf(items[i]); const tr=inp.closest('tr'); tr.querySelector('.cst').textContent=brl(items[i].custoUnit*items[i].qtd); tr.querySelector('.cm-lbl').textContent=`${items[i].modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(items[i]).toFixed(2)}`; updLabel(); });
+            tbl.querySelectorAll('.cm-val').forEach(inp=>inp.oninput=()=>{ const i=+inp.dataset.i; items[i].val=parseFloat(inp.value)||0; items[i].qtd=qtdOf(items[i]); const tr=inp.closest('tr'); tr.querySelector('.cst').textContent=brl(items[i].custoUnit*items[i].qtd); tr.querySelector('.vtot').textContent='/ '+brl(vendaOf(items[i])*items[i].qtd); tr.querySelector('.cm-lbl').textContent=`${items[i].modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(items[i]).toFixed(2)}`; updLabel(); });
             tbl.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ items.splice(+b.dataset.rm,1); rr(); refreshBrowser(); });
             updLabel();
         }
@@ -333,7 +337,7 @@
         $('br-search').oninput=renderBrowser;
         $('pk-tipo').onchange=()=>renderPkItens();
         function renderPkItens(){ renderConsumoItens('pk-itens-tbl',pkItens,$('pk-tipo').value,renderBrowser,updPkLabel); }
-        function updPkLabel(){ $('pk-custo-label').textContent=$('pk-tipo').value==='open'?`Custo de consumo por pessoa: ${brl(pkCusto())}`:`Custo total: ${brl(pkCusto())}`; }
+        function updPkLabel(){ const per=$('pk-tipo').value==='open'?' por pessoa':' total'; $('pk-custo-label').innerHTML=`Consumo${per} — custo ${brl(sumCusto(pkItens))} <span class="vnd">/ venda ${brl(sumVenda(pkItens))}</span>`; }
         $('pk-clear').onclick=()=>{ pkItens=[]; $('pk-nome').value=''; editingPkId=null; renderPkItens(); renderBrowser(); };
         $('pk-save').onclick=async()=>{ const nome=$('pk-nome').value.trim(); if(!nome)return toast('Dê um nome'); if(!pkItens.length)return toast('Adicione itens'); if($('pk-tipo').value==='open')pkItens.forEach(ensureConsumo); try{ await addDoc(collection(db,PK_COL),{nome,tipo:$('pk-tipo').value,itens:pkItens,custo:pkCusto(),criadoEm:new Date().toISOString()}); toast('Pacote salvo'); pkItens=[]; $('pk-nome').value=''; editingPkId=null; renderPkItens(); renderBrowser(); loadPacotes(); }catch(e){ toast('Erro: '+e.message); } };
 
@@ -343,7 +347,7 @@
         async function loadPacotes(){
             try{ PACOTES=(await getDocs(collection(db,PK_COL))).docs.map(d=>({id:d.id,...d.data()})); }catch(e){ PACOTES=[]; }
             PACOTES.sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
-            $('pk-saved-tbl').innerHTML=PACOTES.length?`<thead><tr><th>Pacote</th><th>Tipo</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${PACOTES.map((p,ix)=>`<tr><td><strong>${p.nome}</strong><div class="pk-sub">${pkgComp(p)}</div></td><td><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></td><td class="amount">${brl(p.custo)}${p.tipo==='open'?'/pax':''}</td><td class="amount"><button class="btn btn-ghost btn-sm" data-ld="${ix}">editar</button> <button class="btn btn-danger btn-sm" data-dl="${p.id}">×</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum pacote salvo.</td></tr></tbody>';
+            $('pk-saved-tbl').innerHTML=PACOTES.length?`<thead><tr><th>Pacote</th><th>Tipo</th><th class="amount">Custo / Venda</th><th></th></tr></thead><tbody>${PACOTES.map((p,ix)=>{ const sfx=p.tipo==='open'?'/pax':''; return `<tr><td><strong>${p.nome}</strong><div class="pk-sub">${pkgComp(p)}</div></td><td><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></td><td class="amount">${brl(p.custo)}${sfx} <span class="vnd">/ ${brl(sumVenda(p.itens||[]))}${sfx}</span></td><td class="amount"><button class="btn btn-ghost btn-sm" data-ld="${ix}">editar</button> <button class="btn btn-danger btn-sm" data-dl="${p.id}">×</button></td></tr>`; }).join('')}</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum pacote salvo.</td></tr></tbody>';
             $('pk-saved-tbl').querySelectorAll('[data-ld]').forEach(b=>b.onclick=()=>loadPkToBuilder(PACOTES[+b.dataset.ld]));
             $('pk-saved-tbl').querySelectorAll('[data-dl]').forEach(b=>b.onclick=async()=>{ if(!confirm('Excluir pacote?'))return; await deleteDoc(doc(db,PK_COL,b.dataset.dl)); loadPacotes(); });
             renderCotPkList();
@@ -374,7 +378,7 @@
         function renderCotPkList(){
             const q=($('cot-pk-search').value||'').toLowerCase();
             const list=PACOTES.filter(p=>!q||p.nome.toLowerCase().includes(q));
-            $('cot-pk-list').innerHTML=list.length?list.map(p=>`<div class="pk-opt${prontoPkId===p.id?' sel':''}" data-pk="${p.id}"><div class="t"><span>${p.nome}</span><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></div><div class="d">${(p.itens||[]).length} itens · <b style="color:#4f1964">${brl(p.custo)}${p.tipo==='open'?'/pessoa':''}</b> de custo</div><div class="comp">${pkgComp(p)}</div></div>`).join(''):'<p class="hint">Nenhum pacote. Crie um na aba Pacotes ou use o modo Personalizado.</p>';
+            $('cot-pk-list').innerHTML=list.length?list.map(p=>{ const sfx=p.tipo==='open'?'/pessoa':''; return `<div class="pk-opt${prontoPkId===p.id?' sel':''}" data-pk="${p.id}"><div class="t"><span>${p.nome}</span><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></div><div class="d">${(p.itens||[]).length} itens · custo <b style="color:#4f1964">${brl(p.custo)}${sfx}</b> · venda <b class="vnd">${brl(sumVenda(p.itens||[]))}${sfx}</b></div><div class="comp">${pkgComp(p)}</div></div>`; }).join(''):'<p class="hint">Nenhum pacote. Crie um na aba Pacotes ou use o modo Personalizado.</p>';
             $('cot-pk-list').querySelectorAll('[data-pk]').forEach(el=>el.onclick=()=>{ prontoPkId=el.dataset.pk; cotPacoteId=el.dataset.pk; renderCotPkList(); showPkDetalhe(); });
             if(prontoPkId&&!list.find(p=>p.id===prontoPkId)){ prontoPkId=null; if(cotMode==='pronto')cotPacoteId=null; }
         }
@@ -386,10 +390,11 @@
         function fixItem(it){ const c=CATALOGO.find(x=>x.codigo===it.codigo)||CATALOGO.find(x=>x.nome===it.nome)||{}; return {codigo:it.codigo||c.codigo, nome:it.nome, categoria:it.categoria||c.categoria||'—', custoUnit:it.custoUnit!=null?it.custoUnit:(c.precoCusto||0), precoVenda:it.precoVenda!=null?it.precoVenda:(c.precoVenda||0), qtd:it.qtd, modo:it.modo, val:it.val}; }
         const pkgBase=p=>parseInt((p.nome.match(/(\d+)\s*p/i)||[])[1])||50;
         function modelCostPP(m,pax){ if(m.tipo==='open') return m.pkg.custo; const base=pkgBase(m.pkg); return m.pkg.itens.reduce((s,i)=>s+(i.custoUnit||0)*((i.qtd||0)/base),0); }
+        function modelVendaPP(m,pax){ if(m.tipo==='open') return sumVenda(m.pkg.itens); const base=pkgBase(m.pkg); return m.pkg.itens.reduce((s,i)=>s+vendaOf(i)*((i.qtd||0)/base),0); }
         function modelsList(){ const fam=pre=>PACOTES.find(p=>p.nome.startsWith(pre)); return [['Open Especial','Especial','open'],['Open Premium','Premium','open'],['Por Unidade','Por unidade','item']].map(([pre,label,tipo])=>({pre,label,tipo,pkg:fam(pre)})).filter(m=>m.pkg); }
         function renderModels(){
             const pax=curPax()||50, models=modelsList();
-            $('cust-models').innerHTML=models.length?models.map((m,ix)=>`<div class="model-card" data-m="${ix}"><div class="ml">${m.label}</div><div class="ms">${m.pkg.itens.length} itens · custo ${brl(modelCostPP(m,pax))}/pessoa</div></div>`).join(''):'<span class="hint">Sem modelos — crie pacotes na aba Pacotes.</span>';
+            $('cust-models').innerHTML=models.length?models.map((m,ix)=>`<div class="model-card" data-m="${ix}"><div class="ml">${m.label}</div><div class="ms">${m.pkg.itens.length} itens · custo ${brl(modelCostPP(m,pax))} <span class="vnd">/ venda ${brl(modelVendaPP(m,pax))}</span> /pessoa</div></div>`).join(''):'<span class="hint">Sem modelos — crie pacotes na aba Pacotes.</span>';
             $('cust-models').querySelectorAll('[data-m]').forEach(el=>el.onclick=()=>applyModel(models[+el.dataset.m]));
         }
         function applyModel(m){
@@ -403,7 +408,7 @@
         $('cust-tipo').onchange=()=>{ custTipo=$('cust-tipo').value; renderCustItens(); setPrecoLabel(); };
         $('cust-search').oninput=renderCustBrowser;
         $('sim-pessoas').addEventListener('input',()=>{ if(cotMode==='custom') renderModels(); });
-        function updCustLabel(){ buildCustomPkg(); $('cust-custo-label').textContent=custItens.length?(custTipo==='open'?`Custo de consumo por pessoa: ${brl(customPkg.custo)}`:`Custo total: ${brl(customPkg.custo)}`):''; renderResumo(); }
+        function updCustLabel(){ buildCustomPkg(); const per=custTipo==='open'?' por pessoa':' total'; $('cust-custo-label').innerHTML=custItens.length?`Consumo${per} — custo ${brl(sumCusto(custItens))} <span class="vnd">/ venda ${brl(sumVenda(custItens))}</span>`:''; renderResumo(); }
         function renderCustItens(){ renderConsumoItens('cust-itens-tbl',custItens,custTipo,renderCustBrowser,updCustLabel); }
         function renderCustBrowser(){ renderConsumoBrowser('cust-br-list','cust-search',custItens,it=>{ pushItemInto(custItens,it,1); renderCustItens(); renderCustBrowser(); }); }
 
@@ -434,14 +439,15 @@
             const p=getPkg(cotPacoteId); if(!p||!(p.itens||[]).length)return null;
             const pax=Math.max(parseFloat($('sim-pessoas').value)||0,0), preco=parseFloat($('sim-preco').value)||0, ohpp=parseFloat($('sim-overhead').value)||0;
             const isOpen=p.tipo==='open', custoFBpp=isOpen?p.custo:(pax>0?p.custo/pax:0), custoFB=isOpen?p.custo*pax:p.custo;
+            const vendaFBunit=sumVenda(p.itens), vendaFB=isOpen?vendaFBunit*pax:vendaFBunit;
             const eq=equipeTotal(), a=exAbs(), r=exRep(), overhead=ohpp*pax;
             const pkgReceita=isOpen?preco*pax:preco, receita=pkgReceita+r, lucro=receita-custoFB-eq-a-r-overhead;
-            return {p,pax,preco,ohpp,isOpen,custoFBpp,custoFB,eq,exA:a,exR:r,ex:a+r,overhead,pkgReceita,receita,lucro,margem:receita>0?lucro/receita*100:0};
+            return {p,pax,preco,ohpp,isOpen,custoFBpp,custoFB,vendaFB,eq,exA:a,exR:r,ex:a+r,overhead,pkgReceita,receita,lucro,margem:receita>0?lucro/receita*100:0};
         }
         function renderResumo(){
             const c=calc();
             if(!c){ ['r-receita','r-fb','r-equipe','r-extras','r-overhead','r-lucro','r-margem'].forEach(id=>$(id).textContent='—'); $('r-insights').textContent='Escolha um pacote ou monte um personalizado no passo anterior.'; return; }
-            $('r-receita').textContent=brl(c.receita); $('r-fb').textContent=brl(c.custoFB); $('r-equipe').textContent=brl(c.eq); $('r-extras').textContent=brl(c.ex); $('r-overhead').textContent=brl(c.overhead);
+            $('r-receita').textContent=brl(c.receita); $('r-fb').innerHTML=`${brl(c.custoFB)} <span class="vnd">/ menu ${brl(c.vendaFB)}</span>`; $('r-equipe').textContent=brl(c.eq); $('r-extras').textContent=brl(c.ex); $('r-overhead').textContent=brl(c.overhead);
             $('r-lucro').textContent=brl(c.lucro); $('r-lucro').className=c.lucro>=0?'pos':'neg';
             $('r-margem').textContent=c.receita>0?c.margem.toFixed(1)+'%':'—'; $('r-margem').className=c.margem>=0?'pos':'neg';
             let ins='';
