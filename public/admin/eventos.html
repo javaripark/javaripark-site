@@ -134,6 +134,7 @@
                     <strong id="pk-custo-label" style="font-size:16px;color:#4f1964"></strong>
                     <div style="display:flex;gap:10px">
                         <button class="btn btn-ghost btn-sm" id="pk-clear">Limpar</button>
+                        <button class="btn btn-ghost btn-sm" id="perfil-save">Salvar como perfil</button>
                         <button class="btn btn-primary" id="pk-save">Salvar pacote</button>
                     </div>
                 </div>
@@ -148,6 +149,11 @@
                 <p class="hint" style="margin-top:-8px;margin-bottom:14px">Clique em <strong>Carregar</strong> para abrir um pacote no construtor, ajustar e salvar como novo. Modelos rápidos abaixo são pontos de partida.</p>
                 <div id="pk-templates" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"></div>
                 <div class="table-wrap"><table class="fin-table" id="pk-saved-tbl"></table></div>
+            </div>
+            <div class="card">
+                <h3>Perfis de consumo salvos</h3>
+                <p class="hint" style="margin-top:-8px;margin-bottom:12px">Um perfil guarda o consumo por pessoa (ex.: 3 caipi, 1 gin, porção a cada 2 pessoas). "Aplicar" monta no construtor pra você ajustar e salvar como pacote.</p>
+                <div class="table-wrap"><table class="fin-table" id="perfil-tbl"></table></div>
             </div>
         </div>
 
@@ -339,23 +345,33 @@
             let html='', lastCat=null;
             rows.slice(0,600).forEach(p=>{ if(p.categoria!==lastCat){ html+=`<div class="br-cat">${p.categoria||'—'}</div>`; lastCat=p.categoria; } const inCart=pkItens.find(i=>i.codigo===p.codigo); html+=`<div class="br-item${inCart?' in':''}" data-add="${p.codigo}"><span>${p.nome}</span><span class="br-cost">${brl(p.precoCusto||0)}<b>${inCart?'✓':'+'}</b></span></div>`; });
             $('br-list').innerHTML=html||'<div style="color:#aaa;padding:14px">Nada encontrado.</div>';
-            $('br-list').querySelectorAll('[data-add]').forEach(el=>el.addEventListener('click',()=>{ const it=CATALOGO.find(p=>String(p.codigo)===el.dataset.add); if(!it)return; const ex=pkItens.find(i=>i.codigo===it.codigo); if(ex)ex.qtd+=1; else pkItens.push({codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0,qtd:1}); renderPkItens(); renderBrowser(); }));
+            $('br-list').querySelectorAll('[data-add]').forEach(el=>el.addEventListener('click',()=>{ const it=CATALOGO.find(p=>String(p.codigo)===el.dataset.add); if(!it)return; pushItem(it,1); renderPkItens(); renderBrowser(); }));
         }
         $('br-search').addEventListener('input',renderBrowser);
 
         // ---------- Construtor ----------
         let pkItens=[], editingId=null;
         $('pk-tipo').addEventListener('change',()=>renderPkItens());
-        function pkCusto(){ return pkItens.reduce((s,i)=>s+i.custoUnit*i.qtd,0); }
+        // Consumo: modo 'pp' (val = un/pessoa) ou 'share' (val = serve N pessoas -> qtd = 1/N)
+        const qtdOf=it=> it.modo==='share' ? (it.val>0 ? 1/it.val : 0) : (+it.val||0);
+        function ensureConsumo(it){ if(it.modo!=='pp'&&it.modo!=='share'){ if((it.qtd||0)>0&&it.qtd<1){ it.modo='share'; it.val=Math.round(1/it.qtd)||2; } else { it.modo='pp'; it.val=(it.qtd!=null?it.qtd:1); } } it.qtd=qtdOf(it); return it; }
+        function pushItem(it, qtd){ const ex=pkItens.find(x=>x.codigo===it.codigo); if(ex){ if(ex.modo!=='share') ex.val=(+ex.val||0)+1; ex.qtd=qtdOf(ex); return; } const o={codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0}; if(qtd!=null&&qtd>0&&qtd<1){ o.modo='share'; o.val=Math.round(1/qtd)||2; } else { o.modo='pp'; o.val=(qtd!=null?qtd:1); } o.qtd=qtdOf(o); pkItens.push(o); }
+        function pkCusto(){ return pkItens.reduce((s,i)=>s+i.custoUnit*(i.qtd||0),0); }
         function renderPkItens(){
             const tipo=$('pk-tipo').value;
+            if(tipo==='open') pkItens.forEach(ensureConsumo);
             if(!pkItens.length){ $('pk-itens-tbl').innerHTML='<tbody><tr><td style="color:#aaa">Nenhum item ainda — busque ou navegue abaixo e clique para incluir.</td></tr></tbody>'; }
             else{
-                const byCat={}; pkItens.forEach((i,ix)=>{ (byCat[i.categoria]=byCat[i.categoria]||[]).push({...i,ix}); });
-                let html=`<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>${tipo==='open'?'Qtd/pessoa':'Qtd total'}</th><th class="amount">Custo</th><th></th></tr></thead><tbody>`;
-                Object.keys(byCat).sort().forEach(cat=>{ html+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`; byCat[cat].forEach(i=>{ html+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td><div style="display:flex;align-items:center;gap:4px"><button class="qbtn" data-d="${i.ix}" data-inc="-1">−</button><strong style="min-width:26px;display:inline-block;text-align:center">${i.qtd}</strong><button class="qbtn" data-d="${i.ix}" data-inc="1">+1</button><button class="qbtn" data-d="${i.ix}" data-inc="5">+5</button><button class="qbtn" data-d="${i.ix}" data-inc="10">+10</button></div></td><td class="amount">${brl(i.custoUnit*i.qtd)}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${i.ix}">×</button></td></tr>`; }); });
+                const byCat={}; pkItens.forEach((i,ix)=>{ (byCat[i.categoria]=byCat[i.categoria]||[]).push(ix); });
+                let html=`<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>${tipo==='open'?'Consumo':'Qtd total'}</th><th class="amount">Custo</th><th></th></tr></thead><tbody>`;
+                Object.keys(byCat).sort().forEach(cat=>{ html+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`; byCat[cat].forEach(ix=>{ const i=pkItens[ix]; let cell;
+                    if(tipo==='open'){ cell=`<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><select class="cm-sel" data-i="${ix}" style="padding:4px 6px;font-size:12px"><option value="pp"${i.modo==='pp'?' selected':''}>por pessoa</option><option value="share"${i.modo==='share'?' selected':''}>1 a cada</option></select><input class="cm-val" data-i="${ix}" type="number" min="0" step="${i.modo==='pp'?'0.5':'1'}" value="${i.val}" style="max-width:56px;padding:4px 6px;font-size:12px;text-align:right"><span class="cm-lbl" style="font-size:11px;color:#999">${i.modo==='pp'?'un/pessoa':'pessoas'} → ${qtdOf(i).toFixed(2)}/pess</span></div>`; }
+                    else { cell=`<div style="display:flex;align-items:center;gap:4px"><button class="qbtn" data-d="${ix}" data-inc="-1">−</button><strong style="min-width:26px;display:inline-block;text-align:center">${i.qtd}</strong><button class="qbtn" data-d="${ix}" data-inc="1">+1</button><button class="qbtn" data-d="${ix}" data-inc="5">+5</button><button class="qbtn" data-d="${ix}" data-inc="10">+10</button></div>`; }
+                    html+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td>${cell}</td><td class="amount cst">${brl(i.custoUnit*(i.qtd||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`; }); });
                 $('pk-itens-tbl').innerHTML=html+'</tbody>';
-                $('pk-itens-tbl').querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.d; pkItens[i].qtd=Math.max(0,pkItens[i].qtd+(+b.dataset.inc)); if(pkItens[i].qtd===0)pkItens.splice(i,1); renderPkItens(); renderBrowser(); }));
+                $('pk-itens-tbl').querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.d; pkItens[i].qtd=Math.max(0,(pkItens[i].qtd||0)+(+b.dataset.inc)); pkItens[i].val=pkItens[i].qtd; if(pkItens[i].qtd===0)pkItens.splice(i,1); renderPkItens(); renderBrowser(); }));
+                $('pk-itens-tbl').querySelectorAll('.cm-sel').forEach(s=>s.addEventListener('change',()=>{ const i=+s.dataset.i; pkItens[i].modo=s.value; if(pkItens[i].modo==='share'&&(!pkItens[i].val||pkItens[i].val<1))pkItens[i].val=2; pkItens[i].qtd=qtdOf(pkItens[i]); renderPkItens(); }));
+                $('pk-itens-tbl').querySelectorAll('.cm-val').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.i; pkItens[i].val=parseFloat(inp.value)||0; pkItens[i].qtd=qtdOf(pkItens[i]); const tr=inp.closest('tr'); tr.querySelector('.cst').textContent=brl(pkItens[i].custoUnit*pkItens[i].qtd); tr.querySelector('.cm-lbl').textContent=`${pkItens[i].modo==='pp'?'un/pessoa':'pessoas'} → ${qtdOf(pkItens[i]).toFixed(2)}/pess`; $('pk-custo-label').textContent=`Custo de consumo por pessoa: ${brl(pkCusto())}`; }));
                 $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); renderBrowser(); }));
             }
             $('pk-custo-label').textContent=tipo==='open'?`Custo de consumo por pessoa: ${brl(pkCusto())}`:`Custo de consumo total: ${brl(pkCusto())}`;
@@ -374,7 +390,18 @@
         ];
         function renderTemplates(){
             $('pk-templates').innerHTML=TEMPLATES.map((t,i)=>`<button class="pill" data-tpl="${i}">＋ ${t.nome}</button>`).join('');
-            $('pk-templates').querySelectorAll('[data-tpl]').forEach(b=>b.addEventListener('click',()=>{ const t=TEMPLATES[+b.dataset.tpl]; pkItens=[]; editingId=null; $('pk-tipo').value=t.tipo; $('pk-nome').value=t.nome; let faltou=0; t.itens.forEach(([kw,q])=>{ const it=CATALOGO.find(p=>{const n=p.nome.toLowerCase(); return kw.every(k=>n.includes(k));}); if(it){ pkItens.push({codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0,qtd:q}); } else faltou++; }); renderPkItens(); renderBrowser(); window.scrollTo({top:0,behavior:'smooth'}); if(faltou)toast(`${faltou} item(s) não encontrado(s)`); }));
+            $('pk-templates').querySelectorAll('[data-tpl]').forEach(b=>b.addEventListener('click',()=>{ const t=TEMPLATES[+b.dataset.tpl]; pkItens=[]; editingId=null; $('pk-tipo').value=t.tipo; $('pk-nome').value=t.nome; let faltou=0; t.itens.forEach(([kw,q])=>{ const it=CATALOGO.find(p=>{const n=p.nome.toLowerCase(); return kw.every(k=>n.includes(k));}); if(it){ pushItem(it,q); } else faltou++; }); renderPkItens(); renderBrowser(); window.scrollTo({top:0,behavior:'smooth'}); if(faltou)toast(`${faltou} item(s) não encontrado(s)`); }));
+        }
+
+        // ---------- Perfis de consumo ----------
+        const PERFIS_COL=BASE+'/eventos_perfis';
+        let PERFIS=[];
+        $('perfil-save').addEventListener('click',async()=>{ if(!pkItens.length){ toast('Adicione itens primeiro'); return; } const nome=prompt('Nome do perfil de consumo:', $('pk-nome').value||'Perfil'); if(!nome)return; if($('pk-tipo').value==='open') pkItens.forEach(ensureConsumo); try{ await addDoc(collection(db,PERFIS_COL),{nome,itens:JSON.parse(JSON.stringify(pkItens)),criadoEm:new Date().toISOString()}); toast('Perfil salvo'); loadPerfis(); }catch(e){ toast('Erro: '+e.message); } });
+        async function loadPerfis(){
+            try{ const s=await getDocs(collection(db,PERFIS_COL)); PERFIS=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){ PERFIS=[]; }
+            $('perfil-tbl').innerHTML=PERFIS.length?`<thead><tr><th>Perfil</th><th class="amount">Itens</th><th></th></tr></thead><tbody>${PERFIS.map((p,ix)=>`<tr><td>${p.nome}</td><td class="amount">${(p.itens||[]).length}</td><td class="amount"><button class="btn btn-ghost btn-sm" data-pa="${ix}">aplicar</button> <button class="btn btn-danger btn-sm" data-pd="${p.id}">×</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum perfil salvo. Monte um consumo no construtor e clique "Salvar como perfil".</td></tr></tbody>';
+            $('perfil-tbl').querySelectorAll('[data-pa]').forEach(b=>b.addEventListener('click',()=>{ const p=PERFIS[+b.dataset.pa]; pkItens=JSON.parse(JSON.stringify(p.itens||[])); pkItens.forEach(it=>{ if(!it.categoria){ const c=CATALOGO.find(x=>x.codigo===it.codigo); it.categoria=c?c.categoria:'—'; } ensureConsumo(it); }); $('pk-tipo').value='open'; editingId=null; renderPkItens(); renderBrowser(); document.querySelector('.section-tab[data-section="pacotes"]').click(); window.scrollTo({top:0,behavior:'smooth'}); toast('Perfil aplicado — ajuste e salve como pacote'); }));
+            $('perfil-tbl').querySelectorAll('[data-pd]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir perfil?'))return; await deleteDoc(doc(db,PERFIS_COL,b.dataset.pd)); loadPerfis(); }));
         }
 
         // ---------- Pacotes salvos ----------
@@ -643,6 +670,7 @@
         await loadPacotes();
         await loadCenarios();
         await loadPropostas();
+        await loadPerfis();
         await loadConfig();
         await loadLogo();
     </script>
