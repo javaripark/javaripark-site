@@ -107,7 +107,7 @@
 </head>
 <body>
     <div class="container">
-        <header class="header"><h1>Painel Administrativo</h1><p id="user-email-display"></p><button class="logout-btn" id="logoutBtn">Sair</button></header>
+        <header class="header"><h1>Eventos &amp; Cotações</h1><p id="user-email-display"></p><button class="logout-btn" id="logoutBtn">Sair</button></header>
         <nav class="admin-nav">
             <a href="/admin/reservas.html">Reservas</a><a href="/admin/agenda.html">Agenda</a>
             <a href="/admin/cardapio.html">Cardápio</a><a href="/admin/blog.html">Blog</a>
@@ -262,8 +262,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         const AUTH_KEY='javari_admin_auth';
-        if(!JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null')) location.href='/admin/index.html';
+        const session=JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null');
+        if(!session) location.href='/admin/index.html';
         const $=id=>document.getElementById(id);
+        $('user-email-display').textContent = session ? (session.email||'') : '';
         $('logoutBtn').onclick=()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; };
         const db=getFirestore(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
         const BASE='artifacts/central-de-reservas-jsp/public/data';
