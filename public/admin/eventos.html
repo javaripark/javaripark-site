@@ -4,327 +4,254 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
     <title>Eventos — Javari StrEat Park</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:'Inter',sans-serif;background:#f4f5f7;color:#2c2c2c}
-        .container{max-width:1180px;margin:0 auto;padding:16px}
-        .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:18px 22px;text-align:center;position:relative;border-radius:14px 14px 0 0;box-shadow:0 4px 14px rgba(79,25,100,.2)}
-        .header h1{color:#fff;font-size:1.3em;font-weight:700;letter-spacing:.5px}
-        .header .logout-btn{position:absolute;top:50%;right:18px;transform:translateY(-50%);background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.15);padding:7px 15px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
-        .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 10px rgba(0,0,0,.05);border-radius:0 0 14px 14px;margin-bottom:22px;-webkit-overflow-scrolling:touch}
-        .admin-nav a{flex:1;min-width:0;text-align:center;padding:14px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
-        .admin-nav a:hover{background:#faf9fb}
+        .container{max-width:920px;margin:0 auto;padding:14px}
+        .header{background:linear-gradient(135deg,#1a1a1a,#2d1640 50%,#1a1a1a);padding:16px 20px;text-align:center;position:relative;border-radius:14px 14px 0 0}
+        .header h1{color:#fff;font-size:1.25em;font-weight:700}
+        .header .logout-btn{position:absolute;top:50%;right:16px;transform:translateY(-50%);background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+        .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 10px rgba(0,0,0,.05);border-radius:0 0 14px 14px;margin-bottom:18px}
+        .admin-nav a{flex:1;text-align:center;padding:13px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;white-space:nowrap}
         .admin-nav a.active{color:#4f1964;border-bottom-color:#4f1964;background:#f5f0f8}
-        .section-tabs{display:flex;gap:4px;border-bottom:2px solid #e9e9ee;margin-bottom:22px;overflow-x:auto}
-        .section-tab{padding:11px 18px;font-size:13px;font-weight:600;color:#8a8a93;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
-        .section-tab:hover{color:#5a5a63}
-        .section-tab.active{color:#4f1964;border-bottom-color:#4f1964}
-        .section-panel{display:none}
-        .section-panel.active{display:block}
-        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
-        .kpi-card{background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 5px rgba(0,0,0,.05)}
-        .kpi-label{font-size:10px;font-weight:700;color:#9a9aa3;text-transform:uppercase;letter-spacing:.6px}
-        .kpi-value{font-size:1.45em;font-weight:700;color:#1f1f24;margin-top:5px}
-        .kpi-sub{font-size:11px;color:#a8a8b0;margin-top:4px}
-        .card{background:#fff;border-radius:12px;padding:22px;box-shadow:0 1px 5px rgba(0,0,0,.05);margin-bottom:20px}
-        .card h3{font-size:.82em;font-weight:700;color:#4f1964;margin:0 0 16px;text-transform:uppercase;letter-spacing:.5px;padding-bottom:10px;border-bottom:1px solid #f0eef3}
-        .fin-table{width:100%;border-collapse:collapse;font-size:13px}
-        .fin-table th{text-align:left;padding:11px 12px;background:#faf9fb;color:#777;font-weight:600;border-bottom:2px solid #eee;white-space:nowrap;font-size:12px}
-        .fin-table td{padding:11px 12px;border-bottom:1px solid #f2f2f5;color:#3c3c44}
-        .fin-table tr:hover td{background:#fbfafc}
-        .fin-table .amount{text-align:right;font-weight:600;white-space:nowrap}
-        .fin-table .cat-row td{background:#f5f0f8;color:#4f1964;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:7px 12px}
-        .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-height:480px;overflow-y:auto;border-radius:8px}
-        .pill{padding:8px 14px;border-radius:22px;border:1px solid #ddd;background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:#555;white-space:nowrap}
-        .pill:hover{border-color:#4f1964;color:#4f1964}
-        label{display:block;font-size:12px;font-weight:600;color:#666;margin:14px 0 6px}
-        input,select,textarea{padding:10px 13px;border:1px solid #dcdce2;border-radius:9px;font-size:14px;font-family:inherit;width:100%;color:#2c2c2c}
+        .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+        .tab{padding:10px 18px;font-size:13px;font-weight:600;color:#7a7a83;cursor:pointer;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+        .tab.active{color:#fff;background:#4f1964}
+        .panel{display:none}.panel.active{display:block}
+        .card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 5px rgba(0,0,0,.05);margin-bottom:16px}
+        .card h3{font-size:.8em;font-weight:700;color:#4f1964;margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px;padding-bottom:10px;border-bottom:1px solid #f0eef3}
+        label{display:block;font-size:12px;font-weight:600;color:#666;margin:12px 0 5px}
+        input,select,textarea{padding:10px 12px;border:1px solid #dcdce2;border-radius:9px;font-size:14px;font-family:inherit;width:100%;color:#2c2c2c}
         input:focus,select:focus,textarea:focus{outline:none;border-color:#4f1964;box-shadow:0 0 0 3px rgba(79,25,100,.08)}
         textarea{resize:vertical;line-height:1.6}
-        .row{display:flex;gap:14px;flex-wrap:wrap}
-        .row>div{flex:1;min-width:130px}
-        .btn{padding:11px 18px;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer}
-        .btn-primary{background:#4f1964;color:#fff}
-        .btn-ghost{background:#fff;color:#4f1964;border:1px solid #d9cfe0}
-        .btn-danger{background:#fff;color:#ef4444;border:1px solid #f3c4c4}
-        .btn-gold{background:#b8860b;color:#fff}
-        .btn-sm{padding:6px 11px;font-size:12px}
+        .row{display:flex;gap:12px;flex-wrap:wrap}.row>div{flex:1;min-width:120px}
+        .btn{padding:11px 18px;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer}
+        .btn-primary{background:#4f1964;color:#fff}.btn-ghost{background:#fff;color:#4f1964;border:1px solid #d9cfe0}
+        .btn-gold{background:#b8860b;color:#fff}.btn-danger{background:#fff;color:#ef4444;border:1px solid #f3c4c4}
+        .btn-sm{padding:6px 11px;font-size:12px}.btn:disabled{opacity:.4;cursor:default}
         .qbtn{padding:4px 9px;font-size:12px;border:1px solid #ddd;background:#fff;border-radius:7px;cursor:pointer;color:#555;font-weight:600}
-        .qbtn:hover{border-color:#4f1964;color:#4f1964}
-        .pos{color:#16a34a}.neg{color:#ef4444}
-        .hint{font-size:12px;color:#9a9aa3;margin-top:6px}
-        .pill-tipo{display:inline-block;padding:3px 10px;border-radius:11px;font-size:10px;font-weight:600}
+        .pos{color:#16a34a}.neg{color:#ef4444}.hint{font-size:12px;color:#9a9aa3;line-height:1.6}
+        table{width:100%;border-collapse:collapse;font-size:13px}
+        th{text-align:left;padding:10px;background:#faf9fb;color:#777;font-weight:600;font-size:12px;border-bottom:2px solid #eee}
+        td{padding:10px;border-bottom:1px solid #f2f2f5;color:#3c3c44}
+        .amount{text-align:right;font-weight:600;white-space:nowrap}
+        .cat-row td{background:#f5f0f8;color:#4f1964;font-weight:700;font-size:11px;text-transform:uppercase;padding:6px 10px}
+        .wrap{overflow-x:auto;max-height:440px;overflow-y:auto;border-radius:8px}
+        .pill{padding:3px 10px;border-radius:11px;font-size:10px;font-weight:600}
         .tipo-open{background:#dcfce7;color:#16a34a}.tipo-item{background:#e0e7ff;color:#4338ca}
-        /* Item browser */
-        .browser{border:1px solid #eceaf0;border-radius:10px;max-height:340px;overflow-y:auto;margin-top:8px}
-        .br-cat{position:sticky;top:0;background:#f5f0f8;color:#4f1964;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:8px 14px;border-bottom:1px solid #ece8f1;z-index:1}
-        .br-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #f4f3f6;cursor:pointer;font-size:13px;transition:background .12s}
-        .br-item:hover{background:#f5f0f8}
-        .br-item.in{background:#f0fdf4}
-        .br-item .br-cost{color:#999;font-size:12px;white-space:nowrap}
-        .br-item .br-cost b{color:#4f1964;font-size:15px;margin-left:6px}
-        .br-item.in .br-cost b{color:#16a34a}
-        /* Photo picker */
-        .photo-grp{font-size:11px;font-weight:700;color:#4f1964;text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px}
-        .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px}
-        .ph{position:relative;border-radius:10px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;border:3px solid transparent;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-        .ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
-        .ph:hover img{transform:scale(1.05)}
-        .ph.sel{border-color:#4f1964}
-        .ph .chk{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#bbb}
+        /* Wizard */
+        .steps{display:flex;gap:6px;margin-bottom:18px}
+        .stp{flex:1;text-align:center;padding:10px 4px;border-radius:10px;background:#fff;font-size:12px;font-weight:600;color:#aaa;box-shadow:0 1px 3px rgba(0,0,0,.05);cursor:pointer}
+        .stp .n{display:inline-flex;width:20px;height:20px;border-radius:50%;background:#eee;color:#999;align-items:center;justify-content:center;font-size:11px;margin-right:5px}
+        .stp.active{color:#4f1964}.stp.active .n{background:#4f1964;color:#fff}
+        .stp.done .n{background:#16a34a;color:#fff}
+        .step{display:none}.step.active{display:block}
+        .step-nav{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+        /* Pacote picker */
+        .pk-opt{border:2px solid #eee;border-radius:12px;padding:14px;cursor:pointer;margin-bottom:10px;transition:.15s}
+        .pk-opt:hover{border-color:#cbb8d6}.pk-opt.sel{border-color:#4f1964;background:#faf7fc}
+        .pk-opt .t{font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+        .pk-opt .d{font-size:12px;color:#888;margin-top:4px}
+        /* P&L resumo */
+        .resumo{background:#faf9fb;border-radius:12px;padding:16px}
+        .r-line{display:flex;justify-content:space-between;padding:7px 0;font-size:14px}
+        .r-line.sub{font-size:12px;color:#888;padding:3px 0}
+        .r-line.big{border-top:1px solid #e6e2ec;margin-top:6px;padding-top:12px;font-size:16px;font-weight:700}
+        .r-line.big b{font-size:1.1em}
+        /* Photo pickers */
+        .browser{border:1px solid #eceaf0;border-radius:10px;max-height:300px;overflow-y:auto;margin-top:8px}
+        .br-cat{position:sticky;top:0;background:#f5f0f8;color:#4f1964;font-weight:700;font-size:11px;text-transform:uppercase;padding:7px 14px;z-index:1}
+        .br-item{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid #f4f3f6;cursor:pointer;font-size:13px}
+        .br-item:hover{background:#f5f0f8}.br-item.in{background:#f0fdf4}.br-item .br-cost b{color:#4f1964;margin-left:6px}.br-item.in .br-cost b{color:#16a34a}
+        .cover-strip{display:flex;gap:9px;overflow-x:auto;padding:4px 2px}
+        .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:9px}
+        .ph{position:relative;border-radius:9px;overflow:hidden;cursor:pointer;aspect-ratio:4/3;border:3px solid transparent}
+        .cover-strip .ph{flex:0 0 120px;aspect-ratio:16/9}
+        .ph img{width:100%;height:100%;object-fit:cover;display:block}.ph.sel{border-color:#4f1964}
+        .ph .chk{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:12px;color:#bbb}
         .ph.sel .chk{background:#4f1964;color:#fff}
-        .ph .cap{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:10px;font-weight:600}
-        .modal-wide{max-width:680px;max-height:88vh;overflow-y:auto}
-        .cover-strip{display:flex;gap:10px;overflow-x:auto;padding:6px 2px}
-        .cover-strip .ph{flex:0 0 132px;aspect-ratio:16/9}
+        .ph .cap{position:absolute;left:0;right:0;bottom:0;padding:12px 5px 3px;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;font-size:10px;font-weight:600}
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+        .kpi{background:#fff;border-radius:12px;padding:15px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+        .kpi .l{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px}
+        .kpi .v{font-size:1.4em;font-weight:700;margin-top:4px}.kpi .s{font-size:11px;color:#aaa;margin-top:3px}
         /* Modal */
         .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:18px}
         .modal-ov.open{display:flex}
-        .modal-box{background:#fff;border-radius:14px;max-width:440px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-        .modal-box h3{font-size:16px;font-weight:700;color:#222;margin-bottom:8px}
-        .modal-box p{font-size:13px;color:#666;line-height:1.6;margin-bottom:18px}
-        .modal-actions{display:flex;flex-direction:column;gap:10px}
-        .toast{display:none;position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:13px 22px;border-radius:11px;font-size:14px;z-index:2000;box-shadow:0 4px 16px rgba(0,0,0,.3)}
-        @media(max-width:600px){input,select,textarea{font-size:16px}.card{padding:16px}.container{padding:12px}}
+        .modal-box{background:#fff;border-radius:14px;max-width:460px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+        .modal-box h3{font-size:16px;font-weight:700;margin-bottom:8px}.modal-box p{font-size:13px;color:#666;line-height:1.6;margin-bottom:16px}
+        .modal-actions{display:flex;flex-direction:column;gap:9px}
+        .toast{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:13px 22px;border-radius:11px;font-size:14px;z-index:2000}
+        @media(max-width:600px){input,select,textarea{font-size:16px}.card{padding:15px}.stp{font-size:0}.stp .n{margin:0;font-size:12px}}
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1>Painel Administrativo</h1>
-            <button class="logout-btn" id="logoutBtn">Sair</button>
-        </header>
+        <header class="header"><h1>Painel Administrativo</h1><button class="logout-btn" id="logoutBtn">Sair</button></header>
         <nav class="admin-nav">
-            <a href="/admin/reservas.html">Reservas</a>
-            <a href="/admin/agenda.html">Agenda</a>
-            <a href="/admin/cardapio.html">Cardápio</a>
-            <a href="/admin/blog.html">Blog</a>
-            <a href="/admin/eventos.html" class="active">Eventos</a>
-            <a href="/admin/dashboard.html">Dashboard</a>
+            <a href="/admin/reservas.html">Reservas</a><a href="/admin/agenda.html">Agenda</a>
+            <a href="/admin/cardapio.html">Cardápio</a><a href="/admin/blog.html">Blog</a>
+            <a href="/admin/eventos.html" class="active">Eventos</a><a href="/admin/dashboard.html">Dashboard</a>
         </nav>
 
-        <div class="section-tabs">
-            <div class="section-tab active" data-section="pacotes">Pacotes</div>
-            <div class="section-tab" data-section="simulador">Simulador & Proposta</div>
-            <div class="section-tab" data-section="propostas">Propostas</div>
-            <div class="section-tab" data-section="cenarios">Cenários</div>
-            <div class="section-tab" data-section="config">Configurações</div>
-            <div class="section-tab" data-section="catalogo">Catálogo</div>
+        <div class="tabs">
+            <div class="tab active" data-tab="cotacao">Nova cotação</div>
+            <div class="tab" data-tab="propostas">Propostas</div>
+            <div class="tab" data-tab="pacotes">Pacotes</div>
+            <div class="tab" data-tab="ajustes">Ajustes</div>
+        </div>
+
+        <!-- ============ NOVA COTAÇÃO (wizard) ============ -->
+        <div class="panel active" id="panel-cotacao">
+            <div id="cot-edit" style="display:none;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:13px;align-items:center;justify-content:space-between;gap:10px"><span id="cot-edit-txt"></span><button class="btn btn-sm" style="background:#fff;border:1px solid #fed7aa;color:#9a3412" id="cot-edit-cancel">Cancelar edição</button></div>
+            <div class="steps">
+                <div class="stp active" data-s="1"><span class="n">1</span>Evento</div>
+                <div class="stp" data-s="2"><span class="n">2</span>Pacote</div>
+                <div class="stp" data-s="3"><span class="n">3</span>Preço</div>
+                <div class="stp" data-s="4"><span class="n">4</span>Enviar</div>
+            </div>
+
+            <div class="step active" id="step-1">
+                <div class="card">
+                    <h3>Dados do evento</h3>
+                    <div class="row"><div><label>Empresa / Cliente</label><input id="sim-empresa" placeholder="Nome da empresa"></div><div><label>Contato (nome / WhatsApp)</label><input id="sim-contato" placeholder="Maria — (11) 9..."></div></div>
+                    <div class="row"><div style="max-width:180px"><label>Data do evento</label><input id="sim-data" type="date"></div><div style="max-width:130px"><label>Nº de pessoas</label><input id="sim-pessoas" type="number" min="1" value="50"></div><div style="max-width:130px"><label>Duração (h)</label><input id="sim-duracao" type="number" min="1" step="0.5" value="4"></div></div>
+                </div>
+            </div>
+
+            <div class="step" id="step-2">
+                <div class="card">
+                    <h3>Escolha o pacote</h3>
+                    <input id="cot-pk-search" placeholder="🔎 Filtrar pacote…" style="margin-bottom:12px">
+                    <div id="cot-pk-list" style="max-height:420px;overflow-y:auto"></div>
+                </div>
+                <div class="card" id="cot-pk-detalhe" style="display:none"><h3>O que inclui</h3><div id="cot-pk-itens" class="wrap"></div></div>
+            </div>
+
+            <div class="step" id="step-3">
+                <div class="card">
+                    <h3>Preço & margem</h3>
+                    <div class="row">
+                        <div><label id="sim-preco-label">Preço de venda (por pessoa)</label><input id="sim-preco" type="number" min="0" step="1" value="120"></div>
+                        <div style="max-width:150px"><label>Overhead/pessoa</label><input id="sim-overhead" type="number" min="0" step="1" value="8"></div>
+                        <div style="max-width:150px"><label>Margem-alvo (%)</label><input id="sim-margem" type="number" min="0" max="90" value="45"></div>
+                    </div>
+                    <label style="margin-top:16px">Equipe da noite</label><div class="wrap"><table id="sim-equipe-tbl"></table></div>
+                    <button class="btn btn-ghost btn-sm" id="sim-equipe-add" style="margin-top:8px">+ Função</button>
+                    <label style="margin-top:16px">Custos extras (música, decoração…)</label><div class="wrap"><table id="sim-extras-tbl"></table></div>
+                    <button class="btn btn-ghost btn-sm" id="sim-extras-add" style="margin-top:8px">+ Custo extra</button>
+                </div>
+                <div class="card">
+                    <h3>Resultado</h3>
+                    <div class="resumo">
+                        <div class="r-line"><span>Receita</span><b id="r-receita">—</b></div>
+                        <div class="r-line sub"><span>Consumo (comida & bebida)</span><span id="r-fb">—</span></div>
+                        <div class="r-line sub"><span>Equipe</span><span id="r-equipe">—</span></div>
+                        <div class="r-line sub"><span>Extras</span><span id="r-extras">—</span></div>
+                        <div class="r-line sub"><span>Overhead</span><span id="r-overhead">—</span></div>
+                        <div class="r-line big"><span>Lucro líquido</span><b id="r-lucro">—</b></div>
+                        <div class="r-line"><span>Margem</span><b id="r-margem">—</b></div>
+                    </div>
+                    <div class="hint" id="r-insights" style="margin-top:10px"></div>
+                </div>
+            </div>
+
+            <div class="step" id="step-4">
+                <div class="card">
+                    <h3>Fotos da proposta</h3>
+                    <label>🖼 Capa (escolha 1)</label><div class="cover-strip" id="export-cover"></div>
+                    <label style="margin-top:14px">📸 Galeria <span id="export-count" style="color:#4f1964;font-weight:700"></span></label>
+                    <div id="export-gallery" style="max-height:280px;overflow-y:auto;border:1px solid #eceaf0;border-radius:10px;padding:10px;margin-top:6px"></div>
+                    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:500;cursor:pointer"><input type="checkbox" id="export-default" style="width:auto;margin:0"> Salvar essas fotos como padrão</label>
+                </div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn btn-ghost" id="wz-back" style="visibility:hidden">← Voltar</button>
+                <button class="btn btn-primary" id="wz-next">Próximo →</button>
+            </div>
+        </div>
+
+        <!-- ============ PROPOSTAS ============ -->
+        <div class="panel" id="panel-propostas">
+            <div class="kpi-grid">
+                <div class="kpi"><div class="l">Enviadas</div><div class="v" id="pp-enviadas">—</div></div>
+                <div class="kpi"><div class="l">Em negociação</div><div class="v" id="pp-negoc" style="color:#f59e0b">—</div></div>
+                <div class="kpi"><div class="l">Fechadas</div><div class="v" id="pp-fechadas" style="color:#16a34a">—</div></div>
+                <div class="kpi"><div class="l">Conversão</div><div class="v" id="pp-conv" style="color:#4f1964">—</div><div class="s">fechadas ÷ total</div></div>
+                <div class="kpi"><div class="l">Em pipeline</div><div class="v" id="pp-vpipe">—</div></div>
+                <div class="kpi"><div class="l">Fechado</div><div class="v" id="pp-vfech" style="color:#16a34a">—</div></div>
+            </div>
+            <div class="card"><h3>Propostas enviadas</h3><div class="wrap"><table id="pp-tbl"></table></div></div>
         </div>
 
         <!-- ============ PACOTES ============ -->
-        <div class="section-panel active" id="panel-pacotes">
+        <div class="panel" id="panel-pacotes">
             <div class="card">
-                <h3>Construir pacote</h3>
-                <div class="row">
-                    <div><label>Nome do pacote</label><input id="pk-nome" placeholder="Ex: Open Casa 4h"></div>
-                    <div style="max-width:220px"><label>Tipo</label>
-                        <select id="pk-tipo"><option value="open">Open (por pessoa)</option><option value="item">Por item (fechado)</option></select>
-                    </div>
-                </div>
-
-                <label style="margin-top:18px">Itens do pacote</label>
-                <div class="table-wrap"><table class="fin-table" id="pk-itens-tbl"></table></div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">
-                    <strong id="pk-custo-label" style="font-size:16px;color:#4f1964"></strong>
-                    <div style="display:flex;gap:10px">
-                        <button class="btn btn-ghost btn-sm" id="pk-clear">Limpar</button>
-                        <button class="btn btn-ghost btn-sm" id="perfil-save">Salvar como perfil</button>
-                        <button class="btn btn-primary" id="pk-save">Salvar pacote</button>
-                    </div>
-                </div>
-
-                <label style="margin-top:20px">Adicionar itens — busque ou navegue por categoria e clique para incluir</label>
-                <input id="br-search" placeholder="🔎 Buscar item…">
-                <div class="browser" id="br-list"></div>
+                <h3>Construir / editar pacote</h3>
+                <div class="row"><div><label>Nome</label><input id="pk-nome" placeholder="Ex: Open Especial — 50p"></div><div style="max-width:200px"><label>Tipo</label><select id="pk-tipo"><option value="open">Open (por pessoa)</option><option value="item">Por item (total)</option></select></div></div>
+                <label style="margin-top:16px">Itens</label><div class="wrap"><table id="pk-itens-tbl"></table></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap;gap:8px"><strong id="pk-custo-label" style="font-size:15px;color:#4f1964"></strong><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" id="pk-clear">Limpar</button><button class="btn btn-primary" id="pk-save">Salvar pacote</button></div></div>
+                <label style="margin-top:18px">Adicionar itens — busque e clique</label>
+                <input id="br-search" placeholder="🔎 Buscar item…"><div class="browser" id="br-list"></div>
             </div>
-
-            <div class="card">
-                <h3>Pré-prontos / pacotes salvos</h3>
-                <p class="hint" style="margin-top:-8px;margin-bottom:14px">Clique em <strong>Carregar</strong> para abrir um pacote no construtor, ajustar e salvar como novo. Modelos rápidos abaixo são pontos de partida.</p>
-                <div id="pk-templates" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"></div>
-                <div class="table-wrap"><table class="fin-table" id="pk-saved-tbl"></table></div>
-            </div>
-            <div class="card">
-                <h3>Perfis de consumo salvos</h3>
-                <p class="hint" style="margin-top:-8px;margin-bottom:12px">Um perfil guarda o consumo por pessoa (ex.: 3 caipi, 1 gin, porção a cada 2 pessoas). "Aplicar" monta no construtor pra você ajustar e salvar como pacote.</p>
-                <div class="table-wrap"><table class="fin-table" id="perfil-tbl"></table></div>
-            </div>
+            <div class="card"><h3>Pacotes salvos</h3><div class="wrap"><table id="pk-saved-tbl"></table></div></div>
         </div>
 
-        <!-- ============ SIMULADOR & PROPOSTA ============ -->
-        <div class="section-panel" id="panel-simulador">
-            <div id="edit-banner" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#9a3412;align-items:center;justify-content:space-between;gap:10px">
-                <span id="edit-banner-txt"></span>
-                <button class="btn btn-sm" style="background:#fff;border:1px solid #fed7aa;color:#9a3412" id="edit-cancel">Cancelar edição</button>
-            </div>
+        <!-- ============ AJUSTES ============ -->
+        <div class="panel" id="panel-ajustes">
             <div class="card">
-                <h3>Dados da proposta</h3>
-                <div class="row">
-                    <div><label>Empresa / Cliente</label><input id="sim-empresa" placeholder="Nome da empresa"></div>
-                    <div><label>Contato (nome / WhatsApp)</label><input id="sim-contato" placeholder="Ex: Maria — (11) 9...."></div>
-                </div>
-                <div class="row">
-                    <div style="max-width:180px"><label>Data do evento</label><input id="sim-data" type="date"></div>
-                    <div style="max-width:140px"><label>Nº de pessoas</label><input id="sim-pessoas" type="number" min="1" value="50"></div>
-                    <div style="max-width:140px"><label>Duração (h)</label><input id="sim-duracao" type="number" min="1" step="0.5" value="4"></div>
-                </div>
-            </div>
-            <div class="card">
-                <h3>Pacote & preço</h3>
-                <div class="row">
-                    <div><label>Pacote</label><select id="sim-pacote"></select></div>
-                    <div style="max-width:180px"><label id="sim-preco-label">Preço de venda (por pessoa)</label><input id="sim-preco" type="number" min="0" step="1" value="120"></div>
-                    <div style="max-width:150px"><label>Overhead/pessoa</label><input id="sim-overhead" type="number" min="0" step="1" value="8"></div>
-                    <div style="max-width:150px"><label>Margem-alvo (%)</label><input id="sim-margem" type="number" min="0" max="90" step="1" value="45"></div>
-                </div>
-                <label style="margin-top:18px">Equipe da noite (editável)</label>
-                <div class="table-wrap"><table class="fin-table" id="sim-equipe-tbl"></table></div>
-                <button class="btn btn-ghost btn-sm" id="sim-equipe-add" style="margin-top:10px">+ Função</button>
-                <label style="margin-top:20px">Custos extras (música ao vivo, decoração…)</label>
-                <div class="table-wrap"><table class="fin-table" id="sim-extras-tbl"></table></div>
-                <button class="btn btn-ghost btn-sm" id="sim-extras-add" style="margin-top:10px">+ Custo extra</button>
-            </div>
-
-            <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">Receita</div><div class="kpi-value" id="r-receita">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Custo de Consumo</div><div class="kpi-value" id="r-fb">—</div><div class="kpi-sub" id="r-fb-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Equipe</div><div class="kpi-value" id="r-equipe">—</div><div class="kpi-sub" id="r-equipe-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Extras</div><div class="kpi-value" id="r-extras">—</div><div class="kpi-sub" id="r-extras-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Overhead</div><div class="kpi-value" id="r-overhead">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Lucro líquido</div><div class="kpi-value" id="r-lucro">—</div><div class="kpi-sub" id="r-lucro-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Margem</div><div class="kpi-value" id="r-margem">—</div></div>
-            </div>
-            <div class="card" id="sim-insights" style="font-size:13px;color:#444;line-height:1.7"></div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:24px;flex-wrap:wrap">
-                <input id="sim-cenario-nome" placeholder="Nome do cenário p/ salvar" style="max-width:200px">
-                <button class="btn btn-ghost btn-sm" id="sim-save">Salvar cenário</button>
-                <button class="btn" style="background:#4f1964;color:#fff" id="sim-export">Exportar proposta →</button>
-            </div>
-        </div>
-
-        <!-- ============ CENÁRIOS ============ -->
-        <div class="section-panel" id="panel-cenarios">
-            <div class="card"><h3>Cenários salvos</h3><div class="table-wrap"><table class="fin-table" id="cen-tbl"></table></div></div>
-        </div>
-
-        <div class="section-panel" id="panel-propostas">
-            <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">Enviadas</div><div class="kpi-value" id="pp-enviadas">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Em negociação</div><div class="kpi-value" id="pp-negoc" style="color:#f59e0b">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Fechadas</div><div class="kpi-value" id="pp-fechadas" style="color:#16a34a">—</div></div>
-                <div class="kpi-card"><div class="kpi-label">Taxa de conversão</div><div class="kpi-value" id="pp-conv" style="color:#4f1964">—</div><div class="kpi-sub">fechadas ÷ total</div></div>
-                <div class="kpi-card"><div class="kpi-label">Valor em pipeline</div><div class="kpi-value" id="pp-vpipe">—</div><div class="kpi-sub">enviada + negociação</div></div>
-                <div class="kpi-card"><div class="kpi-label">Valor fechado</div><div class="kpi-value" id="pp-vfech" style="color:#16a34a">—</div></div>
-            </div>
-            <div class="card"><h3>Propostas enviadas</h3><div class="table-wrap"><table class="fin-table" id="pp-tbl"></table></div></div>
-        </div>
-
-        <!-- ============ CONFIGURAÇÕES ============ -->
-        <div class="section-panel" id="panel-config">
-            <div class="card" style="border-left:4px solid #b8860b">
-                <p class="hint" style="margin:0">Edite os textos abaixo. Ao salvar, você escolhe se vale <strong>só para a cotação atual</strong> ou se vira o <strong>novo padrão</strong> das próximas propostas.</p>
-            </div>
-            <div class="card">
-                <h3>Identidade (aparece no PDF)</h3>
+                <h3>Identidade (aparece na proposta)</h3>
                 <div class="row"><div><label>Nome</label><input id="cfg-nome"></div><div><label>Endereço</label><input id="cfg-endereco"></div></div>
                 <div class="row"><div><label>Telefone / WhatsApp</label><input id="cfg-telefone"></div><div><label>Site</label><input id="cfg-site"></div><div><label>Instagram</label><input id="cfg-instagram"></div></div>
             </div>
             <div class="card"><h3>Forma de pagamento</h3><textarea id="cfg-pagamento" rows="3"></textarea></div>
             <div class="card"><h3>Condições gerais</h3><textarea id="cfg-condicoes" rows="5"></textarea></div>
-            <div class="card">
-                <h3>Revista pessoal</h3>
-                <label>Introdução</label><textarea id="cfg-revista-intro" rows="3"></textarea>
-                <div class="row" style="margin-top:8px"><div><label>Itens autorizados (um por linha)</label><textarea id="cfg-autorizados" rows="9"></textarea></div><div><label>Itens proibidos (um por linha)</label><textarea id="cfg-proibidos" rows="9"></textarea></div></div>
-                <label>Observação final</label><textarea id="cfg-revista-obs" rows="3"></textarea>
-            </div>
-            <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:24px">
-                <button class="btn btn-ghost" id="cfg-reset">↺ Restaurar padrão salvo</button>
-                <button class="btn btn-primary" id="cfg-save">Salvar alterações…</button>
-            </div>
-        </div>
-
-        <!-- ============ CATÁLOGO ============ -->
-        <div class="section-panel" id="panel-catalogo">
-            <div class="card">
-                <h3>Catálogo de custos (real — Consumer POS)</h3>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-                    <input id="cat-search" placeholder="Buscar item…" style="flex:1;min-width:180px">
-                    <select id="cat-cat" style="max-width:220px"></select>
-                </div>
-                <div class="table-wrap"><table class="fin-table" id="cat-tbl"></table></div>
-            </div>
+            <div class="card"><h3>Revista pessoal</h3><label>Introdução</label><textarea id="cfg-revista-intro" rows="3"></textarea><div class="row" style="margin-top:8px"><div><label>Autorizados (1 por linha)</label><textarea id="cfg-autorizados" rows="8"></textarea></div><div><label>Proibidos (1 por linha)</label><textarea id="cfg-proibidos" rows="8"></textarea></div></div><label>Observação</label><textarea id="cfg-revista-obs" rows="3"></textarea></div>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:18px"><button class="btn btn-primary" id="cfg-save">Salvar ajustes</button></div>
+            <div class="card"><h3>Catálogo de custos (referência)</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><input id="cat-search" placeholder="Buscar item…" style="flex:1;min-width:160px"><select id="cat-cat" style="max-width:200px"></select></div><div class="wrap"><table id="cat-tbl"></table></div></div>
         </div>
     </div>
 
-    <!-- Modal: escopo das configurações -->
-    <div class="modal-ov" id="cfg-modal">
-        <div class="modal-box">
-            <h3>Aplicar configurações</h3>
-            <p>As alterações nos textos valem só para a proposta que você está montando agora, ou viram o novo padrão para todas as próximas?</p>
-            <div class="modal-actions">
-                <button class="btn btn-gold" id="cfg-default">Gravar como novo padrão</button>
-                <button class="btn btn-ghost" id="cfg-session">Usar só nesta cotação</button>
-                <button class="btn btn-sm" style="background:none;color:#999" id="cfg-cancel">Cancelar</button>
-            </div>
+    <!-- Resultado da proposta -->
+    <div class="modal-ov" id="link-modal"><div class="modal-box">
+        <h3 id="link-title">Proposta gerada 🎉</h3>
+        <p>Mande o link para o cliente — proposta visual com fotos e botão de WhatsApp. Ou baixe o PDF.</p>
+        <input id="link-url" readonly style="margin-bottom:12px;font-size:13px">
+        <div class="modal-actions">
+            <button class="btn btn-primary" id="link-copy">Copiar link</button>
+            <a class="btn btn-ghost" id="link-open" target="_blank" style="text-align:center;text-decoration:none">Abrir proposta</a>
+            <button class="btn btn-gold" id="link-pdf">📄 Baixar PDF</button>
+            <button class="btn btn-sm" style="background:none;color:#999" id="link-close">Fechar</button>
         </div>
-    </div>
-    <div class="modal-ov" id="export-modal">
-        <div class="modal-box modal-wide">
-            <h3>Exportar proposta</h3>
-            <p>Escolha a capa e as fotos da galeria. Já vêm marcadas as recomendadas — ajuste se quiser e gere.</p>
-            <label style="margin-top:4px">🖼 Capa (escolha 1)</label>
-            <div class="cover-strip" id="export-cover"></div>
-            <label style="margin-top:16px">📸 Galeria <span id="export-count" style="color:#4f1964;font-weight:700"></span></label>
-            <div id="export-gallery" style="max-height:300px;overflow-y:auto;border:1px solid #eceaf0;border-radius:10px;padding:10px;margin-top:6px"></div>
-            <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:500;cursor:pointer"><input type="checkbox" id="export-default" style="width:auto;margin:0"> Salvar essa seleção como padrão das próximas</label>
-            <div class="modal-actions" style="margin-top:16px">
-                <button class="btn btn-primary" id="export-go">Gerar proposta →</button>
-                <button class="btn btn-sm" style="background:none;color:#999" id="export-cancel">Cancelar</button>
-            </div>
-        </div>
-    </div>
-    <div class="modal-ov" id="link-modal">
-        <div class="modal-box">
-            <h3 id="link-title">Proposta gerada 🎉</h3>
-            <p>Mande este link para o cliente. Ele abre uma proposta visual e interativa — com fotos do espaço, galeria e botão de WhatsApp direto pra sua linha.</p>
-            <input id="link-url" readonly style="margin-bottom:14px;font-size:13px">
-            <div class="modal-actions">
-                <button class="btn btn-primary" id="link-copy">Copiar link</button>
-                <a class="btn btn-ghost" id="link-open" target="_blank" style="text-align:center;text-decoration:none">Abrir proposta</a>
-                <button class="btn btn-gold" id="link-pdf">📄 Baixar PDF</button>
-                <button class="btn btn-sm" style="background:none;color:#999" id="link-close">Fechar</button>
-            </div>
-        </div>
-    </div>
+    </div></div>
     <div class="toast" id="toast"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         const AUTH_KEY='javari_admin_auth';
-        const session=JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null');
-        if(!session) location.href='/admin/index.html';
+        if(!JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null')) location.href='/admin/index.html';
         const $=id=>document.getElementById(id);
-        $('logoutBtn').addEventListener('click',()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; });
-        const fbCfg={ apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18", authDomain:"central-de-reservas-jsp.firebaseapp.com", projectId:"central-de-reservas-jsp", storageBucket:"central-de-reservas-jsp.firebasestorage.app", appId:"1:574859111927:web:83df67ed1865a59c0392f2" };
-        const db=getFirestore(initializeApp(fbCfg));
+        $('logoutBtn').onclick=()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; };
+        const db=getFirestore(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
         const BASE='artifacts/central-de-reservas-jsp/public/data';
-        const PK_COL=BASE+'/eventos_pacotes', CEN_COL=BASE+'/eventos_cenarios', CFG_COL=BASE+'/eventos_config', PROP_COL=BASE+'/eventos_propostas';
+        const PK_COL=BASE+'/eventos_pacotes', PROP_COL=BASE+'/eventos_propostas', CFG_COL=BASE+'/eventos_config';
         const brl=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
         const fmtDateBR=s=>{ if(!s)return''; const p=String(s).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
         function toast(m){ const t=$('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2600); }
-        document.querySelectorAll('.section-tab').forEach(tab=>tab.addEventListener('click',()=>{ document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.section-panel').forEach(p=>p.classList.remove('active')); tab.classList.add('active'); $('panel-'+tab.dataset.section).classList.add('active'); }));
 
-        // ---------- Catálogo ----------
+        // ----- Tabs -----
+        document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); t.classList.add('active'); $('panel-'+t.dataset.tab).classList.add('active'); });
+
+        // ----- Catálogo -----
         let CATALOGO=[];
         async function loadCatalogo(){
-            try{ const r=await fetch('/data/produtos-consumer.json?v='+Date.now()); const d=await r.json(); CATALOGO=(d.produtos||[]).filter(p=>(p.precoVenda||0)>0||(p.precoCusto||0)>0); }catch(e){ CATALOGO=[]; }
+            try{ const d=await fetch('/data/produtos-consumer.json?v='+Date.now()).then(r=>r.json()); CATALOGO=(d.produtos||[]).filter(p=>(p.precoVenda||0)>0||(p.precoCusto||0)>0); }catch(e){ CATALOGO=[]; }
             const cats=[...new Set(CATALOGO.map(p=>p.categoria||'—'))].sort();
             $('cat-cat').innerHTML='<option value="">Todas categorias</option>'+cats.map(c=>`<option>${c}</option>`).join('');
             renderCatalogo(); renderBrowser();
@@ -332,347 +259,256 @@
         function renderCatalogo(){
             const q=($('cat-search').value||'').toLowerCase(), cat=$('cat-cat').value;
             const rows=CATALOGO.filter(p=>(!q||p.nome.toLowerCase().includes(q))&&(!cat||p.categoria===cat)).sort((a,b)=>(a.categoria||'').localeCompare(b.categoria||'')||a.nome.localeCompare(b.nome)).slice(0,500);
-            let html='<thead><tr><th>Item</th><th>Categoria</th><th class="amount">Custo</th><th class="amount">Venda</th><th class="amount">CMV</th><th class="amount">Margem</th></tr></thead><tbody>', lastCat=null;
-            rows.forEach(p=>{ const v=p.precoVenda||0,c=p.precoCusto||0,cmv=v>0?(c/v*100):null; if(p.categoria!==lastCat){ html+=`<tr class="cat-row"><td colspan="6">${p.categoria||'—'}</td></tr>`; lastCat=p.categoria; } html+=`<tr><td>${p.nome}</td><td>${p.categoria||'—'}</td><td class="amount">${brl(c)}</td><td class="amount">${brl(v)}</td><td class="amount">${cmv==null?'—':cmv.toFixed(0)+'%'}</td><td class="amount">${brl(v-c)}</td></tr>`; });
-            $('cat-tbl').innerHTML=html+'</tbody>';
+            let h='<thead><tr><th>Item</th><th>Categoria</th><th class="amount">Custo</th><th class="amount">Venda</th><th class="amount">CMV</th></tr></thead><tbody>',lc=null;
+            rows.forEach(p=>{ const v=p.precoVenda||0,c=p.precoCusto||0; if(p.categoria!==lc){ h+=`<tr class="cat-row"><td colspan="5">${p.categoria||'—'}</td></tr>`; lc=p.categoria; } h+=`<tr><td>${p.nome}</td><td>${p.categoria||'—'}</td><td class="amount">${brl(c)}</td><td class="amount">${brl(v)}</td><td class="amount">${v>0?(c/v*100).toFixed(0)+'%':'—'}</td></tr>`; });
+            $('cat-tbl').innerHTML=h+'</tbody>';
         }
-        $('cat-search').addEventListener('input',renderCatalogo); $('cat-cat').addEventListener('change',renderCatalogo);
+        $('cat-search').oninput=renderCatalogo; $('cat-cat').onchange=renderCatalogo;
 
-        // ---------- Item browser (adicionar ágil) ----------
+        // ----- Construtor de pacotes (com modo de consumo) -----
+        let pkItens=[], editingPkId=null;
+        const qtdOf=it=> it.modo==='share'?(it.val>0?1/it.val:0):(+it.val||0);
+        function ensureConsumo(it){ if(it.modo!=='pp'&&it.modo!=='share'){ if((it.qtd||0)>0&&it.qtd<1){ it.modo='share'; it.val=Math.round(1/it.qtd)||2; } else { it.modo='pp'; it.val=(it.qtd!=null?it.qtd:1); } } it.qtd=qtdOf(it); return it; }
+        function pushItem(it,qtd){ const ex=pkItens.find(x=>x.codigo===it.codigo); if(ex){ if(ex.modo!=='share') ex.val=(+ex.val||0)+1; ex.qtd=qtdOf(ex); return; } const o={codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0}; if(qtd!=null&&qtd>0&&qtd<1){ o.modo='share'; o.val=Math.round(1/qtd)||2; } else { o.modo='pp'; o.val=(qtd!=null?qtd:1); } o.qtd=qtdOf(o); pkItens.push(o); }
+        const pkCusto=()=>pkItens.reduce((s,i)=>s+i.custoUnit*(i.qtd||0),0);
         function renderBrowser(){
             const q=($('br-search').value||'').toLowerCase();
             const rows=CATALOGO.filter(p=>!q||p.nome.toLowerCase().includes(q)).sort((a,b)=>(a.categoria||'').localeCompare(b.categoria||'')||a.nome.localeCompare(b.nome));
-            let html='', lastCat=null;
-            rows.slice(0,600).forEach(p=>{ if(p.categoria!==lastCat){ html+=`<div class="br-cat">${p.categoria||'—'}</div>`; lastCat=p.categoria; } const inCart=pkItens.find(i=>i.codigo===p.codigo); html+=`<div class="br-item${inCart?' in':''}" data-add="${p.codigo}"><span>${p.nome}</span><span class="br-cost">${brl(p.precoCusto||0)}<b>${inCart?'✓':'+'}</b></span></div>`; });
-            $('br-list').innerHTML=html||'<div style="color:#aaa;padding:14px">Nada encontrado.</div>';
-            $('br-list').querySelectorAll('[data-add]').forEach(el=>el.addEventListener('click',()=>{ const it=CATALOGO.find(p=>String(p.codigo)===el.dataset.add); if(!it)return; pushItem(it,1); renderPkItens(); renderBrowser(); }));
+            let h='',lc=null;
+            rows.slice(0,600).forEach(p=>{ if(p.categoria!==lc){ h+=`<div class="br-cat">${p.categoria||'—'}</div>`; lc=p.categoria; } const inC=pkItens.find(i=>i.codigo===p.codigo); h+=`<div class="br-item${inC?' in':''}" data-add="${p.codigo}"><span>${p.nome}</span><span class="br-cost">${brl(p.precoCusto||0)}<b>${inC?'✓':'+'}</b></span></div>`; });
+            $('br-list').innerHTML=h||'<div style="color:#aaa;padding:14px">Nada encontrado.</div>';
+            $('br-list').querySelectorAll('[data-add]').forEach(el=>el.onclick=()=>{ const it=CATALOGO.find(p=>String(p.codigo)===el.dataset.add); if(it){ pushItem(it,1); renderPkItens(); renderBrowser(); } });
         }
-        $('br-search').addEventListener('input',renderBrowser);
-
-        // ---------- Construtor ----------
-        let pkItens=[], editingId=null;
-        $('pk-tipo').addEventListener('change',()=>renderPkItens());
-        // Consumo: modo 'pp' (val = un/pessoa) ou 'share' (val = serve N pessoas -> qtd = 1/N)
-        const qtdOf=it=> it.modo==='share' ? (it.val>0 ? 1/it.val : 0) : (+it.val||0);
-        function ensureConsumo(it){ if(it.modo!=='pp'&&it.modo!=='share'){ if((it.qtd||0)>0&&it.qtd<1){ it.modo='share'; it.val=Math.round(1/it.qtd)||2; } else { it.modo='pp'; it.val=(it.qtd!=null?it.qtd:1); } } it.qtd=qtdOf(it); return it; }
-        function pushItem(it, qtd){ const ex=pkItens.find(x=>x.codigo===it.codigo); if(ex){ if(ex.modo!=='share') ex.val=(+ex.val||0)+1; ex.qtd=qtdOf(ex); return; } const o={codigo:it.codigo,nome:it.nome,categoria:it.categoria||'—',custoUnit:it.precoCusto||0,precoVenda:it.precoVenda||0}; if(qtd!=null&&qtd>0&&qtd<1){ o.modo='share'; o.val=Math.round(1/qtd)||2; } else { o.modo='pp'; o.val=(qtd!=null?qtd:1); } o.qtd=qtdOf(o); pkItens.push(o); }
-        function pkCusto(){ return pkItens.reduce((s,i)=>s+i.custoUnit*(i.qtd||0),0); }
+        $('br-search').oninput=renderBrowser;
+        $('pk-tipo').onchange=renderPkItens;
         function renderPkItens(){
             const tipo=$('pk-tipo').value;
             if(tipo==='open') pkItens.forEach(ensureConsumo);
-            if(!pkItens.length){ $('pk-itens-tbl').innerHTML='<tbody><tr><td style="color:#aaa">Nenhum item ainda — busque ou navegue abaixo e clique para incluir.</td></tr></tbody>'; }
+            if(!pkItens.length){ $('pk-itens-tbl').innerHTML='<tbody><tr><td style="color:#aaa">Nenhum item — busque abaixo e clique pra incluir.</td></tr></tbody>'; }
             else{
                 const byCat={}; pkItens.forEach((i,ix)=>{ (byCat[i.categoria]=byCat[i.categoria]||[]).push(ix); });
-                let html=`<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>${tipo==='open'?'Consumo':'Qtd total'}</th><th class="amount">Custo</th><th></th></tr></thead><tbody>`;
-                Object.keys(byCat).sort().forEach(cat=>{ html+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`; byCat[cat].forEach(ix=>{ const i=pkItens[ix]; let cell;
-                    if(tipo==='open'){ cell=`<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><select class="cm-sel" data-i="${ix}" style="padding:4px 6px;font-size:12px"><option value="pp"${i.modo==='pp'?' selected':''}>por pessoa</option><option value="share"${i.modo==='share'?' selected':''}>1 a cada</option></select><input class="cm-val" data-i="${ix}" type="number" min="0" step="${i.modo==='pp'?'0.5':'1'}" value="${i.val}" style="max-width:56px;padding:4px 6px;font-size:12px;text-align:right"><span class="cm-lbl" style="font-size:11px;color:#999">${i.modo==='pp'?'un/pessoa':'pessoas'} → ${qtdOf(i).toFixed(2)}/pess</span></div>`; }
-                    else { cell=`<div style="display:flex;align-items:center;gap:4px"><button class="qbtn" data-d="${ix}" data-inc="-1">−</button><strong style="min-width:26px;display:inline-block;text-align:center">${i.qtd}</strong><button class="qbtn" data-d="${ix}" data-inc="1">+1</button><button class="qbtn" data-d="${ix}" data-inc="5">+5</button><button class="qbtn" data-d="${ix}" data-inc="10">+10</button></div>`; }
-                    html+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td>${cell}</td><td class="amount cst">${brl(i.custoUnit*(i.qtd||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`; }); });
-                $('pk-itens-tbl').innerHTML=html+'</tbody>';
-                $('pk-itens-tbl').querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.d; pkItens[i].qtd=Math.max(0,(pkItens[i].qtd||0)+(+b.dataset.inc)); pkItens[i].val=pkItens[i].qtd; if(pkItens[i].qtd===0)pkItens.splice(i,1); renderPkItens(); renderBrowser(); }));
-                $('pk-itens-tbl').querySelectorAll('.cm-sel').forEach(s=>s.addEventListener('change',()=>{ const i=+s.dataset.i; pkItens[i].modo=s.value; if(pkItens[i].modo==='share'&&(!pkItens[i].val||pkItens[i].val<1))pkItens[i].val=2; pkItens[i].qtd=qtdOf(pkItens[i]); renderPkItens(); }));
-                $('pk-itens-tbl').querySelectorAll('.cm-val').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.i; pkItens[i].val=parseFloat(inp.value)||0; pkItens[i].qtd=qtdOf(pkItens[i]); const tr=inp.closest('tr'); tr.querySelector('.cst').textContent=brl(pkItens[i].custoUnit*pkItens[i].qtd); tr.querySelector('.cm-lbl').textContent=`${pkItens[i].modo==='pp'?'un/pessoa':'pessoas'} → ${qtdOf(pkItens[i]).toFixed(2)}/pess`; $('pk-custo-label').textContent=`Custo de consumo por pessoa: ${brl(pkCusto())}`; }));
-                $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); renderBrowser(); }));
+                let h=`<thead><tr><th>Item</th><th class="amount">Custo un.</th><th>${tipo==='open'?'Consumo':'Qtd total'}</th><th class="amount">Custo</th><th></th></tr></thead><tbody>`;
+                Object.keys(byCat).sort().forEach(cat=>{ h+=`<tr class="cat-row"><td colspan="5">${cat}</td></tr>`; byCat[cat].forEach(ix=>{ const i=pkItens[ix]; let cell;
+                    if(tipo==='open'){ cell=`<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap"><select class="cm-sel" data-i="${ix}" style="padding:4px 6px;font-size:12px;width:auto"><option value="pp"${i.modo==='pp'?' selected':''}>por pessoa</option><option value="share"${i.modo==='share'?' selected':''}>1 a cada</option></select><input class="cm-val" data-i="${ix}" type="number" min="0" step="${i.modo==='pp'?'0.5':'1'}" value="${i.val}" style="max-width:54px;padding:4px 6px;font-size:12px;text-align:right"><span class="cm-lbl" style="font-size:11px;color:#999">${i.modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(i).toFixed(2)}</span></div>`; }
+                    else cell=`<div style="display:flex;align-items:center;gap:4px"><button class="qbtn" data-d="${ix}" data-inc="-1">−</button><strong style="min-width:24px;display:inline-block;text-align:center">${i.qtd}</strong><button class="qbtn" data-d="${ix}" data-inc="1">+1</button><button class="qbtn" data-d="${ix}" data-inc="5">+5</button></div>`;
+                    h+=`<tr><td>${i.nome}</td><td class="amount">${brl(i.custoUnit)}</td><td>${cell}</td><td class="amount cst">${brl(i.custoUnit*(i.qtd||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rm="${ix}">×</button></td></tr>`; }); });
+                $('pk-itens-tbl').innerHTML=h+'</tbody>';
+                $('pk-itens-tbl').querySelectorAll('[data-inc]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.d; pkItens[i].qtd=Math.max(0,(pkItens[i].qtd||0)+(+b.dataset.inc)); pkItens[i].val=pkItens[i].qtd; if(pkItens[i].qtd===0)pkItens.splice(i,1); renderPkItens(); renderBrowser(); });
+                $('pk-itens-tbl').querySelectorAll('.cm-sel').forEach(s=>s.onchange=()=>{ const i=+s.dataset.i; pkItens[i].modo=s.value; if(pkItens[i].modo==='share'&&(!pkItens[i].val||pkItens[i].val<1))pkItens[i].val=2; pkItens[i].qtd=qtdOf(pkItens[i]); renderPkItens(); });
+                $('pk-itens-tbl').querySelectorAll('.cm-val').forEach(inp=>inp.oninput=()=>{ const i=+inp.dataset.i; pkItens[i].val=parseFloat(inp.value)||0; pkItens[i].qtd=qtdOf(pkItens[i]); const tr=inp.closest('tr'); tr.querySelector('.cst').textContent=brl(pkItens[i].custoUnit*pkItens[i].qtd); tr.querySelector('.cm-lbl').textContent=`${pkItens[i].modo==='pp'?'un/pess':'pessoas'} → ${qtdOf(pkItens[i]).toFixed(2)}`; updPkLabel(); });
+                $('pk-itens-tbl').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ pkItens.splice(+b.dataset.rm,1); renderPkItens(); renderBrowser(); });
             }
-            $('pk-custo-label').textContent=tipo==='open'?`Custo de consumo por pessoa: ${brl(pkCusto())}`:`Custo de consumo total: ${brl(pkCusto())}`;
+            updPkLabel();
         }
-        $('pk-clear').addEventListener('click',()=>{ pkItens=[]; $('pk-nome').value=''; editingId=null; renderPkItens(); renderBrowser(); });
-        $('pk-save').addEventListener('click',async()=>{
-            const nome=$('pk-nome').value.trim(); if(!nome){ toast('Dê um nome ao pacote'); return; } if(!pkItens.length){ toast('Adicione ao menos 1 item'); return; }
-            try{ await addDoc(collection(db,PK_COL),{nome,tipo:$('pk-tipo').value,itens:pkItens,custo:pkCusto(),criadoEm:new Date().toISOString()}); toast(editingId?'Salvo como novo pacote':'Pacote salvo'); pkItens=[]; $('pk-nome').value=''; editingId=null; renderPkItens(); renderBrowser(); loadPacotes(); }catch(e){ toast('Erro: '+e.message); }
-        });
+        function updPkLabel(){ $('pk-custo-label').textContent=$('pk-tipo').value==='open'?`Custo de consumo por pessoa: ${brl(pkCusto())}`:`Custo total: ${brl(pkCusto())}`; }
+        $('pk-clear').onclick=()=>{ pkItens=[]; $('pk-nome').value=''; editingPkId=null; renderPkItens(); renderBrowser(); };
+        $('pk-save').onclick=async()=>{ const nome=$('pk-nome').value.trim(); if(!nome)return toast('Dê um nome'); if(!pkItens.length)return toast('Adicione itens'); if($('pk-tipo').value==='open')pkItens.forEach(ensureConsumo); try{ await addDoc(collection(db,PK_COL),{nome,tipo:$('pk-tipo').value,itens:pkItens,custo:pkCusto(),criadoEm:new Date().toISOString()}); toast('Pacote salvo'); pkItens=[]; $('pk-nome').value=''; editingPkId=null; renderPkItens(); renderBrowser(); loadPacotes(); }catch(e){ toast('Erro: '+e.message); } };
 
-        // ---------- Modelos rápidos ----------
-        const TEMPLATES=[
-            {nome:'Open Casa', tipo:'open', itens:[[['caipirinha','barreiro'],3],[['eisenbahn','pilsen','long'],2],[['gin','tonica'],1],[['água','sem gás'],2],[['coxinha'],0.3]]},
-            {nome:'Open Premium', tipo:'open', itens:[[['caipirinha','absolut'],2],[['patagonia','ipa'],2],[['gin','tonica'],2],[['jarra','suco'],0.4],[['dadinho'],0.3]]},
-            {nome:'Híbrido (sem cerveja)', tipo:'open', itens:[[['caipirinha','barreiro'],3],[['gin','tonica'],1],[['água','sem gás'],2],[['coxinha'],0.3]]},
-        ];
-        function renderTemplates(){
-            $('pk-templates').innerHTML=TEMPLATES.map((t,i)=>`<button class="pill" data-tpl="${i}">＋ ${t.nome}</button>`).join('');
-            $('pk-templates').querySelectorAll('[data-tpl]').forEach(b=>b.addEventListener('click',()=>{ const t=TEMPLATES[+b.dataset.tpl]; pkItens=[]; editingId=null; $('pk-tipo').value=t.tipo; $('pk-nome').value=t.nome; let faltou=0; t.itens.forEach(([kw,q])=>{ const it=CATALOGO.find(p=>{const n=p.nome.toLowerCase(); return kw.every(k=>n.includes(k));}); if(it){ pushItem(it,q); } else faltou++; }); renderPkItens(); renderBrowser(); window.scrollTo({top:0,behavior:'smooth'}); if(faltou)toast(`${faltou} item(s) não encontrado(s)`); }));
-        }
-
-        // ---------- Perfis de consumo ----------
-        const PERFIS_COL=BASE+'/eventos_perfis';
-        let PERFIS=[];
-        $('perfil-save').addEventListener('click',async()=>{ if(!pkItens.length){ toast('Adicione itens primeiro'); return; } const nome=prompt('Nome do perfil de consumo:', $('pk-nome').value||'Perfil'); if(!nome)return; if($('pk-tipo').value==='open') pkItens.forEach(ensureConsumo); try{ await addDoc(collection(db,PERFIS_COL),{nome,itens:JSON.parse(JSON.stringify(pkItens)),criadoEm:new Date().toISOString()}); toast('Perfil salvo'); loadPerfis(); }catch(e){ toast('Erro: '+e.message); } });
-        async function loadPerfis(){
-            try{ const s=await getDocs(collection(db,PERFIS_COL)); PERFIS=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){ PERFIS=[]; }
-            $('perfil-tbl').innerHTML=PERFIS.length?`<thead><tr><th>Perfil</th><th class="amount">Itens</th><th></th></tr></thead><tbody>${PERFIS.map((p,ix)=>`<tr><td>${p.nome}</td><td class="amount">${(p.itens||[]).length}</td><td class="amount"><button class="btn btn-ghost btn-sm" data-pa="${ix}">aplicar</button> <button class="btn btn-danger btn-sm" data-pd="${p.id}">×</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum perfil salvo. Monte um consumo no construtor e clique "Salvar como perfil".</td></tr></tbody>';
-            $('perfil-tbl').querySelectorAll('[data-pa]').forEach(b=>b.addEventListener('click',()=>{ const p=PERFIS[+b.dataset.pa]; pkItens=JSON.parse(JSON.stringify(p.itens||[])); pkItens.forEach(it=>{ if(!it.categoria){ const c=CATALOGO.find(x=>x.codigo===it.codigo); it.categoria=c?c.categoria:'—'; } ensureConsumo(it); }); $('pk-tipo').value='open'; editingId=null; renderPkItens(); renderBrowser(); document.querySelector('.section-tab[data-section="pacotes"]').click(); window.scrollTo({top:0,behavior:'smooth'}); toast('Perfil aplicado — ajuste e salve como pacote'); }));
-            $('perfil-tbl').querySelectorAll('[data-pd]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir perfil?'))return; await deleteDoc(doc(db,PERFIS_COL,b.dataset.pd)); loadPerfis(); }));
-        }
-
-        // ---------- Pacotes salvos ----------
+        // ----- Pacotes salvos -----
         let PACOTES=[];
-        function loadPacoteToBuilder(p){ pkItens=JSON.parse(JSON.stringify(p.itens||[])); pkItens.forEach(i=>{ if(!i.categoria){ const c=CATALOGO.find(x=>x.codigo===i.codigo); i.categoria=c?c.categoria:'—'; } }); $('pk-nome').value=p.nome; $('pk-tipo').value=p.tipo; editingId=p.id; renderPkItens(); renderBrowser(); document.querySelector('.section-tab[data-section="pacotes"]').click(); window.scrollTo({top:0,behavior:'smooth'}); toast('Pacote carregado no construtor'); }
+        function loadPkToBuilder(p){ pkItens=JSON.parse(JSON.stringify(p.itens||[])); pkItens.forEach(it=>{ if(!it.categoria){ const c=CATALOGO.find(x=>x.codigo===it.codigo); it.categoria=c?c.categoria:'—'; } }); $('pk-nome').value=p.nome; $('pk-tipo').value=p.tipo; editingPkId=p.id; renderPkItens(); renderBrowser(); document.querySelector('.tab[data-tab="pacotes"]').click(); window.scrollTo({top:0,behavior:'smooth'}); toast('Pacote no construtor — ajuste e salve'); }
         async function loadPacotes(){
-            try{ const s=await getDocs(collection(db,PK_COL)); PACOTES=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){ PACOTES=[]; }
-            $('pk-saved-tbl').innerHTML=PACOTES.length?`<thead><tr><th>Pacote</th><th>Tipo</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${
-                PACOTES.map((p,ix)=>`<tr><td>${p.nome}</td><td><span class="pill-tipo tipo-${p.tipo}">${p.tipo==='open'?'open/pessoa':'por item'}</span></td><td class="amount">${brl(p.custo)}${p.tipo==='open'?'/pax':''}</td><td class="amount"><button class="btn btn-ghost btn-sm" data-load="${ix}">Carregar</button> <button class="btn btn-danger btn-sm" data-del="${p.id}">excluir</button></td></tr>`).join('')
-            }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum pacote salvo. Monte um acima e salve — ele vira um pré-pronto reutilizável.</td></tr></tbody>';
-            $('pk-saved-tbl').querySelectorAll('[data-load]').forEach(b=>b.addEventListener('click',()=>loadPacoteToBuilder(PACOTES[+b.dataset.load])));
-            $('pk-saved-tbl').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir este pacote?'))return; await deleteDoc(doc(db,PK_COL,b.dataset.del)); loadPacotes(); }));
-            $('sim-pacote').innerHTML=PACOTES.length?PACOTES.map(p=>`<option value="${p.id}">${p.nome} (${p.tipo==='open'?'open':'item'})</option>`).join(''):'<option value="">— crie um pacote primeiro —</option>';
-            simular();
+            try{ PACOTES=(await getDocs(collection(db,PK_COL))).docs.map(d=>({id:d.id,...d.data()})); }catch(e){ PACOTES=[]; }
+            PACOTES.sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+            $('pk-saved-tbl').innerHTML=PACOTES.length?`<thead><tr><th>Pacote</th><th>Tipo</th><th class="amount">Custo</th><th></th></tr></thead><tbody>${PACOTES.map((p,ix)=>`<tr><td>${p.nome}</td><td><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></td><td class="amount">${brl(p.custo)}${p.tipo==='open'?'/pax':''}</td><td class="amount"><button class="btn btn-ghost btn-sm" data-ld="${ix}">editar</button> <button class="btn btn-danger btn-sm" data-dl="${p.id}">×</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum pacote salvo.</td></tr></tbody>';
+            $('pk-saved-tbl').querySelectorAll('[data-ld]').forEach(b=>b.onclick=()=>loadPkToBuilder(PACOTES[+b.dataset.ld]));
+            $('pk-saved-tbl').querySelectorAll('[data-dl]').forEach(b=>b.onclick=async()=>{ if(!confirm('Excluir pacote?'))return; await deleteDoc(doc(db,PK_COL,b.dataset.dl)); loadPacotes(); });
+            renderCotPkList();
         }
 
-        // ---------- Equipe ----------
+        // ----- Wizard: passo 2 (escolher pacote) -----
+        let cotPacoteId=null;
+        $('cot-pk-search').oninput=renderCotPkList;
+        function renderCotPkList(){
+            const q=($('cot-pk-search').value||'').toLowerCase();
+            const list=PACOTES.filter(p=>!q||p.nome.toLowerCase().includes(q));
+            $('cot-pk-list').innerHTML=list.length?list.map(p=>`<div class="pk-opt${cotPacoteId===p.id?' sel':''}" data-pk="${p.id}"><div class="t"><span>${p.nome}</span><span class="pill tipo-${p.tipo}">${p.tipo==='open'?'por pessoa':'total'}</span></div><div class="d">${(p.itens||[]).length} itens · custo ${brl(p.custo)}${p.tipo==='open'?'/pessoa':''}</div></div>`).join(''):'<p class="hint">Nenhum pacote. Crie um na aba Pacotes.</p>';
+            $('cot-pk-list').querySelectorAll('[data-pk]').forEach(el=>el.onclick=()=>{ cotPacoteId=el.dataset.pk; renderCotPkList(); showPkDetalhe(); });
+            if(cotPacoteId&&!list.find(p=>p.id===cotPacoteId)) cotPacoteId=null;
+        }
+        function showPkDetalhe(){
+            const p=PACOTES.find(x=>x.id===cotPacoteId); if(!p){ $('cot-pk-detalhe').style.display='none'; return; }
+            $('cot-pk-detalhe').style.display='block';
+            $('cot-pk-itens').innerHTML=`<table><tbody>${(p.itens||[]).map(i=>`<tr><td>${i.nome}</td><td class="amount">${p.tipo==='open'?consumoLabel(i)+' /pessoa':i.qtd+' un'}</td></tr>`).join('')}</tbody></table>`;
+            $('sim-preco-label').textContent=p.tipo==='item'?'Preço de venda (total)':'Preço de venda (por pessoa)';
+            renderResumo();
+        }
+        function consumoLabel(i){ ensureConsumo(i); return i.modo==='share'?`1 a cada ${i.val}`:`${i.val}`; }
+
+        // ----- Equipe -----
         let equipe=[{funcao:'Atendimento/Limpeza',qtd:2,custoUnit:150},{funcao:'Bar',qtd:2,custoUnit:150},{funcao:'Recepção',qtd:1,custoUnit:150},{funcao:'Cozinha',qtd:2,custoUnit:150},{funcao:'Gerente',qtd:1,custoUnit:300}];
         const equipeTotal=()=>equipe.reduce((s,e)=>s+(e.qtd||0)*(e.custoUnit||0),0);
         function renderEquipe(){
-            $('sim-equipe-tbl').innerHTML=`<thead><tr><th>Função</th><th class="amount">Qtd</th><th class="amount">R$/un</th><th class="amount">Total</th><th></th></tr></thead><tbody>${
-                equipe.map((e,ix)=>`<tr><td><input data-f="${ix}" data-k="funcao" value="${e.funcao}" style="padding:6px 9px;font-size:13px"></td><td class="amount"><input data-f="${ix}" data-k="qtd" type="number" min="0" value="${e.qtd}" style="padding:6px 9px;font-size:13px;max-width:64px;text-align:right"></td><td class="amount"><input data-f="${ix}" data-k="custoUnit" type="number" min="0" value="${e.custoUnit}" style="padding:6px 9px;font-size:13px;max-width:78px;text-align:right"></td><td class="amount">${brl((e.qtd||0)*(e.custoUnit||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rme="${ix}">×</button></td></tr>`).join('')
-            }<tr><td><strong>Total equipe</strong></td><td></td><td></td><td class="amount"><strong>${brl(equipeTotal())}</strong></td><td></td></tr></tbody>`;
-            $('sim-equipe-tbl').querySelectorAll('input[data-f]').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.f,k=inp.dataset.k; equipe[i][k]=k==='funcao'?inp.value:(parseFloat(inp.value)||0); simular(); const last=$('sim-equipe-tbl').querySelector('tbody tr:last-child td.amount strong'); if(last)last.textContent=brl(equipeTotal()); }));
-            $('sim-equipe-tbl').querySelectorAll('[data-rme]').forEach(b=>b.addEventListener('click',()=>{ equipe.splice(+b.dataset.rme,1); renderEquipe(); simular(); }));
+            $('sim-equipe-tbl').innerHTML=`<thead><tr><th>Função</th><th class="amount">Qtd</th><th class="amount">R$/un</th><th class="amount">Total</th><th></th></tr></thead><tbody>${equipe.map((e,ix)=>`<tr><td><input data-f="${ix}" data-k="funcao" value="${e.funcao}" style="padding:5px 8px;font-size:12px"></td><td class="amount"><input data-f="${ix}" data-k="qtd" type="number" min="0" value="${e.qtd}" style="padding:5px 8px;font-size:12px;max-width:58px;text-align:right"></td><td class="amount"><input data-f="${ix}" data-k="custoUnit" type="number" min="0" value="${e.custoUnit}" style="padding:5px 8px;font-size:12px;max-width:74px;text-align:right"></td><td class="amount">${brl((e.qtd||0)*(e.custoUnit||0))}</td><td class="amount"><button class="btn btn-danger btn-sm" data-rme="${ix}">×</button></td></tr>`).join('')}<tr><td><strong>Total</strong></td><td></td><td></td><td class="amount"><strong>${brl(equipeTotal())}</strong></td><td></td></tr></tbody>`;
+            $('sim-equipe-tbl').querySelectorAll('input[data-f]').forEach(inp=>inp.oninput=()=>{ const i=+inp.dataset.f,k=inp.dataset.k; equipe[i][k]=k==='funcao'?inp.value:(parseFloat(inp.value)||0); renderResumo(); const last=$('sim-equipe-tbl').querySelector('tbody tr:last-child td.amount strong'); if(last)last.textContent=brl(equipeTotal()); });
+            $('sim-equipe-tbl').querySelectorAll('[data-rme]').forEach(b=>b.onclick=()=>{ equipe.splice(+b.dataset.rme,1); renderEquipe(); renderResumo(); });
         }
-        $('sim-equipe-add').addEventListener('click',()=>{ equipe.push({funcao:'Nova função',qtd:1,custoUnit:150}); renderEquipe(); simular(); });
+        $('sim-equipe-add').onclick=()=>{ equipe.push({funcao:'Nova função',qtd:1,custoUnit:150}); renderEquipe(); renderResumo(); };
 
-        // ---------- Extras (absorver/repassar) ----------
+        // ----- Extras (absorver/repassar) -----
         let extras=[{desc:'Música ao vivo',valor:0,repassar:false}];
-        const extrasTotal=()=>extras.reduce((s,e)=>s+(e.valor||0),0);
-        const extrasAbsorvidos=()=>extras.reduce((s,e)=>s+(e.repassar?0:(e.valor||0)),0);
-        const extrasRepassados=()=>extras.reduce((s,e)=>s+(e.repassar?(e.valor||0):0),0);
+        const exTot=()=>extras.reduce((s,e)=>s+(e.valor||0),0), exAbs=()=>extras.reduce((s,e)=>s+(e.repassar?0:(e.valor||0)),0), exRep=()=>extras.reduce((s,e)=>s+(e.repassar?(e.valor||0):0),0);
         function renderExtras(){
-            $('sim-extras-tbl').innerHTML=`<thead><tr><th>Descrição</th><th class="amount">Valor (R$)</th><th>Cobrança</th><th></th></tr></thead><tbody>${
-                extras.map((e,ix)=>`<tr><td><input data-x="${ix}" data-k="desc" value="${e.desc}" style="padding:6px 9px;font-size:13px"></td><td class="amount"><input data-x="${ix}" data-k="valor" type="number" min="0" value="${e.valor}" style="padding:6px 9px;font-size:13px;max-width:100px;text-align:right"></td><td><select data-x="${ix}" data-k="repassar" style="padding:6px 9px;font-size:13px"><option value="absorver"${!e.repassar?' selected':''}>Absorver</option><option value="repassar"${e.repassar?' selected':''}>Repassar ao cliente</option></select></td><td class="amount"><button class="btn btn-danger btn-sm" data-rmx="${ix}">×</button></td></tr>`).join('')
-            }<tr><td><strong>Total extras</strong></td><td class="amount"><strong>${brl(extrasTotal())}</strong></td><td colspan="2" style="font-size:11px;color:#999">repassado ${brl(extrasRepassados())} · absorvido ${brl(extrasAbsorvidos())}</td></tr></tbody>`;
-            $('sim-extras-tbl').querySelectorAll('input[data-x]').forEach(inp=>inp.addEventListener('input',()=>{ const i=+inp.dataset.x,k=inp.dataset.k; extras[i][k]=k==='valor'?(parseFloat(inp.value)||0):inp.value; simular(); const f=$('sim-extras-tbl').querySelector('tbody tr:last-child'); if(f){ f.children[1].querySelector('strong').textContent=brl(extrasTotal()); f.children[2].textContent=`repassado ${brl(extrasRepassados())} · absorvido ${brl(extrasAbsorvidos())}`; } }));
-            $('sim-extras-tbl').querySelectorAll('select[data-x]').forEach(s=>s.addEventListener('change',()=>{ extras[+s.dataset.x].repassar=(s.value==='repassar'); renderExtras(); simular(); }));
-            $('sim-extras-tbl').querySelectorAll('[data-rmx]').forEach(b=>b.addEventListener('click',()=>{ extras.splice(+b.dataset.rmx,1); renderExtras(); simular(); }));
+            $('sim-extras-tbl').innerHTML=`<thead><tr><th>Descrição</th><th class="amount">Valor</th><th>Cobrança</th><th></th></tr></thead><tbody>${extras.map((e,ix)=>`<tr><td><input data-x="${ix}" data-k="desc" value="${e.desc}" style="padding:5px 8px;font-size:12px"></td><td class="amount"><input data-x="${ix}" data-k="valor" type="number" min="0" value="${e.valor}" style="padding:5px 8px;font-size:12px;max-width:90px;text-align:right"></td><td><select data-x="${ix}" data-k="repassar" style="padding:5px 8px;font-size:12px"><option value="absorver"${!e.repassar?' selected':''}>Absorver</option><option value="repassar"${e.repassar?' selected':''}>Repassar</option></select></td><td class="amount"><button class="btn btn-danger btn-sm" data-rmx="${ix}">×</button></td></tr>`).join('')}</tbody>`;
+            $('sim-extras-tbl').querySelectorAll('input[data-x]').forEach(inp=>inp.oninput=()=>{ const i=+inp.dataset.x,k=inp.dataset.k; extras[i][k]=k==='valor'?(parseFloat(inp.value)||0):inp.value; renderResumo(); });
+            $('sim-extras-tbl').querySelectorAll('select[data-x]').forEach(s=>s.onchange=()=>{ extras[+s.dataset.x].repassar=(s.value==='repassar'); renderResumo(); });
+            $('sim-extras-tbl').querySelectorAll('[data-rmx]').forEach(b=>b.onclick=()=>{ extras.splice(+b.dataset.rmx,1); renderExtras(); renderResumo(); });
         }
-        $('sim-extras-add').addEventListener('click',()=>{ extras.push({desc:'Novo custo',valor:0,repassar:false}); renderExtras(); simular(); });
+        $('sim-extras-add').onclick=()=>{ extras.push({desc:'Novo custo',valor:0,repassar:false}); renderExtras(); renderResumo(); };
 
-        // ---------- Simulador ----------
-        ['sim-pessoas','sim-duracao','sim-preco','sim-overhead','sim-margem'].forEach(id=>$(id).addEventListener('input',simular));
-        $('sim-pacote').addEventListener('change',()=>{ const p=PACOTES.find(x=>x.id===$('sim-pacote').value); $('sim-preco-label').textContent=(p&&p.tipo==='item')?'Preço de venda (total)':'Preço de venda (por pessoa)'; simular(); });
+        // ----- P&L -----
+        ['sim-pessoas','sim-duracao','sim-preco','sim-overhead','sim-margem'].forEach(id=>$(id).oninput=renderResumo);
         function calc(){
-            const p=PACOTES.find(x=>x.id===$('sim-pacote').value); if(!p)return null;
+            const p=PACOTES.find(x=>x.id===cotPacoteId); if(!p)return null;
             const pax=Math.max(parseFloat($('sim-pessoas').value)||0,0), preco=parseFloat($('sim-preco').value)||0, ohpp=parseFloat($('sim-overhead').value)||0;
             const isOpen=p.tipo==='open', custoFBpp=isOpen?p.custo:(pax>0?p.custo/pax:0), custoFB=isOpen?p.custo*pax:p.custo;
-            const eq=equipeTotal(), exAbs=extrasAbsorvidos(), exRep=extrasRepassados(), ex=exAbs+exRep, overhead=ohpp*pax;
-            const pkgReceita=isOpen?preco*pax:preco, receita=pkgReceita+exRep, lucro=receita-custoFB-eq-ex-overhead;
-            return {p,pax,preco,ohpp,isOpen,custoFBpp,custoFB,eq,ex,exAbs,exRep,overhead,pkgReceita,receita,lucro,margem:receita>0?lucro/receita*100:0};
+            const eq=equipeTotal(), a=exAbs(), r=exRep(), overhead=ohpp*pax;
+            const pkgReceita=isOpen?preco*pax:preco, receita=pkgReceita+r, lucro=receita-custoFB-eq-a-r-overhead;
+            return {p,pax,preco,ohpp,isOpen,custoFBpp,custoFB,eq,exA:a,exR:r,ex:a+r,overhead,pkgReceita,receita,lucro,margem:receita>0?lucro/receita*100:0};
         }
-        function simular(){
+        function renderResumo(){
             const c=calc();
-            if(!c){ ['r-receita','r-fb','r-equipe','r-extras','r-overhead','r-lucro','r-margem'].forEach(id=>{$(id).textContent='—';$(id).className='kpi-value';}); ['r-fb-sub','r-equipe-sub','r-extras-sub','r-lucro-sub'].forEach(id=>$(id).textContent=''); $('sim-insights').innerHTML='<span style="color:#aaa">Crie e selecione um pacote para simular.</span>'; return; }
-            $('r-receita').textContent=brl(c.receita);
-            $('r-fb').textContent=brl(c.custoFB); $('r-fb-sub').textContent=c.isOpen?`${brl(c.p.custo)}/pessoa`:'fixo';
-            $('r-equipe').textContent=brl(c.eq); $('r-equipe-sub').textContent=c.pax>0?`${brl(c.eq/c.pax)}/pessoa`:'';
-            $('r-extras').textContent=brl(c.ex); $('r-extras-sub').textContent=c.ex?`${brl(c.exRep)} repassado · ${brl(c.exAbs)} absorvido`:'';
-            $('r-overhead').textContent=brl(c.overhead);
-            $('r-lucro').textContent=brl(c.lucro); $('r-lucro').className='kpi-value '+(c.lucro>=0?'pos':'neg'); $('r-lucro-sub').textContent=c.pax>0?`${brl(c.lucro/c.pax)}/pessoa`:'';
-            $('r-margem').textContent=c.receita>0?c.margem.toFixed(1)+'%':'—'; $('r-margem').className='kpi-value '+(c.margem>=0?'pos':'neg');
+            if(!c){ ['r-receita','r-fb','r-equipe','r-extras','r-overhead','r-lucro','r-margem'].forEach(id=>$(id).textContent='—'); $('r-insights').textContent='Escolha um pacote no passo anterior.'; return; }
+            $('r-receita').textContent=brl(c.receita); $('r-fb').textContent=brl(c.custoFB); $('r-equipe').textContent=brl(c.eq); $('r-extras').textContent=brl(c.ex); $('r-overhead').textContent=brl(c.overhead);
+            $('r-lucro').textContent=brl(c.lucro); $('r-lucro').className=c.lucro>=0?'pos':'neg';
+            $('r-margem').textContent=c.receita>0?c.margem.toFixed(1)+'%':'—'; $('r-margem').className=c.margem>=0?'pos':'neg';
             let ins='';
-            if(c.isOpen){ const fixo=c.eq+c.exAbs, contrib=c.preco-c.custoFBpp-c.ohpp; const be=contrib>0?Math.ceil(fixo/contrib):null;
-                ins+=be!=null?`<div>⚖️ <strong>Ponto de equilíbrio:</strong> ${be} pessoas (cobre equipe + extras absorvidos).</div>`:`<div class="neg">⚠️ Preço não cobre o custo variável por pessoa.</div>`;
-                const m=(parseFloat($('sim-margem').value)||0)/100, precoSug=(1-m)>0?(c.custoFBpp+c.ohpp+(c.pax>0?fixo/c.pax:0))/(1-m):0;
-                ins+=`<div>🎯 Para <strong>${(m*100).toFixed(0)}% de margem</strong> com ${c.pax} pessoas: preço sugerido <strong>${brl(precoSug)}/pessoa</strong>.</div>`;
-            } else ins+=`<div>Pacote por item (custo fixo). Lucro escala com o preço total negociado.</div>`;
-            ins+=`<div style="margin-top:8px;color:#999">Custo total do evento: ${brl(c.custoFB+c.eq+c.ex+c.overhead)} · ${c.pax} pessoas · ${$('sim-duracao').value}h</div>`;
-            $('sim-insights').innerHTML=ins;
-        }
-        $('sim-save').addEventListener('click',async()=>{
-            const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
-            const nome=$('sim-cenario-nome').value.trim()||`${c.p.nome} · ${c.pax}px`;
-            try{ await addDoc(collection(db,CEN_COL),{nome,empresa:$('sim-empresa').value,contato:$('sim-contato').value,dataEvento:$('sim-data').value,pacote:c.p.nome,tipo:c.p.tipo,pessoas:c.pax,duracao:$('sim-duracao').value,preco:c.preco,equipe:JSON.parse(JSON.stringify(equipe)),extras:JSON.parse(JSON.stringify(extras)),custoFB:c.custoFB,receita:c.receita,lucro:c.lucro,margem:c.margem,criadoEm:new Date().toISOString()}); toast('Cenário salvo'); $('sim-cenario-nome').value=''; loadCenarios(); }catch(e){ toast('Erro: '+e.message); }
-        });
-
-        // ---------- Gerar proposta (link público) ----------
-        let editingPropostaId=null;
-        function showEditBanner(empresa){ editingPropostaId&&($('edit-banner-txt').textContent=`✏️ Editando a proposta de "${empresa||'—'}" — ao gerar, o mesmo link é atualizado (status e data de envio preservados).`); $('edit-banner').style.display=editingPropostaId?'flex':'none'; }
-        function clearEditing(){ editingPropostaId=null; $('edit-banner').style.display='none'; }
-        $('edit-cancel').addEventListener('click',clearEditing);
-        async function generateLink(coverSrc, galeria){
-            const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
-            fieldsToCFG();
-            const fields={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cover:coverSrc||'cotacao-hero.webp', galeria:galeria||[], cfg:{...CFG} };
-            try{
-                let id;
-                if(editingPropostaId){
-                    await updateDoc(doc(db,PROP_COL,editingPropostaId),{...fields, atualizadoEm:new Date().toISOString()});
-                    id=editingPropostaId; clearEditing(); $('link-title').textContent='Proposta atualizada ✓';
-                } else {
-                    const ref=await addDoc(collection(db,PROP_COL),{...fields, status:'enviada', criadoEm:new Date().toISOString()});
-                    id=ref.id; $('link-title').textContent='Proposta gerada 🎉';
-                }
-                const url=location.origin+'/proposta.html?id='+id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); loadPropostas();
-            }catch(e){ toast('Erro: '+e.message); }
-        }
-        function loadPropostaToSim(p){
-            document.querySelector('.section-tab[data-section="simulador"]').click();
-            $('sim-empresa').value=p.empresa||''; $('sim-contato').value=p.contato||''; $('sim-data').value=p.dataEvento||''; $('sim-pessoas').value=p.pessoas||''; $('sim-duracao').value=p.duracao||'4'; $('sim-preco').value=p.preco||'';
-            const pk=PACOTES.find(x=>x.nome===p.pacoteNome);
-            if(pk){ $('sim-pacote').value=pk.id; $('sim-pacote').dispatchEvent(new Event('change')); } else toast('Pacote original não existe mais — selecione um pacote.');
-            extras=(p.extrasRepassados&&p.extrasRepassados.length)?p.extrasRepassados.map(e=>({desc:e.desc,valor:e.valor,repassar:true})):[{desc:'Música ao vivo',valor:0,repassar:false}];
-            renderExtras();
-            selCover=p.cover||DEFAULT_COVER; selPhotos=new Set((p.galeria&&p.galeria.length)?p.galeria.map(g=>g.src):DEFAULT_SEL);
-            editingPropostaId=p.id; showEditBanner(p.empresa);
-            simular(); window.scrollTo({top:0,behavior:'smooth'});
-        }
-        $('link-copy').addEventListener('click',()=>{ const i=$('link-url'); i.select(); navigator.clipboard?.writeText(i.value).then(()=>toast('Link copiado')).catch(()=>{ document.execCommand('copy'); toast('Link copiado'); }); });
-        $('link-close').addEventListener('click',()=>$('link-modal').classList.remove('open'));
-
-        // ---------- Cenários ----------
-        async function loadCenarios(){
-            let cen=[]; try{ const s=await getDocs(collection(db,CEN_COL)); cen=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){}
-            cen.sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
-            $('cen-tbl').innerHTML=cen.length?`<thead><tr><th>Cenário</th><th>Empresa</th><th class="amount">Pessoas</th><th class="amount">Preço</th><th class="amount">Receita</th><th class="amount">Lucro</th><th class="amount">Margem</th><th></th></tr></thead><tbody>${
-                cen.map(c=>`<tr><td>${c.nome}</td><td>${c.empresa||'—'}</td><td class="amount">${c.pessoas}</td><td class="amount">${brl(c.preco)}</td><td class="amount">${brl(c.receita)}</td><td class="amount ${c.lucro>=0?'pos':'neg'}">${brl(c.lucro)}</td><td class="amount ${c.margem>=0?'pos':'neg'}">${(c.margem||0).toFixed(1)}%</td><td class="amount"><button class="btn btn-danger btn-sm" data-delc="${c.id}">excluir</button></td></tr>`).join('')
-            }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum cenário salvo.</td></tr></tbody>';
-            $('cen-tbl').querySelectorAll('[data-delc]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir cenário?'))return; await deleteDoc(doc(db,CEN_COL,b.dataset.delc)); loadCenarios(); }));
+            if(c.isOpen){ const fixo=c.eq+c.exA, contrib=c.preco-c.custoFBpp-c.ohpp; const be=contrib>0?Math.ceil(fixo/contrib):null;
+                ins+=be!=null?`⚖️ Equilíbrio: <b>${be} pessoas</b>. `:'<span class="neg">⚠️ Preço não cobre o custo variável. </span>';
+                const m=(parseFloat($('sim-margem').value)||0)/100, sug=(1-m)>0?(c.custoFBpp+c.ohpp+(c.pax>0?fixo/c.pax:0))/(1-m):0;
+                ins+=`🎯 Para ${(m*100).toFixed(0)}% de margem: <b>${brl(sug)}/pessoa</b>.`;
+            } else ins='Pacote por item (custo fixo).';
+            $('r-insights').innerHTML=ins;
         }
 
-        // ---------- Propostas (pipeline) ----------
-        const STATUS_LIST=[['enviada','Enviada'],['negociacao','Em negociação'],['fechada','Fechada'],['perdida','Perdida']];
-        async function loadPropostas(){
-            let pp=[]; try{ const s=await getDocs(collection(db,PROP_COL)); pp=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){}
-            pp.sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
-            const st=p=>p.status||'enviada';
-            const cnt=v=>pp.filter(p=>st(p)===v).length;
-            const sumv=fn=>pp.filter(fn).reduce((s,p)=>s+(p.total||0),0);
-            const total=pp.length, fechadas=cnt('fechada');
-            $('pp-enviadas').textContent=cnt('enviada');
-            $('pp-negoc').textContent=cnt('negociacao');
-            $('pp-fechadas').textContent=fechadas;
-            $('pp-conv').textContent=total?`${(fechadas/total*100).toFixed(0)}%`:'—';
-            $('pp-vpipe').textContent=brl(sumv(p=>['enviada','negociacao'].includes(st(p))));
-            $('pp-vfech').textContent=brl(sumv(p=>st(p)==='fechada'));
-            $('pp-tbl').innerHTML=pp.length?`<thead><tr><th>Empresa</th><th>Data evento</th><th class="amount">Pessoas</th><th class="amount">Valor</th><th>Status</th><th>Criada</th><th></th></tr></thead><tbody>${
-                pp.map(p=>`<tr><td>${p.empresa||'—'}</td><td>${fmtDateBR(p.dataEvento)||'—'}</td><td class="amount">${p.pessoas||'—'}</td><td class="amount">${brl(p.total)}</td><td><select data-st="${p.id}" style="padding:5px 9px;font-size:12px">${STATUS_LIST.map(([v,l])=>`<option value="${v}"${st(p)===v?' selected':''}>${l}</option>`).join('')}</select></td><td>${fmtDateBR((p.criadoEm||'').slice(0,10))}</td><td class="amount"><button class="btn btn-ghost btn-sm" data-editp="${p.id}">editar</button> <a class="btn btn-ghost btn-sm" href="/proposta.html?id=${p.id}" target="_blank" style="text-decoration:none">abrir</a> <button class="btn btn-danger btn-sm" data-delp="${p.id}">×</button></td></tr>`).join('')
-            }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhuma proposta enviada ainda. Gere uma na aba Simulador & Proposta.</td></tr></tbody>';
-            $('pp-tbl').querySelectorAll('[data-st]').forEach(s=>s.addEventListener('change',async()=>{ try{ await updateDoc(doc(db,PROP_COL,s.dataset.st),{status:s.value}); loadPropostas(); }catch(e){ toast('Erro: '+e.message); } }));
-            $('pp-tbl').querySelectorAll('[data-editp]').forEach(b=>b.addEventListener('click',()=>{ const p=pp.find(x=>x.id===b.dataset.editp); if(p)loadPropostaToSim(p); }));
-            $('pp-tbl').querySelectorAll('[data-delp]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir esta proposta do pipeline?'))return; await deleteDoc(doc(db,PROP_COL,b.dataset.delp)); loadPropostas(); }));
-        }
-
-        // ---------- Configurações ----------
-        const CFG_DEFAULT={ nome:'Javari Streat Park', endereco:'Rua Javari, 112 - Mooca (SP)', telefone:'(11) 2081-1544', site:'www.javaripark.com.br', instagram:'@javaripark',
-            pagamento:'60% até 15 dias antes da realização do evento (pix)\n40% até 1 dia antes do evento (pix)\nNota fiscal incluída',
-            condicoes:'- Valores aplicados para 175 pessoas mediante entrega de lista de convidados;\n- A casa não trabalha com hora extra, portanto, o horário de fechamento da casa deve ser cumprido integralmente;\n- Consumo extra será cobrado individualmente, a partir dos valores praticados no cardápio;\n- Não é permitida a entrada de bebida e comida de nenhuma espécie;',
-            revistaIntro:'O Javari Streat Park conta com uma equipe de segurança que está autorizada a realizar revistas nos clientes no momento da entrada. O intuito da ação é garantir o bem-estar de todos e o bom funcionamento da casa. Abaixo, listamos alguns itens que são verificados pela nossa equipe:',
-            autorizados:'Máquina fotográfica\nPatins\nSkate\nBicicleta\nLaptops\nCarrinho de bebê\nItens de higiene pessoal\nUtensílios para cuidados com bebê\nAlimentação para bebês',
-            proibidos:'Malas\nAlimentos diversos\nBebidas alcoólicas ou não\nNarguilé\nSubstâncias ilegais de qualquer espécie\nArmas brancas e de fogo\nObjetos cortantes ou perfurantes, tais como canivetes, tesouras de unhas e demais itens pontiagudos\nBolas esportivas\nInstrumentos musicais\nCapacete',
-            revistaObs:'OBS: para os casos de clientes portando itens proibidos, o Javari Streat Park tem o direito de confiscar os objetos no momento da entrada. A retirada ocorre somente na saída do cliente.' };
-        let CFG={...CFG_DEFAULT}, CFG_SAVED={...CFG_DEFAULT};
-        const cfgMap={'cfg-nome':'nome','cfg-endereco':'endereco','cfg-telefone':'telefone','cfg-site':'site','cfg-instagram':'instagram','cfg-pagamento':'pagamento','cfg-condicoes':'condicoes','cfg-revista-intro':'revistaIntro','cfg-autorizados':'autorizados','cfg-proibidos':'proibidos','cfg-revista-obs':'revistaObs'};
-        function fieldsToCFG(){ for(const [id,k] of Object.entries(cfgMap)) CFG[k]=$(id).value; }
-        function cfgToFields(src){ for(const [id,k] of Object.entries(cfgMap)) $(id).value=src[k]||''; }
-        // --- Fotos da proposta (galeria) ---
-        const PHOTO_LIB=[
-            {src:'quintal/quintal-aniversario.webp',cap:'Aniversários no quintal',g:'Espaço'},
-            {src:'quintal/quintal-happyhour.webp',cap:'Happy hour',g:'Espaço'},
-            {src:'quintal/quintal-oasis.webp',cap:'O quintal',g:'Espaço'},
-            {src:'quintal/quintal-hero.webp',cap:'O espaço',g:'Espaço'},
-            {src:'quintal/quintal-bora.webp',cap:'Vem pro Javari',g:'Espaço'},
-            {src:'quintal/quintal-tribos.webp',cap:'Pra todas as turmas',g:'Espaço'},
-            {src:'quintal/quintal-reservas.webp',cap:'Reservado pra você',g:'Espaço'},
-            {src:'quintal/quintal-pets-kids.webp',cap:'Pets & kids',g:'Espaço'},
-            {src:'quintal/quintal-01.webp',cap:'Ambiente',g:'Espaço'},
-            {src:'quintal/quintal-02.webp',cap:'Ambiente',g:'Espaço'},
-            {src:'quintal/quintal-03.webp',cap:'Ambiente',g:'Espaço'},
-            {src:'quintal/quintal-04.webp',cap:'Ambiente',g:'Espaço'},
-            {src:'quintal/quintal-05.webp',cap:'Ambiente',g:'Espaço'},
-            {src:'quintal/quintal-06.webp',cap:'Ambiente',g:'Espaço'},
-            {src:'bus-lounge/bus-01.webp',cap:'Bus Lounge',g:'Bus Lounge'},
-            {src:'bus-lounge/bus-02.webp',cap:'Bus Lounge',g:'Bus Lounge'},
-            {src:'bus-lounge/bus-03.webp',cap:'Bus Lounge',g:'Bus Lounge'},
-            {src:'drinks/cerveja-trincando.webp',cap:'Sempre trincando',g:'Drinks'},
-            {src:'drinks/drink-01.webp',cap:'Drinks da casa',g:'Drinks'},
-            {src:'drinks/drink-02.webp',cap:'Drinks da casa',g:'Drinks'},
-            {src:'drinks/drink-03.webp',cap:'Drinks da casa',g:'Drinks'},
-            {src:'drinks/drink-04.webp',cap:'Drinks da casa',g:'Drinks'},
-            {src:'drinks/bebidas-infantis.webp',cap:'Bebidas infantis',g:'Drinks'},
-            {src:'clientes/cliente-01.webp',cap:'Quem comemora aqui',g:'Eventos'},
-            {src:'clientes/cliente-02.webp',cap:'Quem comemora aqui',g:'Eventos'},
-            {src:'clientes/cliente-03.webp',cap:'Quem comemora aqui',g:'Eventos'},
-            {src:'clientes/cliente-04.webp',cap:'Quem comemora aqui',g:'Eventos'},
-            {src:'clientes/fotos-01.webp',cap:'Eventos',g:'Eventos'},
-            {src:'clientes/fotos-03.webp',cap:'Eventos',g:'Eventos'},
-            {src:'clientes/galeria-01.webp',cap:'Eventos',g:'Eventos'},
-            {src:'clientes/galeria-03.webp',cap:'Eventos',g:'Eventos'},
-            {src:'clientes/galeria-05.webp',cap:'Eventos',g:'Eventos'},
-        ];
+        // ----- Fotos (capa + galeria) -----
+        const PHOTO_LIB=[{src:'quintal/quintal-aniversario.webp',cap:'Aniversários',g:'Espaço'},{src:'quintal/quintal-happyhour.webp',cap:'Happy hour',g:'Espaço'},{src:'quintal/quintal-oasis.webp',cap:'O quintal',g:'Espaço'},{src:'quintal/quintal-hero.webp',cap:'O espaço',g:'Espaço'},{src:'quintal/quintal-bora.webp',cap:'Vem pro Javari',g:'Espaço'},{src:'quintal/quintal-tribos.webp',cap:'Pra todas as turmas',g:'Espaço'},{src:'quintal/quintal-01.webp',cap:'Ambiente',g:'Espaço'},{src:'quintal/quintal-02.webp',cap:'Ambiente',g:'Espaço'},{src:'quintal/quintal-03.webp',cap:'Ambiente',g:'Espaço'},{src:'quintal/quintal-04.webp',cap:'Ambiente',g:'Espaço'},{src:'bus-lounge/bus-01.webp',cap:'Bus Lounge',g:'Bus Lounge'},{src:'bus-lounge/bus-02.webp',cap:'Bus Lounge',g:'Bus Lounge'},{src:'bus-lounge/bus-03.webp',cap:'Bus Lounge',g:'Bus Lounge'},{src:'drinks/cerveja-trincando.webp',cap:'Sempre trincando',g:'Drinks'},{src:'drinks/drink-01.webp',cap:'Drinks',g:'Drinks'},{src:'drinks/drink-02.webp',cap:'Drinks',g:'Drinks'},{src:'drinks/drink-03.webp',cap:'Drinks',g:'Drinks'},{src:'drinks/bebidas-infantis.webp',cap:'Infantis',g:'Drinks'},{src:'clientes/cliente-01.webp',cap:'Quem comemora aqui',g:'Eventos'},{src:'clientes/cliente-02.webp',cap:'Eventos',g:'Eventos'},{src:'clientes/cliente-03.webp',cap:'Eventos',g:'Eventos'},{src:'clientes/cliente-04.webp',cap:'Eventos',g:'Eventos'},{src:'clientes/fotos-01.webp',cap:'Eventos',g:'Eventos'},{src:'clientes/galeria-01.webp',cap:'Eventos',g:'Eventos'}];
         const DEFAULT_SEL=['quintal/quintal-aniversario.webp','quintal/quintal-happyhour.webp','bus-lounge/bus-01.webp','quintal/quintal-oasis.webp','drinks/cerveja-trincando.webp','drinks/drink-01.webp','clientes/cliente-01.webp','quintal/quintal-bora.webp'];
         const DEFAULT_COVER='cotacao-hero.webp';
-        const COVER_LIB=[{src:'cotacao-hero.webp',cap:'Lanche'},{src:'quintal/quintal-hero.webp',cap:'O espaço'},{src:'quintal/quintal-aniversario.webp',cap:'Aniversário'},{src:'quintal/quintal-happyhour.webp',cap:'Happy hour'},{src:'quintal/quintal-oasis.webp',cap:'O quintal'},{src:'drinks/cerveja-trincando.webp',cap:'Cerveja'},{src:'drinks/drink-01.webp',cap:'Drinks'},{src:'bus-lounge/bus-01.webp',cap:'Bus Lounge'},{src:'clientes/cliente-01.webp',cap:'Eventos'}];
+        const COVER_LIB=[{src:'cotacao-hero.webp',cap:'Lanche'},{src:'quintal/quintal-hero.webp',cap:'O espaço'},{src:'quintal/quintal-aniversario.webp',cap:'Aniversário'},{src:'quintal/quintal-happyhour.webp',cap:'Happy hour'},{src:'quintal/quintal-oasis.webp',cap:'O quintal'},{src:'drinks/cerveja-trincando.webp',cap:'Cerveja'},{src:'bus-lounge/bus-01.webp',cap:'Bus Lounge'},{src:'clientes/cliente-01.webp',cap:'Eventos'}];
         let selPhotos=new Set(DEFAULT_SEL), selCover=DEFAULT_COVER;
         const galeriaSel=()=>PHOTO_LIB.filter(p=>selPhotos.has(p.src)).map(p=>({src:p.src,cap:p.cap}));
         function renderExport(){
-            $('export-cover').innerHTML=COVER_LIB.map(p=>`<div class="ph${selCover===p.src?' sel':''}" data-cover="${p.src}"><img loading="lazy" src="/assets/images/${p.src}" alt=""><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('');
-            $('export-cover').querySelectorAll('[data-cover]').forEach(el=>el.addEventListener('click',()=>{ selCover=el.dataset.cover; renderExport(); }));
+            $('export-cover').innerHTML=COVER_LIB.map(p=>`<div class="ph${selCover===p.src?' sel':''}" data-cover="${p.src}"><img loading="lazy" src="/assets/images/${p.src}"><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('');
+            $('export-cover').querySelectorAll('[data-cover]').forEach(el=>el.onclick=()=>{ selCover=el.dataset.cover; renderExport(); });
             const grps=[...new Set(PHOTO_LIB.map(p=>p.g))];
-            $('export-gallery').innerHTML=grps.map(g=>`<div class="photo-grp">${g}</div><div class="photo-grid">${PHOTO_LIB.filter(p=>p.g===g).map(p=>`<div class="ph${selPhotos.has(p.src)?' sel':''}" data-src="${p.src}"><img loading="lazy" src="/assets/images/${p.src}" alt=""><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('')}</div>`).join('');
-            $('export-gallery').querySelectorAll('[data-src]').forEach(el=>el.addEventListener('click',()=>{ const s=el.dataset.src; if(selPhotos.has(s))selPhotos.delete(s); else selPhotos.add(s); el.classList.toggle('sel'); $('export-count').textContent=`(${selPhotos.size})`; }));
+            $('export-gallery').innerHTML=grps.map(g=>`<div class="br-cat" style="position:static">${g}</div><div class="photo-grid">${PHOTO_LIB.filter(p=>p.g===g).map(p=>`<div class="ph${selPhotos.has(p.src)?' sel':''}" data-src="${p.src}"><img loading="lazy" src="/assets/images/${p.src}"><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('')}</div>`).join('');
+            $('export-gallery').querySelectorAll('[data-src]').forEach(el=>el.onclick=()=>{ const s=el.dataset.src; selPhotos.has(s)?selPhotos.delete(s):selPhotos.add(s); el.classList.toggle('sel'); $('export-count').textContent=`(${selPhotos.size})`; });
             $('export-count').textContent=`(${selPhotos.size})`;
         }
-        function openExport(){ const c=calc(); if(!c){ toast('Selecione um pacote'); return; } if(!editingPropostaId){ selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); selCover=CFG.cover||DEFAULT_COVER; } renderExport(); $('export-default').checked=false; $('export-modal').classList.add('open'); }
-        $('sim-export').addEventListener('click',openExport);
-        $('export-cancel').addEventListener('click',()=>$('export-modal').classList.remove('open'));
-        async function maybeSaveDefault(){ if($('export-default').checked){ CFG.cover=selCover; CFG.galeria=galeriaSel(); try{ await setDoc(doc(db,CFG_COL,'main'),CFG); CFG_SAVED={...CFG}; toast('Fotos salvas como padrão'); }catch(e){} } }
-        $('export-go').addEventListener('click',async()=>{ await maybeSaveDefault(); $('export-modal').classList.remove('open'); await generateLink(selCover, galeriaSel()); });
-        $('link-pdf').addEventListener('click',()=>generatePDF(selCover));
-        // edição ao vivo aplica à cotação atual (CFG) — usada no PDF
-        Object.keys(cfgMap).forEach(id=>$(id).addEventListener('input',fieldsToCFG));
-        async function loadConfig(){ try{ const snap=await getDoc(doc(db,CFG_COL,'main')); if(snap.exists()){ CFG_SAVED={...CFG_DEFAULT,...snap.data()}; } }catch(e){} CFG={...CFG_SAVED}; cfgToFields(CFG); }
-        $('cfg-save').addEventListener('click',()=>{ fieldsToCFG(); $('cfg-modal').classList.add('open'); });
-        $('cfg-cancel').addEventListener('click',()=>$('cfg-modal').classList.remove('open'));
-        $('cfg-session').addEventListener('click',()=>{ fieldsToCFG(); $('cfg-modal').classList.remove('open'); toast('Aplicado só nesta cotação'); });
-        $('cfg-default').addEventListener('click',async()=>{ fieldsToCFG(); try{ await setDoc(doc(db,CFG_COL,'main'),CFG); CFG_SAVED={...CFG}; $('cfg-modal').classList.remove('open'); toast('Novo padrão gravado'); }catch(e){ toast('Erro: '+e.message); } });
-        $('cfg-reset').addEventListener('click',()=>{ CFG={...CFG_SAVED}; cfgToFields(CFG); toast('Restaurado ao padrão salvo'); });
+        async function maybeSaveDefault(){ if($('export-default').checked){ CFG.cover=selCover; CFG.galeria=galeriaSel(); try{ await setDoc(doc(db,CFG_COL,'main'),CFG); }catch(e){} } }
 
-        // ---------- PDF ----------
-        let LOGO_DATA=null;
-        async function loadLogo(){ try{ const r=await fetch('/assets/images/logo-horizontal-black.png'); const b=await r.blob(); LOGO_DATA=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);}); }catch(e){} }
-        function webpToJpeg(src, targetAR){ return new Promise(res=>{ const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ let sw=img.naturalWidth, sh=img.naturalHeight, sx=0, sy=0; if(targetAR){ const ar=sw/sh; if(ar>targetAR){ const nw=sh*targetAR; sx=(sw-nw)/2; sw=nw; } else { const nh=sw/targetAR; sy=(sh-nh)/2; sh=nh; } } const cv=document.createElement('canvas'); cv.width=sw; cv.height=sh; cv.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh); try{ res({data:cv.toDataURL('image/jpeg',0.85)}); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src=src; }); }
-        async function generatePDF(coverSrc){
-            const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
-            const { jsPDF }=window.jspdf; const d=new jsPDF({unit:'mm',format:'a4'});
-            const M=20, W=210, CW=W-2*M, PH=297; let y=M;
-            const ensure=h=>{ if(y+h>PH-M){ d.addPage(); y=M; } };
-            const para=(txt,size=10,style='normal',color=[70,70,70],lh=1.5)=>{ d.setFont('helvetica',style); d.setFontSize(size); d.setTextColor(...color); d.splitTextToSize(String(txt||''),CW).forEach(l=>{ ensure(size*0.45*lh+1); d.text(l,M,y); y+=size*0.45*lh+1; }); };
-            const head=t=>{ y+=7; ensure(12); d.setFillColor(79,25,100); d.rect(M,y-1,2.6,6.5,'F'); d.setTextColor(79,25,100); d.setFont('helvetica','bold'); d.setFontSize(11.5); d.text(String(t).toUpperCase(),M+6,y+3.6); y+=10; };
-            const bullets=txt=>String(txt||'').split('\n').filter(s=>s.trim()).forEach(line=>{ const t=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(70,70,70); d.splitTextToSize(t,CW-6).forEach((l,i)=>{ ensure(5.6); if(i===0){ d.setTextColor(79,25,100); d.text('•',M,y); d.setTextColor(70,70,70); } d.text(l,M+5,y); y+=5.6; }); y+=1.2; });
-            const hh=64; const hero=await webpToJpeg('/assets/images/'+(coverSrc||'cotacao-hero.webp'), W/hh);
-            if(hero){ try{ d.addImage(hero.data,'JPEG',0,0,W,hh); }catch(e){} d.setFillColor(26,15,30); d.setGState&&d.setGState(new d.GState({opacity:0.4})); d.rect(0,0,W,hh,'F'); d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+8; }
-            if(LOGO_DATA){ const lw=44, lh=lw*430/800; try{ d.addImage(LOGO_DATA,'PNG',M,y,lw,lh); }catch(e){} y+=lh+3; }
-            d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(25,25,25); ensure(9); d.text($('sim-empresa').value?`Proposta — ${$('sim-empresa').value}`:'Proposta de Evento',M,y); y+=4;
-            d.setDrawColor(225,220,230); d.line(M,y,W-M,y); y+=2;
+        // ----- Wizard nav -----
+        let step=1, editingPropostaId=null;
+        function goStep(n){
+            step=n;
+            document.querySelectorAll('.step').forEach(s=>s.classList.remove('active')); $('step-'+n).classList.add('active');
+            document.querySelectorAll('.stp').forEach(s=>{ const sn=+s.dataset.s; s.classList.toggle('active',sn===n); s.classList.toggle('done',sn<n); });
+            $('wz-back').style.visibility=n>1?'visible':'hidden';
+            $('wz-next').textContent=n<4?'Próximo →':'Gerar proposta →';
+            if(n===2) renderCotPkList();
+            if(n===3) renderResumo();
+            if(n===4){ if(!editingPropostaId){ selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); selCover=CFG.cover||DEFAULT_COVER; } $('export-default').checked=false; renderExport(); }
+            window.scrollTo({top:0,behavior:'smooth'});
+        }
+        document.querySelectorAll('.stp').forEach(s=>s.onclick=()=>{ const n=+s.dataset.s; if(n<=step||n===step+1) tryGo(n); });
+        $('wz-back').onclick=()=>goStep(Math.max(1,step-1));
+        $('wz-next').onclick=()=>{ if(step<4) tryGo(step+1); else gerarProposta(); };
+        function tryGo(n){ if(n>2&&!cotPacoteId){ toast('Escolha um pacote primeiro'); goStep(2); return; } goStep(n); }
+
+        // ----- Gerar / editar proposta -----
+        function cotEditBanner(){ $('cot-edit').style.display=editingPropostaId?'flex':'none'; if(editingPropostaId)$('cot-edit-txt').textContent=`✏️ Editando proposta de "${$('sim-empresa').value||'—'}" — gerar atualiza o mesmo link.`; }
+        $('cot-edit-cancel').onclick=()=>{ editingPropostaId=null; cotEditBanner(); };
+        async function gerarProposta(){
+            const c=calc(); if(!c)return toast('Escolha um pacote');
+            await maybeSaveDefault();
+            fieldsToCFG();
+            const fields={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cover:selCover, galeria:galeriaSel(), cfg:{...CFG} };
+            try{
+                let id;
+                if(editingPropostaId){ await updateDoc(doc(db,PROP_COL,editingPropostaId),{...fields,atualizadoEm:new Date().toISOString()}); id=editingPropostaId; editingPropostaId=null; cotEditBanner(); $('link-title').textContent='Proposta atualizada ✓'; }
+                else { const ref=await addDoc(collection(db,PROP_COL),{...fields,status:'enviada',criadoEm:new Date().toISOString()}); id=ref.id; $('link-title').textContent='Proposta gerada 🎉'; }
+                const url=location.origin+'/proposta.html?id='+id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); loadPropostas();
+            }catch(e){ toast('Erro: '+e.message); }
+        }
+        $('link-copy').onclick=()=>{ const i=$('link-url'); i.select(); navigator.clipboard?.writeText(i.value).then(()=>toast('Copiado')).catch(()=>{document.execCommand('copy');toast('Copiado');}); };
+        $('link-close').onclick=()=>$('link-modal').classList.remove('open');
+        $('link-pdf').onclick=()=>gerarPDF(selCover);
+
+        // ----- PDF -----
+        let LOGO=null;
+        async function loadLogo(){ try{ const b=await fetch('/assets/images/logo-horizontal-black.png').then(r=>r.blob()); LOGO=await new Promise(res=>{const f=new FileReader();f.onload=()=>res(f.result);f.readAsDataURL(b);}); }catch(e){} }
+        function webpJpeg(src,ar){ return new Promise(res=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>{ let sw=im.naturalWidth,sh=im.naturalHeight,sx=0,sy=0; if(ar){ const a=sw/sh; if(a>ar){const nw=sh*ar;sx=(sw-nw)/2;sw=nw;}else{const nh=sw/ar;sy=(sh-nh)/2;sh=nh;} } const cv=document.createElement('canvas'); cv.width=sw;cv.height=sh; cv.getContext('2d').drawImage(im,sx,sy,sw,sh,0,0,sw,sh); try{res(cv.toDataURL('image/jpeg',0.85));}catch(e){res(null);} }; im.onerror=()=>res(null); im.src=src; }); }
+        async function gerarPDF(coverSrc){
+            const c=calc(); if(!c)return toast('Escolha um pacote');
+            const {jsPDF}=window.jspdf; const d=new jsPDF({unit:'mm',format:'a4'}); const M=18,W=210,CW=W-2*M,PH=297; let y=M;
+            const ens=h=>{ if(y+h>PH-M){d.addPage();y=M;} };
+            const para=(t,s=10,st='normal',cl=[70,70,70])=>{ d.setFont('helvetica',st);d.setFontSize(s);d.setTextColor(...cl); d.splitTextToSize(String(t||''),CW).forEach(l=>{ens(s*0.5+1);d.text(l,M,y);y+=s*0.5+1;}); };
+            const head=t=>{ y+=7;ens(11); d.setFillColor(79,25,100);d.rect(M,y-1,2.6,6.5,'F'); d.setTextColor(79,25,100);d.setFont('helvetica','bold');d.setFontSize(11.5);d.text(String(t).toUpperCase(),M+6,y+3.6);y+=10; };
+            const bullets=t=>String(t||'').split('\n').filter(x=>x.trim()).forEach(line=>{ const x=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(70,70,70); d.splitTextToSize(x,CW-6).forEach((l,i)=>{ens(5.6); if(i===0){d.setTextColor(79,25,100);d.text('•',M,y);d.setTextColor(70,70,70);} d.text(l,M+5,y);y+=5.6;}); y+=1; });
+            const hh=64, hero=await webpJpeg('/assets/images/'+(coverSrc||'cotacao-hero.webp'),W/hh);
+            if(hero){ try{d.addImage(hero,'JPEG',0,0,W,hh);}catch(e){} d.setFillColor(26,15,30);d.setGState&&d.setGState(new d.GState({opacity:0.4}));d.rect(0,0,W,hh,'F');d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+8; }
+            if(LOGO){ const lw=44; try{d.addImage(LOGO,'PNG',M,y,lw,lw*430/800);}catch(e){} y+=lw*430/800+3; }
+            d.setFont('helvetica','bold');d.setFontSize(17);d.setTextColor(25,25,25);ens(9); d.text($('sim-empresa').value?`Proposta — ${$('sim-empresa').value}`:'Proposta de Evento',M,y);y+=4;
+            d.setDrawColor(225,220,230);d.line(M,y,W-M,y);y+=2;
             head('Dados do evento');
-            [['Empresa / Cliente',$('sim-empresa').value||'—'],['Contato',$('sim-contato').value||'—'],['Data do evento',fmtDateBR($('sim-data').value)||'—'],['Nº de pessoas',String(c.pax)],['Duração',$('sim-duracao').value+'h']].forEach(([k,v])=>{ ensure(6.5); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(110,110,110); d.text(k,M,y); d.setFont('helvetica','normal'); d.setTextColor(40,40,40); d.text(String(v),M+48,y); y+=6.2; });
+            [['Empresa / Cliente',$('sim-empresa').value||'—'],['Contato',$('sim-contato').value||'—'],['Data',fmtDateBR($('sim-data').value)||'—'],['Nº de pessoas',String(c.pax)],['Duração',$('sim-duracao').value+'h']].forEach(([k,v])=>{ ens(6.2);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(110,110,110);d.text(k,M,y);d.setFont('helvetica','normal');d.setTextColor(40,40,40);d.text(String(v),M+46,y);y+=6; });
             head('Pacote: '+c.p.nome);
-            (c.p.itens||[]).forEach(i=>{ ensure(5.6); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(75,75,75); d.text(`•  ${i.nome}`,M+1,y); d.text(c.isOpen?`${i.qtd} /pessoa`:`${i.qtd} un`,W-M,y,{align:'right'}); y+=5.6; });
-            head('Investimento');
-            d.setFont('helvetica','normal'); d.setFontSize(10.5); d.setTextColor(55,55,55); ensure(6.5);
-            d.text(c.isOpen?`Pacote: ${brl(c.preco)} por pessoa × ${c.pax} pessoas`:'Pacote (fechado)',M,y); d.text(brl(c.pkgReceita),W-M,y,{align:'right'}); y+=6.5;
-            extras.filter(e=>e.repassar&&(e.valor||0)>0).forEach(e=>{ ensure(6); d.text('+ '+e.desc,M,y); d.text(brl(e.valor),W-M,y,{align:'right'}); y+=6; });
-            y+=2; ensure(11); d.setFillColor(245,240,248); d.rect(M,y-5,CW,9,'F'); d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(79,25,100); d.text('Total',M+3,y+1.5); d.text(brl(c.receita),W-M-3,y+1.5,{align:'right'}); y+=10;
-            head('Forma de pagamento'); para(CFG.pagamento);
-            head('Condições gerais'); bullets(CFG.condicoes);
-            head('Revista pessoal'); para(CFG.revistaIntro);
-            y+=2; ensure(6); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(22,163,74); d.text('Itens autorizados',M,y); y+=6; bullets(CFG.autorizados);
-            y+=1; ensure(6); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(220,38,38); d.text('Itens proibidos',M,y); y+=6; bullets(CFG.proibidos);
-            y+=1; para(CFG.revistaObs,9.5,'italic',[120,120,120]);
-            y+=7; ensure(24); d.setDrawColor(220,218,224); d.line(M,y,W-M,y); y+=6;
-            d.setFont('helvetica','bold'); d.setFontSize(10.5); d.setTextColor(40,40,40); d.text(CFG.nome,M,y); y+=5.5;
-            d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(100,100,100);
-            [CFG.endereco,'Tel/WhatsApp: '+CFG.telefone,CFG.site,'Instagram: '+CFG.instagram].forEach(l=>{ ensure(5); d.text(String(l),M,y); y+=5; });
+            (c.p.itens||[]).forEach(i=>{ ens(5.6);d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(75,75,75);d.text(`•  ${i.nome}`,M+1,y);d.text(c.isOpen?`${i.qtd} /pessoa`:`${i.qtd} un`,W-M,y,{align:'right'});y+=5.6; });
+            head('Investimento'); d.setFont('helvetica','normal');d.setFontSize(10.5);d.setTextColor(55,55,55);ens(6.5);
+            d.text(c.isOpen?`Pacote: ${brl(c.preco)} por pessoa × ${c.pax} pessoas`:'Pacote (fechado)',M,y);d.text(brl(c.pkgReceita),W-M,y,{align:'right'});y+=6.5;
+            extras.filter(e=>e.repassar&&(e.valor||0)>0).forEach(e=>{ ens(6);d.text('+ '+e.desc,M,y);d.text(brl(e.valor),W-M,y,{align:'right'});y+=6; });
+            y+=2;ens(11);d.setFillColor(245,240,248);d.rect(M,y-5,CW,9,'F');d.setFont('helvetica','bold');d.setFontSize(14);d.setTextColor(79,25,100);d.text('Total',M+3,y+1.5);d.text(brl(c.receita),W-M-3,y+1.5,{align:'right'});y+=10;
+            head('Forma de pagamento');para(CFG.pagamento); head('Condições gerais');bullets(CFG.condicoes); head('Revista pessoal');para(CFG.revistaIntro);
+            y+=2;ens(6);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(22,163,74);d.text('Itens autorizados',M,y);y+=6;bullets(CFG.autorizados);
+            y+=1;ens(6);d.setFont('helvetica','bold');d.setFontSize(10);d.setTextColor(220,38,38);d.text('Itens proibidos',M,y);y+=6;bullets(CFG.proibidos);
+            y+=1;para(CFG.revistaObs,9.5,'italic',[120,120,120]);
+            y+=7;ens(24);d.setDrawColor(220,218,224);d.line(M,y,W-M,y);y+=6;
+            d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(40,40,40);d.text(CFG.nome,M,y);y+=5.5;
+            d.setFont('helvetica','normal');d.setFontSize(9.5);d.setTextColor(100,100,100);
+            [CFG.endereco,'Tel/WhatsApp: '+CFG.telefone,CFG.site,'Instagram: '+CFG.instagram].forEach(l=>{ens(5);d.text(String(l||''),M,y);y+=5;});
             d.save(`Proposta-Javari-${($('sim-empresa').value||'evento').replace(/[^a-z0-9]/gi,'-')}.pdf`);
         }
 
-        // ---------- Init ----------
+        // ----- Propostas (pipeline) -----
+        const STATUS=[['enviada','Enviada'],['negociacao','Em negociação'],['fechada','Fechada'],['perdida','Perdida']];
+        async function loadPropostas(){
+            let pp=[]; try{ pp=(await getDocs(collection(db,PROP_COL))).docs.map(d=>({id:d.id,...d.data()})); }catch(e){}
+            pp.sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+            const st=p=>p.status||'enviada', cnt=v=>pp.filter(p=>st(p)===v).length, sumv=fn=>pp.filter(fn).reduce((s,p)=>s+(p.total||0),0);
+            const total=pp.length, fech=cnt('fechada');
+            $('pp-enviadas').textContent=cnt('enviada'); $('pp-negoc').textContent=cnt('negociacao'); $('pp-fechadas').textContent=fech;
+            $('pp-conv').textContent=total?`${(fech/total*100).toFixed(0)}%`:'—'; $('pp-vpipe').textContent=brl(sumv(p=>['enviada','negociacao'].includes(st(p)))); $('pp-vfech').textContent=brl(sumv(p=>st(p)==='fechada'));
+            $('pp-tbl').innerHTML=pp.length?`<thead><tr><th>Empresa</th><th>Data</th><th class="amount">Pessoas</th><th class="amount">Valor</th><th>Status</th><th></th></tr></thead><tbody>${pp.map(p=>`<tr><td>${p.empresa||'—'}</td><td>${fmtDateBR(p.dataEvento)||'—'}</td><td class="amount">${p.pessoas||'—'}</td><td class="amount">${brl(p.total)}</td><td><select data-st="${p.id}" style="padding:5px 8px;font-size:12px">${STATUS.map(([v,l])=>`<option value="${v}"${st(p)===v?' selected':''}>${l}</option>`).join('')}</select></td><td class="amount"><button class="btn btn-ghost btn-sm" data-ed="${p.id}">editar</button> <a class="btn btn-ghost btn-sm" href="/proposta.html?id=${p.id}" target="_blank" style="text-decoration:none">abrir</a> <button class="btn btn-danger btn-sm" data-dp="${p.id}">×</button></td></tr>`).join('')}</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhuma proposta. Gere uma em Nova cotação.</td></tr></tbody>';
+            $('pp-tbl').querySelectorAll('[data-st]').forEach(s=>s.onchange=async()=>{ try{ await updateDoc(doc(db,PROP_COL,s.dataset.st),{status:s.value}); loadPropostas(); }catch(e){ toast('Erro'); } });
+            $('pp-tbl').querySelectorAll('[data-dp]').forEach(b=>b.onclick=async()=>{ if(!confirm('Excluir proposta?'))return; await deleteDoc(doc(db,PROP_COL,b.dataset.dp)); loadPropostas(); });
+            $('pp-tbl').querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{ const p=pp.find(x=>x.id===b.dataset.ed); if(p)editarProposta(p); });
+        }
+        function editarProposta(p){
+            $('sim-empresa').value=p.empresa||''; $('sim-contato').value=p.contato||''; $('sim-data').value=p.dataEvento||''; $('sim-pessoas').value=p.pessoas||''; $('sim-duracao').value=p.duracao||'4'; $('sim-preco').value=p.preco||'';
+            const pk=PACOTES.find(x=>x.nome===p.pacoteNome); cotPacoteId=pk?pk.id:null; if(!pk)toast('Pacote original não existe mais — escolha um no passo 2.');
+            extras=(p.extrasRepassados&&p.extrasRepassados.length)?p.extrasRepassados.map(e=>({desc:e.desc,valor:e.valor,repassar:true})):[{desc:'Música ao vivo',valor:0,repassar:false}]; renderExtras();
+            selCover=p.cover||DEFAULT_COVER; selPhotos=new Set((p.galeria&&p.galeria.length)?p.galeria.map(g=>g.src):DEFAULT_SEL);
+            editingPropostaId=p.id; cotEditBanner();
+            document.querySelector('.tab[data-tab="cotacao"]').click(); goStep(1);
+        }
+
+        // ----- Config -----
+        const CFG_DEFAULT={ nome:'Javari Streat Park',endereco:'Rua Javari, 112 - Mooca (SP)',telefone:'(11) 2081-1544',site:'www.javaripark.com.br',instagram:'@javaripark',pagamento:'60% até 15 dias antes da realização do evento (pix)\n40% até 1 dia antes do evento (pix)\nNota fiscal incluída',condicoes:'- Valores aplicados para 175 pessoas mediante entrega de lista de convidados;\n- A casa não trabalha com hora extra, portanto, o horário de fechamento da casa deve ser cumprido integralmente;\n- Consumo extra será cobrado individualmente, a partir dos valores praticados no cardápio;\n- Não é permitida a entrada de bebida e comida de nenhuma espécie;',revistaIntro:'O Javari Streat Park conta com uma equipe de segurança que está autorizada a realizar revistas nos clientes no momento da entrada. O intuito da ação é garantir o bem-estar de todos e o bom funcionamento da casa. Abaixo, listamos alguns itens que são verificados pela nossa equipe:',autorizados:'Máquina fotográfica\nPatins\nSkate\nBicicleta\nLaptops\nCarrinho de bebê\nItens de higiene pessoal\nUtensílios para cuidados com bebê\nAlimentação para bebês',proibidos:'Malas\nAlimentos diversos\nBebidas alcoólicas ou não\nNarguilé\nSubstâncias ilegais de qualquer espécie\nArmas brancas e de fogo\nObjetos cortantes ou perfurantes, tais como canivetes, tesouras de unhas e demais itens pontiagudos\nBolas esportivas\nInstrumentos musicais\nCapacete',revistaObs:'OBS: para os casos de clientes portando itens proibidos, o Javari Streat Park tem o direito de confiscar os objetos no momento da entrada. A retirada ocorre somente na saída do cliente.' };
+        let CFG={...CFG_DEFAULT};
+        const cfgMap={'cfg-nome':'nome','cfg-endereco':'endereco','cfg-telefone':'telefone','cfg-site':'site','cfg-instagram':'instagram','cfg-pagamento':'pagamento','cfg-condicoes':'condicoes','cfg-revista-intro':'revistaIntro','cfg-autorizados':'autorizados','cfg-proibidos':'proibidos','cfg-revista-obs':'revistaObs'};
+        const fieldsToCFG=()=>{ for(const [id,k] of Object.entries(cfgMap)) CFG[k]=$(id).value; };
+        async function loadConfig(){ try{ const s=await getDoc(doc(db,CFG_COL,'main')); if(s.exists()) CFG={...CFG_DEFAULT,...s.data()}; }catch(e){} for(const [id,k] of Object.entries(cfgMap)) $(id).value=CFG[k]||''; if(CFG.cover)selCover=CFG.cover; if(CFG.galeria&&CFG.galeria.length)selPhotos=new Set(CFG.galeria.map(g=>g.src)); }
+        $('cfg-save').onclick=async()=>{ fieldsToCFG(); try{ await setDoc(doc(db,CFG_COL,'main'),CFG); toast('Ajustes salvos'); }catch(e){ toast('Erro: '+e.message); } };
+
+        // ----- Init -----
         renderPkItens(); renderEquipe(); renderExtras();
         await loadCatalogo();
-        renderTemplates();
-        await loadPacotes();
-        await loadCenarios();
-        await loadPropostas();
-        await loadPerfis();
         await loadConfig();
+        await loadPacotes();
+        await loadPropostas();
         await loadLogo();
+        renderResumo();
     </script>
 </body>
 </html>
