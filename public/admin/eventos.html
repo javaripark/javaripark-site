@@ -111,6 +111,7 @@
         <div class="section-tabs">
             <div class="section-tab active" data-section="pacotes">Pacotes</div>
             <div class="section-tab" data-section="simulador">Simulador & Proposta</div>
+            <div class="section-tab" data-section="propostas">Propostas</div>
             <div class="section-tab" data-section="cenarios">Cenários</div>
             <div class="section-tab" data-section="config">Configurações</div>
             <div class="section-tab" data-section="catalogo">Catálogo</div>
@@ -202,6 +203,18 @@
             <div class="card"><h3>Cenários salvos</h3><div class="table-wrap"><table class="fin-table" id="cen-tbl"></table></div></div>
         </div>
 
+        <div class="section-panel" id="panel-propostas">
+            <div class="kpi-grid">
+                <div class="kpi-card"><div class="kpi-label">Enviadas</div><div class="kpi-value" id="pp-enviadas">—</div></div>
+                <div class="kpi-card"><div class="kpi-label">Em negociação</div><div class="kpi-value" id="pp-negoc" style="color:#f59e0b">—</div></div>
+                <div class="kpi-card"><div class="kpi-label">Fechadas</div><div class="kpi-value" id="pp-fechadas" style="color:#16a34a">—</div></div>
+                <div class="kpi-card"><div class="kpi-label">Taxa de conversão</div><div class="kpi-value" id="pp-conv" style="color:#4f1964">—</div><div class="kpi-sub">fechadas ÷ total</div></div>
+                <div class="kpi-card"><div class="kpi-label">Valor em pipeline</div><div class="kpi-value" id="pp-vpipe">—</div><div class="kpi-sub">enviada + negociação</div></div>
+                <div class="kpi-card"><div class="kpi-label">Valor fechado</div><div class="kpi-value" id="pp-vfech" style="color:#16a34a">—</div></div>
+            </div>
+            <div class="card"><h3>Propostas enviadas</h3><div class="table-wrap"><table class="fin-table" id="pp-tbl"></table></div></div>
+        </div>
+
         <!-- ============ CONFIGURAÇÕES ============ -->
         <div class="section-panel" id="panel-config">
             <div class="card" style="border-left:4px solid #b8860b">
@@ -261,8 +274,7 @@
             <div id="export-gallery" style="max-height:300px;overflow-y:auto;border:1px solid #eceaf0;border-radius:10px;padding:10px;margin-top:6px"></div>
             <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:500;cursor:pointer"><input type="checkbox" id="export-default" style="width:auto;margin:0"> Salvar essa seleção como padrão das próximas</label>
             <div class="modal-actions" style="margin-top:16px">
-                <button class="btn" style="background:#25D366;color:#fff" id="export-link">🔗 Gerar link interativo</button>
-                <button class="btn btn-gold" id="export-pdf">📄 Baixar PDF</button>
+                <button class="btn btn-primary" id="export-go">Gerar proposta →</button>
                 <button class="btn btn-sm" style="background:none;color:#999" id="export-cancel">Cancelar</button>
             </div>
         </div>
@@ -275,6 +287,7 @@
             <div class="modal-actions">
                 <button class="btn btn-primary" id="link-copy">Copiar link</button>
                 <a class="btn btn-ghost" id="link-open" target="_blank" style="text-align:center;text-decoration:none">Abrir proposta</a>
+                <button class="btn btn-gold" id="link-pdf">📄 Baixar PDF</button>
                 <button class="btn btn-sm" style="background:none;color:#999" id="link-close">Fechar</button>
             </div>
         </div>
@@ -283,7 +296,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         const AUTH_KEY='javari_admin_auth';
         const session=JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null');
         if(!session) location.href='/admin/index.html';
@@ -441,8 +454,8 @@
         async function generateLink(coverSrc, galeria){
             const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
             fieldsToCFG();
-            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cover:coverSrc||'cotacao-hero.webp', galeria:galeria||[], cfg:{...CFG}, criadoEm:new Date().toISOString() };
-            try{ const ref=await addDoc(collection(db,PROP_COL),data); const url=location.origin+'/proposta.html?id='+ref.id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); }catch(e){ toast('Erro: '+e.message); }
+            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cover:coverSrc||'cotacao-hero.webp', galeria:galeria||[], cfg:{...CFG}, status:'enviada', criadoEm:new Date().toISOString() };
+            try{ const ref=await addDoc(collection(db,PROP_COL),data); const url=location.origin+'/proposta.html?id='+ref.id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); loadPropostas(); }catch(e){ toast('Erro: '+e.message); }
         }
         $('link-copy').addEventListener('click',()=>{ const i=$('link-url'); i.select(); navigator.clipboard?.writeText(i.value).then(()=>toast('Link copiado')).catch(()=>{ document.execCommand('copy'); toast('Link copiado'); }); });
         $('link-close').addEventListener('click',()=>$('link-modal').classList.remove('open'));
@@ -455,6 +468,28 @@
                 cen.map(c=>`<tr><td>${c.nome}</td><td>${c.empresa||'—'}</td><td class="amount">${c.pessoas}</td><td class="amount">${brl(c.preco)}</td><td class="amount">${brl(c.receita)}</td><td class="amount ${c.lucro>=0?'pos':'neg'}">${brl(c.lucro)}</td><td class="amount ${c.margem>=0?'pos':'neg'}">${(c.margem||0).toFixed(1)}%</td><td class="amount"><button class="btn btn-danger btn-sm" data-delc="${c.id}">excluir</button></td></tr>`).join('')
             }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhum cenário salvo.</td></tr></tbody>';
             $('cen-tbl').querySelectorAll('[data-delc]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir cenário?'))return; await deleteDoc(doc(db,CEN_COL,b.dataset.delc)); loadCenarios(); }));
+        }
+
+        // ---------- Propostas (pipeline) ----------
+        const STATUS_LIST=[['enviada','Enviada'],['negociacao','Em negociação'],['fechada','Fechada'],['perdida','Perdida']];
+        async function loadPropostas(){
+            let pp=[]; try{ const s=await getDocs(collection(db,PROP_COL)); pp=s.docs.map(d=>({id:d.id,...d.data()})); }catch(e){}
+            pp.sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+            const st=p=>p.status||'enviada';
+            const cnt=v=>pp.filter(p=>st(p)===v).length;
+            const sumv=fn=>pp.filter(fn).reduce((s,p)=>s+(p.total||0),0);
+            const total=pp.length, fechadas=cnt('fechada');
+            $('pp-enviadas').textContent=cnt('enviada');
+            $('pp-negoc').textContent=cnt('negociacao');
+            $('pp-fechadas').textContent=fechadas;
+            $('pp-conv').textContent=total?`${(fechadas/total*100).toFixed(0)}%`:'—';
+            $('pp-vpipe').textContent=brl(sumv(p=>['enviada','negociacao'].includes(st(p))));
+            $('pp-vfech').textContent=brl(sumv(p=>st(p)==='fechada'));
+            $('pp-tbl').innerHTML=pp.length?`<thead><tr><th>Empresa</th><th>Data evento</th><th class="amount">Pessoas</th><th class="amount">Valor</th><th>Status</th><th>Criada</th><th></th></tr></thead><tbody>${
+                pp.map(p=>`<tr><td>${p.empresa||'—'}</td><td>${fmtDateBR(p.dataEvento)||'—'}</td><td class="amount">${p.pessoas||'—'}</td><td class="amount">${brl(p.total)}</td><td><select data-st="${p.id}" style="padding:5px 9px;font-size:12px">${STATUS_LIST.map(([v,l])=>`<option value="${v}"${st(p)===v?' selected':''}>${l}</option>`).join('')}</select></td><td>${fmtDateBR((p.criadoEm||'').slice(0,10))}</td><td class="amount"><a class="btn btn-ghost btn-sm" href="/proposta.html?id=${p.id}" target="_blank" style="text-decoration:none">abrir</a> <button class="btn btn-danger btn-sm" data-delp="${p.id}">×</button></td></tr>`).join('')
+            }</tbody>`:'<tbody><tr><td style="color:#aaa">Nenhuma proposta enviada ainda. Gere uma na aba Simulador & Proposta.</td></tr></tbody>';
+            $('pp-tbl').querySelectorAll('[data-st]').forEach(s=>s.addEventListener('change',async()=>{ try{ await updateDoc(doc(db,PROP_COL,s.dataset.st),{status:s.value}); loadPropostas(); }catch(e){ toast('Erro: '+e.message); } }));
+            $('pp-tbl').querySelectorAll('[data-delp]').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Excluir esta proposta do pipeline?'))return; await deleteDoc(doc(db,PROP_COL,b.dataset.delp)); loadPropostas(); }));
         }
 
         // ---------- Configurações ----------
@@ -521,8 +556,8 @@
         $('sim-export').addEventListener('click',openExport);
         $('export-cancel').addEventListener('click',()=>$('export-modal').classList.remove('open'));
         async function maybeSaveDefault(){ if($('export-default').checked){ CFG.cover=selCover; CFG.galeria=galeriaSel(); try{ await setDoc(doc(db,CFG_COL,'main'),CFG); CFG_SAVED={...CFG}; toast('Fotos salvas como padrão'); }catch(e){} } }
-        $('export-pdf').addEventListener('click',async()=>{ await maybeSaveDefault(); $('export-modal').classList.remove('open'); await generatePDF(selCover); });
-        $('export-link').addEventListener('click',async()=>{ await maybeSaveDefault(); $('export-modal').classList.remove('open'); await generateLink(selCover, galeriaSel()); });
+        $('export-go').addEventListener('click',async()=>{ await maybeSaveDefault(); $('export-modal').classList.remove('open'); await generateLink(selCover, galeriaSel()); });
+        $('link-pdf').addEventListener('click',()=>generatePDF(selCover));
         // edição ao vivo aplica à cotação atual (CFG) — usada no PDF
         Object.keys(cfgMap).forEach(id=>$(id).addEventListener('input',fieldsToCFG));
         async function loadConfig(){ try{ const snap=await getDoc(doc(db,CFG_COL,'main')); if(snap.exists()){ CFG_SAVED={...CFG_DEFAULT,...snap.data()}; } }catch(e){} CFG={...CFG_SAVED}; cfgToFields(CFG); }
@@ -577,6 +612,7 @@
         renderTemplates();
         await loadPacotes();
         await loadCenarios();
+        await loadPropostas();
         await loadConfig();
         await loadLogo();
     </script>
