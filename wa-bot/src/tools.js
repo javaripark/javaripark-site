@@ -5,6 +5,7 @@ import { queryDocs, addDoc, setDoc, getDoc, deleteDoc } from './firestore.js';
 
 const SETORES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
+const DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
 export const toolDefs = [
   {
@@ -102,7 +103,7 @@ async function consultarDisponibilidade({ data }) {
   const reservas = await queryDocs('reservas', [['Data', data]]);
   const ocupados = reservas.map(r => String(r.Setor)).filter(s => s !== 'Extras');
   const livres = SETORES.filter(s => !ocupados.includes(s));
-  const out = { aberto: true, setoresLivres: livres, toleranciaChegada: TOLERANCIA[dow] };
+  const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, toleranciaChegada: TOLERANCIA[dow] };
   if (!livres.length) { out.lotado = true; out.dica = 'ofereça reserva extra (setor "Extras"); equipe acomoda no dia'; }
   return out;
 }
@@ -157,7 +158,7 @@ async function registrarReserva(input, ctx) {
     ViaBot: true,
     CriadoEm: new Date().toISOString(),
   });
-  return { ok: true, reservaId: id, toleranciaChegada: TOLERANCIA[dow] };
+  return { ok: true, reservaId: id, diaSemana: DIAS[dow], toleranciaChegada: TOLERANCIA[dow] };
 }
 
 // Acha a reserva e garante que pertence ao telefone do remetente
@@ -228,7 +229,7 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
     AlteradoEm: new Date().toISOString(),
     AlteradoVia: 'bot',
   });
-  return { ok: true, reserva: { data, setor, pessoas }, toleranciaChegada: TOLERANCIA[dow] };
+  return { ok: true, reserva: { data, setor, pessoas }, diaSemana: DIAS[dow], toleranciaChegada: TOLERANCIA[dow] };
 }
 
 async function chamarHumano({ motivo }, ctx) {
