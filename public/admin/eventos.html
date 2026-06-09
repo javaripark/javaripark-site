@@ -15,6 +15,7 @@
         .container{max-width:1200px;margin:0 auto;padding:12px}
         .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0}
         .header h1{color:#fff;font-size:1.3em;font-weight:700;letter-spacing:.5px}
+        .header p{color:rgba(255,255,255,.6);font-size:.75em;margin-top:3px}
         .header .logout-btn{position:absolute;top:50%;right:16px;transform:translateY(-50%);background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
         .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 8px rgba(0,0,0,.06);border-radius:0 0 12px 12px;margin-bottom:18px}
         .admin-nav a{flex:1;text-align:center;padding:13px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;white-space:nowrap}
@@ -106,7 +107,7 @@
 </head>
 <body>
     <div class="container">
-        <header class="header"><h1>Painel Administrativo</h1><button class="logout-btn" id="logoutBtn">Sair</button></header>
+        <header class="header"><h1>Painel Administrativo</h1><p id="user-email-display"></p><button class="logout-btn" id="logoutBtn">Sair</button></header>
         <nav class="admin-nav">
             <a href="/admin/reservas.html">Reservas</a><a href="/admin/agenda.html">Agenda</a>
             <a href="/admin/cardapio.html">Cardápio</a><a href="/admin/blog.html">Blog</a>
