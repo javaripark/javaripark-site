@@ -79,6 +79,9 @@
         .ph .chk{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#bbb}
         .ph.sel .chk{background:#4f1964;color:#fff}
         .ph .cap{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 4px;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:10px;font-weight:600}
+        .modal-wide{max-width:680px;max-height:88vh;overflow-y:auto}
+        .cover-strip{display:flex;gap:10px;overflow-x:auto;padding:6px 2px}
+        .cover-strip .ph{flex:0 0 132px;aspect-ratio:16/9}
         /* Modal */
         .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:18px}
         .modal-ov.open{display:flex}
@@ -190,8 +193,7 @@
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:24px;flex-wrap:wrap">
                 <input id="sim-cenario-nome" placeholder="Nome do cenário p/ salvar" style="max-width:200px">
                 <button class="btn btn-ghost btn-sm" id="sim-save">Salvar cenário</button>
-                <button class="btn btn-sm" style="background:#f0ebf3;color:#4f1964" id="sim-pdf">📄 PDF</button>
-                <button class="btn" style="background:#25D366;color:#fff" id="sim-link">🔗 Gerar proposta (link)</button>
+                <button class="btn" style="background:#4f1964;color:#fff" id="sim-export">Exportar proposta →</button>
             </div>
         </div>
 
@@ -209,11 +211,6 @@
                 <h3>Identidade (aparece no PDF)</h3>
                 <div class="row"><div><label>Nome</label><input id="cfg-nome"></div><div><label>Endereço</label><input id="cfg-endereco"></div></div>
                 <div class="row"><div><label>Telefone / WhatsApp</label><input id="cfg-telefone"></div><div><label>Site</label><input id="cfg-site"></div><div><label>Instagram</label><input id="cfg-instagram"></div></div>
-            </div>
-            <div class="card">
-                <h3>Fotos da proposta (galeria)</h3>
-                <p class="hint" style="margin:-6px 0 6px">Clique nas fotos pra incluir/tirar da galeria do orçamento. Já vêm marcadas as recomendadas. <span id="photo-count" style="font-weight:700;color:#4f1964"></span></p>
-                <div id="photo-grid"></div>
             </div>
             <div class="card"><h3>Forma de pagamento</h3><textarea id="cfg-pagamento" rows="3"></textarea></div>
             <div class="card"><h3>Condições gerais</h3><textarea id="cfg-condicoes" rows="5"></textarea></div>
@@ -251,6 +248,22 @@
                 <button class="btn btn-gold" id="cfg-default">Gravar como novo padrão</button>
                 <button class="btn btn-ghost" id="cfg-session">Usar só nesta cotação</button>
                 <button class="btn btn-sm" style="background:none;color:#999" id="cfg-cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-ov" id="export-modal">
+        <div class="modal-box modal-wide">
+            <h3>Exportar proposta</h3>
+            <p>Escolha a capa e as fotos da galeria. Já vêm marcadas as recomendadas — ajuste se quiser e gere.</p>
+            <label style="margin-top:4px">🖼 Capa (escolha 1)</label>
+            <div class="cover-strip" id="export-cover"></div>
+            <label style="margin-top:16px">📸 Galeria <span id="export-count" style="color:#4f1964;font-weight:700"></span></label>
+            <div id="export-gallery" style="max-height:300px;overflow-y:auto;border:1px solid #eceaf0;border-radius:10px;padding:10px;margin-top:6px"></div>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:500;cursor:pointer"><input type="checkbox" id="export-default" style="width:auto;margin:0"> Salvar essa seleção como padrão das próximas</label>
+            <div class="modal-actions" style="margin-top:16px">
+                <button class="btn" style="background:#25D366;color:#fff" id="export-link">🔗 Gerar link interativo</button>
+                <button class="btn btn-gold" id="export-pdf">📄 Baixar PDF</button>
+                <button class="btn btn-sm" style="background:none;color:#999" id="export-cancel">Cancelar</button>
             </div>
         </div>
     </div>
@@ -425,12 +438,12 @@
         });
 
         // ---------- Gerar proposta (link público) ----------
-        $('sim-link').addEventListener('click',async()=>{
+        async function generateLink(coverSrc, galeria){
             const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
             fieldsToCFG();
-            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, galeria:CFG.galeria||[], cfg:{...CFG}, criadoEm:new Date().toISOString() };
+            const data={ empresa:$('sim-empresa').value, contato:$('sim-contato').value, dataEvento:$('sim-data').value, pessoas:c.pax, duracao:$('sim-duracao').value, pacoteNome:c.p.nome, isOpen:c.isOpen, itens:(c.p.itens||[]).map(i=>({nome:i.nome,qtd:i.qtd})), preco:c.preco, pkgReceita:c.pkgReceita, extrasRepassados:extras.filter(e=>e.repassar&&(e.valor||0)>0).map(e=>({desc:e.desc,valor:e.valor})), total:c.receita, cover:coverSrc||'cotacao-hero.webp', galeria:galeria||[], cfg:{...CFG}, criadoEm:new Date().toISOString() };
             try{ const ref=await addDoc(collection(db,PROP_COL),data); const url=location.origin+'/proposta.html?id='+ref.id; $('link-url').value=url; $('link-open').href=url; $('link-modal').classList.add('open'); }catch(e){ toast('Erro: '+e.message); }
-        });
+        }
         $('link-copy').addEventListener('click',()=>{ const i=$('link-url'); i.select(); navigator.clipboard?.writeText(i.value).then(()=>toast('Link copiado')).catch(()=>{ document.execCommand('copy'); toast('Link copiado'); }); });
         $('link-close').addEventListener('click',()=>$('link-modal').classList.remove('open'));
 
@@ -454,7 +467,7 @@
             revistaObs:'OBS: para os casos de clientes portando itens proibidos, o Javari Streat Park tem o direito de confiscar os objetos no momento da entrada. A retirada ocorre somente na saída do cliente.' };
         let CFG={...CFG_DEFAULT}, CFG_SAVED={...CFG_DEFAULT};
         const cfgMap={'cfg-nome':'nome','cfg-endereco':'endereco','cfg-telefone':'telefone','cfg-site':'site','cfg-instagram':'instagram','cfg-pagamento':'pagamento','cfg-condicoes':'condicoes','cfg-revista-intro':'revistaIntro','cfg-autorizados':'autorizados','cfg-proibidos':'proibidos','cfg-revista-obs':'revistaObs'};
-        function fieldsToCFG(){ for(const [id,k] of Object.entries(cfgMap)) CFG[k]=$(id).value; syncGaleria(); }
+        function fieldsToCFG(){ for(const [id,k] of Object.entries(cfgMap)) CFG[k]=$(id).value; }
         function cfgToFields(src){ for(const [id,k] of Object.entries(cfgMap)) $(id).value=src[k]||''; }
         // --- Fotos da proposta (galeria) ---
         const PHOTO_LIB=[
@@ -492,17 +505,27 @@
             {src:'clientes/galeria-05.webp',cap:'Eventos',g:'Eventos'},
         ];
         const DEFAULT_SEL=['quintal/quintal-aniversario.webp','quintal/quintal-happyhour.webp','bus-lounge/bus-01.webp','quintal/quintal-oasis.webp','drinks/cerveja-trincando.webp','drinks/drink-01.webp','clientes/cliente-01.webp','quintal/quintal-bora.webp'];
-        let selPhotos=new Set(DEFAULT_SEL);
-        function syncGaleria(){ CFG.galeria=PHOTO_LIB.filter(p=>selPhotos.has(p.src)).map(p=>({src:p.src,cap:p.cap})); const pc=$('photo-count'); if(pc)pc.textContent=`${selPhotos.size} selecionadas`; }
-        function renderPhotoGrid(){
+        const DEFAULT_COVER='cotacao-hero.webp';
+        const COVER_LIB=[{src:'cotacao-hero.webp',cap:'Lanche'},{src:'quintal/quintal-hero.webp',cap:'O espaço'},{src:'quintal/quintal-aniversario.webp',cap:'Aniversário'},{src:'quintal/quintal-happyhour.webp',cap:'Happy hour'},{src:'quintal/quintal-oasis.webp',cap:'O quintal'},{src:'drinks/cerveja-trincando.webp',cap:'Cerveja'},{src:'drinks/drink-01.webp',cap:'Drinks'},{src:'bus-lounge/bus-01.webp',cap:'Bus Lounge'},{src:'clientes/cliente-01.webp',cap:'Eventos'}];
+        let selPhotos=new Set(DEFAULT_SEL), selCover=DEFAULT_COVER;
+        const galeriaSel=()=>PHOTO_LIB.filter(p=>selPhotos.has(p.src)).map(p=>({src:p.src,cap:p.cap}));
+        function renderExport(){
+            $('export-cover').innerHTML=COVER_LIB.map(p=>`<div class="ph${selCover===p.src?' sel':''}" data-cover="${p.src}"><img loading="lazy" src="/assets/images/${p.src}" alt=""><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('');
+            $('export-cover').querySelectorAll('[data-cover]').forEach(el=>el.addEventListener('click',()=>{ selCover=el.dataset.cover; renderExport(); }));
             const grps=[...new Set(PHOTO_LIB.map(p=>p.g))];
-            $('photo-grid').innerHTML=grps.map(g=>`<div class="photo-grp">${g}</div><div class="photo-grid">${PHOTO_LIB.filter(p=>p.g===g).map(p=>`<div class="ph${selPhotos.has(p.src)?' sel':''}" data-src="${p.src}"><img loading="lazy" src="/assets/images/${p.src}" alt=""><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('')}</div>`).join('');
-            $('photo-grid').querySelectorAll('[data-src]').forEach(el=>el.addEventListener('click',()=>{ const s=el.dataset.src; if(selPhotos.has(s))selPhotos.delete(s); else selPhotos.add(s); el.classList.toggle('sel'); syncGaleria(); }));
-            syncGaleria();
+            $('export-gallery').innerHTML=grps.map(g=>`<div class="photo-grp">${g}</div><div class="photo-grid">${PHOTO_LIB.filter(p=>p.g===g).map(p=>`<div class="ph${selPhotos.has(p.src)?' sel':''}" data-src="${p.src}"><img loading="lazy" src="/assets/images/${p.src}" alt=""><div class="chk">✓</div><div class="cap">${p.cap}</div></div>`).join('')}</div>`).join('');
+            $('export-gallery').querySelectorAll('[data-src]').forEach(el=>el.addEventListener('click',()=>{ const s=el.dataset.src; if(selPhotos.has(s))selPhotos.delete(s); else selPhotos.add(s); el.classList.toggle('sel'); $('export-count').textContent=`(${selPhotos.size})`; }));
+            $('export-count').textContent=`(${selPhotos.size})`;
         }
+        function openExport(){ const c=calc(); if(!c){ toast('Selecione um pacote'); return; } selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); selCover=CFG.cover||DEFAULT_COVER; renderExport(); $('export-default').checked=false; $('export-modal').classList.add('open'); }
+        $('sim-export').addEventListener('click',openExport);
+        $('export-cancel').addEventListener('click',()=>$('export-modal').classList.remove('open'));
+        async function maybeSaveDefault(){ if($('export-default').checked){ CFG.cover=selCover; CFG.galeria=galeriaSel(); try{ await setDoc(doc(db,CFG_COL,'main'),CFG); CFG_SAVED={...CFG}; toast('Fotos salvas como padrão'); }catch(e){} } }
+        $('export-pdf').addEventListener('click',async()=>{ await maybeSaveDefault(); $('export-modal').classList.remove('open'); await generatePDF(selCover); });
+        $('export-link').addEventListener('click',async()=>{ await maybeSaveDefault(); $('export-modal').classList.remove('open'); await generateLink(selCover, galeriaSel()); });
         // edição ao vivo aplica à cotação atual (CFG) — usada no PDF
         Object.keys(cfgMap).forEach(id=>$(id).addEventListener('input',fieldsToCFG));
-        async function loadConfig(){ try{ const snap=await getDoc(doc(db,CFG_COL,'main')); if(snap.exists()){ CFG_SAVED={...CFG_DEFAULT,...snap.data()}; } }catch(e){} CFG={...CFG_SAVED}; cfgToFields(CFG); selPhotos=new Set((CFG.galeria&&CFG.galeria.length)?CFG.galeria.map(g=>g.src):DEFAULT_SEL); renderPhotoGrid(); }
+        async function loadConfig(){ try{ const snap=await getDoc(doc(db,CFG_COL,'main')); if(snap.exists()){ CFG_SAVED={...CFG_DEFAULT,...snap.data()}; } }catch(e){} CFG={...CFG_SAVED}; cfgToFields(CFG); }
         $('cfg-save').addEventListener('click',()=>{ fieldsToCFG(); $('cfg-modal').classList.add('open'); });
         $('cfg-cancel').addEventListener('click',()=>$('cfg-modal').classList.remove('open'));
         $('cfg-session').addEventListener('click',()=>{ fieldsToCFG(); $('cfg-modal').classList.remove('open'); toast('Aplicado só nesta cotação'); });
@@ -513,7 +536,7 @@
         let LOGO_DATA=null;
         async function loadLogo(){ try{ const r=await fetch('/assets/images/logo-horizontal-black.png'); const b=await r.blob(); LOGO_DATA=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(b);}); }catch(e){} }
         function webpToJpeg(src, targetAR){ return new Promise(res=>{ const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ let sw=img.naturalWidth, sh=img.naturalHeight, sx=0, sy=0; if(targetAR){ const ar=sw/sh; if(ar>targetAR){ const nw=sh*targetAR; sx=(sw-nw)/2; sw=nw; } else { const nh=sw/targetAR; sy=(sh-nh)/2; sh=nh; } } const cv=document.createElement('canvas'); cv.width=sw; cv.height=sh; cv.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh); try{ res({data:cv.toDataURL('image/jpeg',0.85)}); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src=src; }); }
-        $('sim-pdf').addEventListener('click',async()=>{
+        async function generatePDF(coverSrc){
             const c=calc(); if(!c){ toast('Selecione um pacote'); return; }
             const { jsPDF }=window.jspdf; const d=new jsPDF({unit:'mm',format:'a4'});
             const M=20, W=210, CW=W-2*M, PH=297; let y=M;
@@ -521,7 +544,7 @@
             const para=(txt,size=10,style='normal',color=[70,70,70],lh=1.5)=>{ d.setFont('helvetica',style); d.setFontSize(size); d.setTextColor(...color); d.splitTextToSize(String(txt||''),CW).forEach(l=>{ ensure(size*0.45*lh+1); d.text(l,M,y); y+=size*0.45*lh+1; }); };
             const head=t=>{ y+=7; ensure(12); d.setFillColor(79,25,100); d.rect(M,y-1,2.6,6.5,'F'); d.setTextColor(79,25,100); d.setFont('helvetica','bold'); d.setFontSize(11.5); d.text(String(t).toUpperCase(),M+6,y+3.6); y+=10; };
             const bullets=txt=>String(txt||'').split('\n').filter(s=>s.trim()).forEach(line=>{ const t=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(70,70,70); d.splitTextToSize(t,CW-6).forEach((l,i)=>{ ensure(5.6); if(i===0){ d.setTextColor(79,25,100); d.text('•',M,y); d.setTextColor(70,70,70); } d.text(l,M+5,y); y+=5.6; }); y+=1.2; });
-            const hh=64; const hero=await webpToJpeg('/assets/images/cotacao-hero.webp', W/hh);
+            const hh=64; const hero=await webpToJpeg('/assets/images/'+(coverSrc||'cotacao-hero.webp'), W/hh);
             if(hero){ try{ d.addImage(hero.data,'JPEG',0,0,W,hh); }catch(e){} d.setFillColor(26,15,30); d.setGState&&d.setGState(new d.GState({opacity:0.4})); d.rect(0,0,W,hh,'F'); d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+8; }
             if(LOGO_DATA){ const lw=44, lh=lw*430/800; try{ d.addImage(LOGO_DATA,'PNG',M,y,lw,lh); }catch(e){} y+=lh+3; }
             d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(25,25,25); ensure(9); d.text($('sim-empresa').value?`Proposta — ${$('sim-empresa').value}`:'Proposta de Evento',M,y); y+=4;
@@ -546,7 +569,7 @@
             d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(100,100,100);
             [CFG.endereco,'Tel/WhatsApp: '+CFG.telefone,CFG.site,'Instagram: '+CFG.instagram].forEach(l=>{ ensure(5); d.text(String(l),M,y); y+=5; });
             d.save(`Proposta-Javari-${($('sim-empresa').value||'evento').replace(/[^a-z0-9]/gi,'-')}.pdf`);
-        });
+        }
 
         // ---------- Init ----------
         renderPkItens(); renderEquipe(); renderExtras();

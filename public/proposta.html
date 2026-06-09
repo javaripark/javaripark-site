@@ -73,7 +73,7 @@
     <div id="loading">Carregando proposta…</div>
     <div class="wrap" id="app" style="display:none">
         <section class="hero">
-            <img class="bg" src="/assets/images/cotacao-hero.webp" alt="">
+            <img class="bg" id="hero-bg" src="/assets/images/cotacao-hero.webp" alt="">
             <div class="ov"></div>
             <div class="inner">
                 <img class="logo" src="/assets/images/logo-horizontal-white.png" alt="Javari StrEat Park">
@@ -140,6 +140,7 @@
         }
         function render(p){
             const cfg=p.cfg||{};
+            $('hero-bg').src = '/assets/images/' + (p.cover || 'cotacao-hero.webp');
             $('h-titulo').textContent = p.empresa ? `Proposta para ${p.empresa}` : 'Seu evento no Javari';
             $('h-meta').innerHTML = [p.dataEvento?`<span>📅 ${fmtDateBR(p.dataEvento)}</span>`:'', p.pessoas?`<span>👥 ${p.pessoas} pessoas</span>`:'', p.duracao?`<span>⏰ ${p.duracao}h</span>`:''].join('');
             $('detalhes').innerHTML = [['Pacote',p.pacoteNome||'—'],['Pessoas',p.pessoas||'—'],['Data',fmtDateBR(p.dataEvento)||'a definir']].map(([l,v])=>`<div class="card"><div class="lbl">${l}</div><div class="val">${v}</div></div>`).join('');
@@ -169,7 +170,7 @@
             const head=t=>{ y+=7; ensure(11); d.setFillColor(79,25,100); d.rect(M,y-1,2.6,6.5,'F'); d.setTextColor(79,25,100); d.setFont('helvetica','bold'); d.setFontSize(11.5); d.text(String(t).toUpperCase(),M+6,y+3.6); y+=10; };
             const bullets=t=>String(t||'').split('\n').filter(s=>s.trim()).forEach(line=>{ const x=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(70,70,70); d.splitTextToSize(x,CW-6).forEach((l,i)=>{ ensure(5.6); if(i===0){d.setTextColor(79,25,100);d.text('•',M,y);d.setTextColor(70,70,70);} d.text(l,M+5,y); y+=5.6; }); y+=1; });
             // capa com foto
-            const hh=64; const hero=await webpToJpeg('/assets/images/cotacao-hero.webp', W/hh);
+            const hh=64; const hero=await webpToJpeg('/assets/images/'+(p.cover||'cotacao-hero.webp'), W/hh);
             if(hero){ try{ d.addImage(hero.data,'JPEG',0,0,W,hh); }catch(e){} d.setFillColor(26,15,30); d.setGState&&d.setGState(new d.GState({opacity:0.4})); d.rect(0,0,W,hh,'F'); d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+12; } else y=M;
             const logo=await pngData('/assets/images/logo-horizontal-black.png');
             if(logo){ const lw=44; try{ d.addImage(logo,'PNG',M,y-6,lw,lw*430/800); }catch(e){} y+=lw*430/800+2; }
