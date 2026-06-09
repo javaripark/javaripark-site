@@ -1,6 +1,7 @@
 // Ferramentas do atendente. Schemas compactos (tokens) + validações de
 // negócio espelhadas do admin (seg/ter fechado, 1 reserva por setor/data).
-import { queryDocs, addDoc, setDoc } from './firestore.js';
+// Cancelar/alterar só operam em reservas atreladas ao Whatsapp do remetente.
+import { queryDocs, addDoc, setDoc, getDoc, deleteDoc } from './firestore.js';
 
 const SETORES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
@@ -29,6 +30,35 @@ export const toolDefs = [
         observacoes: { type: 'string', description: 'Opcional: aniversário, preferências, bolo etc.' },
       },
       required: ['data', 'nome', 'sobrenome', 'pessoas', 'setor'],
+    },
+  },
+  {
+    name: 'buscar_reservas',
+    description: 'Lista as reservas futuras atreladas ao WhatsApp deste cliente. Use antes de cancelar ou alterar.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'cancelar_reserva',
+    description: 'Cancela uma reserva do próprio cliente. Só chame APÓS confirmação explícita do cancelamento.',
+    input_schema: {
+      type: 'object',
+      properties: { reservaId: { type: 'string', description: 'ID retornado por buscar_reservas' } },
+      required: ['reservaId'],
+    },
+  },
+  {
+    name: 'alterar_reserva',
+    description: 'Altera data, quantidade de pessoas, setor ou observações de uma reserva do próprio cliente. Só chame APÓS o cliente confirmar o eco da alteração.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        reservaId: { type: 'string', description: 'ID retornado por buscar_reservas' },
+        novaData: { type: 'string', description: 'Opcional, YYYY-MM-DD' },
+        novasPessoas: { type: 'integer', description: 'Opcional' },
+        novoSetor: { type: 'string', description: 'Opcional, setor 1-9' },
+        novasObservacoes: { type: 'string', description: 'Opcional' },
+      },
+      required: ['reservaId'],
     },
   },
   {
@@ -99,6 +129,77 @@ async function registrarReserva(input, ctx) {
   return { ok: true, reservaId: id, toleranciaChegada: TOLERANCIA[dow] };
 }
 
+// Acha a reserva e garante que pertence ao telefone do remetente
+async function reservaDoCliente(reservaId, ctx) {
+  if (!reservaId || /[\/.]/.test(reservaId)) return { erro: 'reservaId inválido' };
+  const doc = await getDoc(`reservas/${reservaId}`);
+  if (!doc) return { erro: 'reserva não encontrada' };
+  if (!ctx.telefone || doc.Whatsapp !== ctx.telefone) {
+    return { erro: 'reserva não pertence a este WhatsApp — use chamar_humano' };
+  }
+  return { doc };
+}
+
+async function buscarReservas(_input, ctx) {
+  if (!ctx.telefone) return { reservas: [] };
+  const todas = await queryDocs('reservas', [['Whatsapp', ctx.telefone]]);
+  const hoje = hojeISO();
+  const futuras = todas
+    .filter(r => (r.Data || '') >= hoje)
+    .sort((a, b) => (a.Data || '').localeCompare(b.Data || ''))
+    .map(r => ({ reservaId: r.id, data: r.Data, setor: String(r.Setor), pessoas: r['Quantidade de Pessoas'], nome: `${r.Nome || ''} ${r.Sobrenome || ''}`.trim() }));
+  return { reservas: futuras, aviso: futuras.length ? undefined : 'nenhuma reserva futura neste número; se foi feita por outro telefone ou Instagram, use chamar_humano' };
+}
+
+async function cancelarReserva({ reservaId }, ctx) {
+  const r = await reservaDoCliente(reservaId, ctx);
+  if (r.erro) return { ok: false, erro: r.erro };
+  const { id, ...dados } = r.doc;
+  await addDoc('wa_cancelamentos', { ...dados, ReservaId: reservaId, CanceladoEm: new Date().toISOString(), CanceladoVia: 'bot' });
+  await deleteDoc(`reservas/${reservaId}`);
+  return { ok: true, cancelada: { data: dados.Data, setor: String(dados.Setor), pessoas: dados['Quantidade de Pessoas'] } };
+}
+
+async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, novasObservacoes }, ctx) {
+  const r = await reservaDoCliente(reservaId, ctx);
+  if (r.erro) return { ok: false, erro: r.erro };
+  const atual = r.doc;
+
+  const data = novaData || atual.Data;
+  const setor = String(novoSetor || atual.Setor);
+  const pessoas = novasPessoas != null ? parseInt(novasPessoas, 10) : atual['Quantidade de Pessoas'];
+
+  const d = validDate(data);
+  if (!d) return { ok: false, erro: 'data inválida' };
+  if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
+  const dow = d.getDay();
+  if (dow === 1 || dow === 2) return { ok: false, erro: 'fechado às segundas e terças' };
+  if (!SETORES.includes(setor)) return { ok: false, erro: 'setor inválido (1-9); Bus Lounge é via equipe humana' };
+  if (!pessoas || pessoas < 1 || pessoas > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
+
+  // Conflito no destino (data+setor), ignorando a própria reserva
+  if (data !== atual.Data || setor !== String(atual.Setor)) {
+    const conflito = (await queryDocs('reservas', [['Data', data], ['Setor', setor]])).filter(c => c.id !== reservaId);
+    if (conflito.length) {
+      const todas = await queryDocs('reservas', [['Data', data]]);
+      const ocupados = todas.filter(c => c.id !== reservaId).map(c => String(c.Setor));
+      return { ok: false, erro: `setor ${setor} ocupado em ${data}`, setoresLivres: SETORES.filter(s => !ocupados.includes(s)) };
+    }
+  }
+
+  const { id, ...dados } = atual;
+  await setDoc(`reservas/${reservaId}`, {
+    ...dados,
+    Data: data,
+    Setor: setor,
+    'Quantidade de Pessoas': pessoas,
+    Observacoes: novasObservacoes != null ? novasObservacoes.trim() : (dados.Observacoes || ''),
+    AlteradoEm: new Date().toISOString(),
+    AlteradoVia: 'bot',
+  });
+  return { ok: true, reserva: { data, setor, pessoas }, toleranciaChegada: TOLERANCIA[dow] };
+}
+
 async function chamarHumano({ motivo }, ctx) {
   await addDoc('wa_alertas', {
     Telefone: ctx.telefone || '',
@@ -117,6 +218,9 @@ export async function runTool(name, input, ctx) {
   try {
     if (name === 'consultar_disponibilidade') return await consultarDisponibilidade(input);
     if (name === 'registrar_reserva') return await registrarReserva(input, ctx);
+    if (name === 'buscar_reservas') return await buscarReservas(input, ctx);
+    if (name === 'cancelar_reserva') return await cancelarReserva(input, ctx);
+    if (name === 'alterar_reserva') return await alterarReserva(input, ctx);
     if (name === 'chamar_humano') return await chamarHumano(input, ctx);
     return { erro: 'ferramenta desconhecida' };
   } catch (e) {

@@ -4,6 +4,7 @@ Atendimento autônomo no WhatsApp oficial via **Cloud API da Meta** (API oficial
 
 - Origem automática: conversa vinda de anúncio (CTWA) entra com `Origem: 'anuncio'` — sem flag manual.
 - Reservas gravadas com `ViaBot: true` e as mesmas validações do admin (seg/ter fechado, 1 setor por data, re-checagem de conflito na gravação).
+- Cliente também **cancela e altera** a própria reserva pelo chat (o bot localiza pelas reservas do número do WhatsApp; só mexe nas do próprio remetente). Cancelamentos ficam auditados em `wa_cancelamentos`; alterações marcam `AlteradoVia: 'bot'`.
 - Handoff: assuntos fora do escopo (Bus Lounge, orçamentos, cancelamentos, reclamações) pausam o bot na conversa (`status: humano`) e geram alerta em `wa_alertas`. Você responde normal **pelo app do celular** (coexistência). O modo humano expira sozinho após 24h sem mensagens.
 
 ## 1. Maturar o prompt (sem WhatsApp)
