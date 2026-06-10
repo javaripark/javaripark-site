@@ -10,9 +10,10 @@ service cloud.firestore {
         && request.auth.token.email == 'admin@javaripark.com.br';
     }
 
-    // Proposta de eventos: o CLIENTE abre o link público — só leitura, só aqui.
+    // Proposta de eventos: o CLIENTE abre o link público (get por id),
+    // mas NINGUÉM pode listar/enumerar as propostas (protege contatos).
     match /artifacts/central-de-reservas-jsp/public/data/eventos_propostas/{id} {
-      allow read: if true;
+      allow get: if true;
     }
   }
 }
