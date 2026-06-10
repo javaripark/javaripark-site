@@ -107,7 +107,8 @@ async function consultarDisponibilidade({ data }) {
   const reservas = await queryDocs('reservas', [['Data', data]]);
   const ocupados = reservas.map(r => String(r.Setor)).filter(s => s !== 'Extras');
   const livres = SETORES.filter(s => !ocupados.includes(s));
-  const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, toleranciaChegada: tolerancia(data, dow) };
+  const busLivre = !reservas.some(r => String(r.Setor) === 'Bus Lounge');
+  const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, busLivre, toleranciaChegada: tolerancia(data, dow) };
   if (dow === 1 || dow === 2) out.atencao = AVISO_SEG_TER;
   if (!livres.length) { out.lotado = true; out.dica = 'ofereça reserva extra (setor "Extras"); equipe acomoda no dia'; }
   return out;
