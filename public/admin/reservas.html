@@ -48,6 +48,21 @@
         #sector-9 { top: 21.8%; left: 22.7%; width: 13.8%; height: 7.1%; }
         #bus-lounge { top: 17.3%; left: 75.5%; width: 21%; height: 59%; font-size: .7em; }
         #sector-extras { top: 1.5%; left: 1.9%; width: 39.1%; height: 14.1%; }
+        /* Filhos (overflow): slot menor colado no pai, no vão central. Só aparecem quando o pai está ocupado. */
+        #sector-1b { top: 66.7%; left: 48.6%; width: 9.5%; height: 7.1%; }
+        #sector-3b { top: 57.7%; left: 48.6%; width: 9.5%; height: 7.1%; }
+        #sector-5b { top: 48.7%; left: 48.6%; width: 9.5%; height: 7.1%; }
+        #sector-6b { top: 39.7%; left: 48.6%; width: 9.5%; height: 7.1%; }
+        #sector-7b { top: 30.8%; left: 48.6%; width: 9.5%; height: 7.1%; }
+        #sector-8b { top: 21.8%; left: 48.6%; width: 9.5%; height: 7.1%; }
+        #sector-2b { top: 66.7%; left: 37.0%; width: 9.5%; height: 7.1%; }
+        #sector-4b { top: 48.7%; left: 37.0%; width: 9.5%; height: 7.1%; }
+        #sector-9b { top: 21.8%; left: 37.0%; width: 9.5%; height: 7.1%; }
+        .sector.child-slot { font-size: .6em; border-style: dashed; opacity: .97; }
+        .sector.child-slot.free { background-color: rgba(144,226,74,.55); border: 2px dashed #4CAF50; }
+        .sector.child-slot.free .sector-name { font-size: 1.5em !important; }
+        .sector.child-slot.reserved { background-color: rgba(234,88,12,.7); }
+        .sector.child-hidden { display: none !important; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,.6); justify-content: center; align-items: center; }
         .modal-content { background-color: #fefefe; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,.2); width: 90%; max-width: 500px; position: relative; transform: scale(.95); opacity: 0; animation: fadeInScale .3s forwards; }
         @keyframes fadeInScale { to { transform: scale(1); opacity: 1; } }
@@ -313,6 +328,15 @@
             <div id="sector-7" class="sector" data-sector="7"></div>
             <div id="sector-8" class="sector" data-sector="8"></div>
             <div id="sector-9" class="sector" data-sector="9"></div>
+            <div id="sector-1b" class="sector" data-sector="1B" data-child="1"></div>
+            <div id="sector-2b" class="sector" data-sector="2B" data-child="1"></div>
+            <div id="sector-3b" class="sector" data-sector="3B" data-child="1"></div>
+            <div id="sector-4b" class="sector" data-sector="4B" data-child="1"></div>
+            <div id="sector-5b" class="sector" data-sector="5B" data-child="1"></div>
+            <div id="sector-6b" class="sector" data-sector="6B" data-child="1"></div>
+            <div id="sector-7b" class="sector" data-sector="7B" data-child="1"></div>
+            <div id="sector-8b" class="sector" data-sector="8B" data-child="1"></div>
+            <div id="sector-9b" class="sector" data-sector="9B" data-child="1"></div>
             <div id="bus-lounge" class="sector" data-sector="Bus Lounge"></div>
             <div id="sector-extras" class="sector" data-sector="Extras"></div>
         </div>
@@ -483,7 +507,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const SECTORS = ['sector-1','sector-2','sector-3','sector-4','sector-5','sector-6','sector-7','sector-8','sector-9','bus-lounge','sector-extras'];
+        const SECTORS = ['sector-1','sector-2','sector-3','sector-4','sector-5','sector-6','sector-7','sector-8','sector-9','sector-1b','sector-2b','sector-3b','sector-4b','sector-5b','sector-6b','sector-7b','sector-8b','sector-9b','bus-lounge','sector-extras'];
 
         let currentReservations = [];
         let selectedDate = new Date().toISOString().split('T')[0];
@@ -749,11 +773,13 @@
 
         // Render map
         function renderMap(reservations) {
+            const ocupado = (setor) => reservations.some(r => r.Setor === setor);
             SECTORS.forEach(sectorId => {
                 const el = document.getElementById(sectorId);
                 if (!el) return;
                 el.innerHTML = '';
-                el.className = 'sector';
+                el.onclick = null;
+                el.className = 'sector' + (el.dataset.child ? ' child-slot' : '');
                 const name = el.dataset.sector;
 
                 if (name === 'Extras') {
@@ -766,6 +792,22 @@
                         el.classList.add('free');
                         el.innerHTML = `<div class="sector-name">Extras</div><div class="sector-info">Disponível</div>`;
                         el.onclick = () => openReservationForm(selectedDate, 'Extras');
+                    }
+                } else if (el.dataset.child) {
+                    // Filho (overflow): só aparece quando o PAI está ocupado. Se ele mesmo tem
+                    // reserva, aparece sempre (laranja). Pai livre e filho vazio → some do mapa.
+                    const pai = name[0];
+                    const res = reservations.find(r => r.Setor === name);
+                    if (res) {
+                        el.classList.add('reserved');
+                        el.innerHTML = `<div class="sector-name">${name}</div><div class="sector-info">${res.Nome||''} ${res.Sobrenome||''}</div><div class="sector-info">${res['Quantidade de Pessoas']||''}p</div>`;
+                        el.onclick = () => openDetailsModal(res);
+                    } else if (ocupado(pai)) {
+                        el.classList.add('free');
+                        el.innerHTML = `<div class="sector-name">${name}</div>`;
+                        el.onclick = () => openReservationForm(selectedDate, name);
+                    } else {
+                        el.classList.add('child-hidden');
                     }
                 } else {
                     const res = reservations.find(r => r.Setor === name);
@@ -784,7 +826,7 @@
         }
 
         // Build sector options for the select
-        const ALL_SECTORS = ['1','2','3','4','5','6','7','8','9','Bus Lounge','Extras'];
+        const ALL_SECTORS = ['1','1B','2','2B','3','3B','4','4B','5','5B','6','6B','7','7B','8','8B','9','9B','Bus Lounge','Extras'];
 
         // Monta o select de setores marcando os ocupados. Seleciona o desejado se livre,
         // senão o primeiro disponível. Retorna true se o setor desejado está livre.
@@ -794,7 +836,7 @@
             ALL_SECTORS.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s;
-                opt.textContent = s === 'Extras' ? 'Extras (sem setor fixo)' : 'Setor ' + s;
+                opt.textContent = s === 'Extras' ? 'Extras (sem setor fixo)' : (/^[1-9]B$/.test(s) ? 'Setor ' + s + ' (overflow)' : 'Setor ' + s);
                 if (s !== 'Extras' && occupiedSectors.includes(s)) {
                     opt.disabled = true;
                     opt.textContent += ' — ocupado';
