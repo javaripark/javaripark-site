@@ -115,6 +115,7 @@
         .kpi-label{font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px}
         .kpi-value{font-size:1.2em;font-weight:700;color:#222;margin-top:2px}
         .kpi-sub{font-size:10px;color:#aaa;margin-top:2px}
+        .kpi-sub.standing-alert{color:#ea580c;font-weight:700}
         .field-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#555}
         .field-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s}
         .field-input:focus{outline:none;border-color:#4a90e2;box-shadow:0 0 0 3px rgba(74,144,226,.15)}
@@ -242,6 +243,7 @@
             <div class="kpi-card">
                 <div class="kpi-label">Pessoas</div>
                 <div class="kpi-value" id="total-people-display">0</div>
+                <div class="kpi-sub" id="standing-sub"></div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Ocupação</div>
@@ -512,6 +514,7 @@
         let currentReservations = [];
         let selectedDate = new Date().toISOString().split('T')[0];
         let globalCapacity = { Mesas: 0, Cadeiras: 0, Tambores: 0, Banquinhos: 0, CapacidadePessoas: 0 };
+        let currentDateIsGame = false; // dia de jogo (vem da agenda) → destaca o "em pé"
         let currentReservationUnsubscribe = null;
         let globalCapacityUnsubscribe = null;
         let agendaUnsubscribe = null;
@@ -656,6 +659,20 @@
             }
             occupancyBar.style.width = pct + '%';
             occupancyPct.textContent = pct.toFixed(0) + '%';
+            updateStanding(totalPeople);
+        }
+
+        // Previsão de "em pé": pessoas esperadas no dia − assentos da casa (Cadeiras + Banquinhos,
+        // do "Recursos disponíveis"). Destaca em datas de jogo, quando sentar faz diferença.
+        function updateStanding(totalPeople) {
+            const el = $('standing-sub');
+            if (!el) return;
+            const seats = (globalCapacity.Cadeiras || 0) + (globalCapacity.Banquinhos || 0);
+            if (!seats) { el.textContent = 'defina Cadeiras/Banquinhos'; el.className = 'kpi-sub'; return; }
+            const standing = Math.max(0, totalPeople - seats);
+            const sentados = Math.min(totalPeople, seats);
+            el.textContent = `${currentDateIsGame ? '⚽ ' : ''}≈ ${standing} em pé · ${sentados} sentados`;
+            el.className = 'kpi-sub' + (currentDateIsGame && standing > 0 ? ' standing-alert' : '');
         }
 
         function updateDateIndicator(has) {
@@ -715,18 +732,23 @@
             agendaUnsubscribe = onSnapshot(ref, (snap) => {
                 const panel = $('agenda-preview');
                 const list = $('agenda-preview-list');
-                if (snap.exists() && (snap.data().events || []).length > 0) {
-                    const events = [...snap.data().events].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+                const events = (snap.exists() && (snap.data().events || [])) || [];
+                currentDateIsGame = events.some(ev => /jogo|copa|brasil|sele[çc][ãa]o/i.test(`${ev.name || ''} ${ev.obs || ''}`));
+                if (events.length > 0) {
+                    const sorted = [...events].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
                     panel.style.display = 'block';
-                    list.innerHTML = events.map(ev =>
+                    list.innerHTML = sorted.map(ev =>
                         `<div class="agenda-event"><strong style="${ev.color ? 'color:'+ev.color : ''}">${ev.time || '--:--'}</strong><span>${ev.name}${ev.obs ? ' — ' + ev.obs : ''}</span></div>`
                     ).join('');
                 } else {
                     panel.style.display = 'none';
                     list.innerHTML = '';
                 }
+                updateStanding(parseInt($('total-people-display').textContent) || 0);
             }, () => {
+                currentDateIsGame = false;
                 $('agenda-preview').style.display = 'none';
+                updateStanding(parseInt($('total-people-display').textContent) || 0);
             });
         }
 
