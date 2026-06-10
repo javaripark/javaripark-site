@@ -347,6 +347,7 @@
                     <div class="form-group">
                         <label for="whatsapp">WhatsApp:</label>
                         <input type="text" id="whatsapp" name="whatsapp" placeholder="Ex: (11) 98765-4321" required>
+                        <p id="dup-warning" style="display:none;margin-top:6px;padding:8px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;font-size:0.85em;"></p>
                     </div>
                     <div class="form-group">
                         <label for="origem">Veio de anúncio?</label>
@@ -1100,6 +1101,30 @@
         }
         $('first-name').addEventListener('blur', normalizeNameFields);
         $('last-name').addEventListener('blur', () => { $('last-name').value = toTitleCase($('last-name').value); });
+
+        // Aviso (não-bloqueante) de número com reserva no mesmo dia.
+        // Compara os últimos 8 dígitos pra ignorar formatação/DDI/9º dígito.
+        const telKey = s => String(s || '').replace(/\D/g, '').slice(-8);
+        async function checkDuplicatePhone() {
+            const warnEl = $('dup-warning');
+            warnEl.style.display = 'none';
+            const dataIso = $('form-date').value;
+            const key = telKey($('whatsapp').value);
+            if (!dataIso || key.length < 8) return;
+            try {
+                const ref = collection(db, `artifacts/${appId}/public/data/reservas`);
+                const snap = await getDocs(query(ref, where('Data', '==', dataIso)));
+                const editingId = $('reservation-doc-id').value || null;
+                const dup = snap.docs.find(d => d.id !== editingId && telKey(d.data().Whatsapp) === key);
+                if (dup) {
+                    const r = dup.data();
+                    warnEl.innerHTML = `⚠ Este número já tem reserva neste dia: <strong>${r.Nome || ''} ${r.Sobrenome || ''}</strong> · setor ${r.Setor} · ${r['Quantidade de Pessoas']} pessoas. Pode salvar mesmo assim, mas confira se não é duplicada.`;
+                    warnEl.style.display = 'block';
+                }
+            } catch (e) { /* aviso é best-effort; não atrapalha o fluxo */ }
+        }
+        $('whatsapp').addEventListener('blur', checkDuplicatePhone);
+        $('form-date').addEventListener('change', checkDuplicatePhone);
 
         // Date change
         datePicker.addEventListener('change', (e) => {
