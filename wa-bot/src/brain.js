@@ -58,7 +58,11 @@ export async function atender(conv, textoCliente) {
     usage.push(resp.usage);
 
     if (resp.stop_reason !== 'tool_use') {
-      const reply = resp.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+      let reply = resp.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+      // nunca deixar o cliente no vácuo (ex.: handoff sem texto)
+      if (!reply) reply = handoff
+        ? 'Já chamei alguém do time pra te ajudar por aqui — respondem rapidinho! 😉'
+        : 'Opa, me perdi aqui 😅 Pode repetir, por favor?';
       // anunciou criar/alterar/cancelar sem nenhuma ferramenta ok? 1 chance de corrigir
       if (!acted && !corrected && CLAIM_RE.test(reply)) {
         corrected = true;
