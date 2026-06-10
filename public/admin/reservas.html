@@ -116,6 +116,9 @@
         .kpi-value{font-size:1.2em;font-weight:700;color:#222;margin-top:2px}
         .kpi-sub{font-size:10px;color:#aaa;margin-top:2px}
         .kpi-sub.standing-alert{color:#ea580c;font-weight:700}
+        .info-i{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#cfcfd6;color:#fff;font:italic 700 9px/1 Georgia,serif;margin-left:5px;cursor:help;position:relative;vertical-align:text-top}
+        .info-i:hover{background:#9333ea}
+        .info-i:hover::after{content:attr(data-tip);position:absolute;left:0;bottom:150%;background:#2d2d3a;color:#fff;font:400 11px/1.4 -apple-system,sans-serif;letter-spacing:.2px;text-transform:none;padding:8px 10px;border-radius:8px;width:190px;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.28);white-space:normal;pointer-events:none}
         .field-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#555}
         .field-input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;transition:border-color .2s}
         .field-input:focus{outline:none;border-color:#4a90e2;box-shadow:0 0 0 3px rgba(74,144,226,.15)}
@@ -225,22 +228,22 @@
                     <div class="kpi-sub" id="global-next-sub"></div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Ocup. média histórica</div>
+                    <div class="kpi-label">Ocup. média histórica <span class="info-i" data-tip="Média de ocupação (pessoas ÷ capacidade) dos dias com reserva já realizados, até hoje. Não é janela de 30 dias.">i</span></div>
                     <div class="kpi-value" id="avg-occ-hist">—</div>
                     <div class="kpi-sub">dias realizados</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Ocup. média do mês</div>
+                    <div class="kpi-label">Ocup. média do mês <span class="info-i" data-tip="Mesma média de ocupação, só dos dias com reserva já realizados neste mês.">i</span></div>
                     <div class="kpi-value" id="avg-occ-month">—</div>
                     <div class="kpi-sub" id="avg-occ-month-sub"></div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Melhor dia · histórico</div>
+                    <div class="kpi-label">Melhor dia · histórico <span class="info-i" data-tip="Dia com mais pessoas em todo o histórico (inclui datas futuras já reservadas).">i</span></div>
                     <div class="kpi-value" id="best-day-hist" style="font-size:1em">—</div>
                     <div class="kpi-sub" id="best-day-hist-sub"></div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Melhor dia · do mês</div>
+                    <div class="kpi-label">Melhor dia · do mês <span class="info-i" data-tip="Dia com mais pessoas no mês atual (inclui datas futuras já reservadas).">i</span></div>
                     <div class="kpi-value" id="best-day-month" style="font-size:1em">—</div>
                     <div class="kpi-sub" id="best-day-month-sub"></div>
                 </div>
@@ -261,12 +264,12 @@
                 <div class="kpi-value" id="total-reservations-display">0</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">Pessoas</div>
+                <div class="kpi-label">Pessoas <span class="info-i" data-tip="Total de pessoas reservadas no dia. Abaixo: estimativa em pé = pessoas − assentos (cadeiras + banquinhos).">i</span></div>
                 <div class="kpi-value" id="total-people-display">0</div>
                 <div class="kpi-sub" id="standing-sub"></div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">Ocupação</div>
+                <div class="kpi-label">Ocupação <span class="info-i" data-tip="Pessoas reservadas no dia ÷ capacidade total da casa.">i</span></div>
                 <div class="kpi-value" id="occupancy-percentage-display">0%</div>
                 <div class="progress-track"><div id="occupancy-bar" class="progress-fill" style="width:0%"></div></div>
             </div>
@@ -852,14 +855,14 @@
                 for (const d of cand) if (porDia[d] > porDia[bd]) bd = d;
                 return { data: bd, pessoas: porDia[bd] };
             };
-            const setBest = (idV, idS, b) => {
+            const setBest = (idV, idS, b, withYear) => {
                 if (!b) { $(idV).textContent = '—'; $(idS).textContent = ''; return; }
                 const p = b.data.split('-');
-                $(idV).textContent = `${p[2]}/${p[1]}`;
+                $(idV).textContent = withYear ? `${p[2]}/${p[1]}/${p[0]}` : `${p[2]}/${p[1]}`;
                 $(idS).textContent = `${b.pessoas} pessoas`;
             };
-            setBest('best-day-hist', 'best-day-hist-sub', melhor(dias));
-            setBest('best-day-month', 'best-day-month-sub', melhor(dias.filter(d => d.startsWith(ym))));
+            setBest('best-day-hist', 'best-day-hist-sub', melhor(dias), true);
+            setBest('best-day-month', 'best-day-month-sub', melhor(dias.filter(d => d.startsWith(ym))), false);
         }
 
         // Render map
