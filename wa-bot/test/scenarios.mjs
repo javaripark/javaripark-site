@@ -207,6 +207,30 @@ const CENARIOS = [
     },
   },
   {
+    nome: 'Persona monossilábica → reserva sai em respostas de 1 palavra',
+    async run(t) {
+      const { joined } = await conversar(t, 'Mô', ['oi', 'mesa', 'sexta 25/9', '8', 'Mô Silva']);
+      const rs = await bancoDe(t);
+      return [
+        ['registrou', rs.length === 1 && rs[0].Data === '2026-09-25'],
+        ['não re-pergunta dado já dado', !/já (falei|disse)/i.test(joined)],
+      ];
+    },
+  },
+  {
+    nome: 'Grupo de 25 → 1 setor só (nunca 2) + brinde mencionado',
+    async run(t) {
+      const { joined } = await conversar(t, 'Pedro', ['meu aniversário dia 5/9, 25 pessoas, Pedro Albuquerque! fecha num setor perto do palco']);
+      const rs = await bancoDe(t);
+      return [
+        ['registrou 1 reserva', rs.length === 1 && rs[0]['Quantidade de Pessoas'] === 25],
+        ['NÃO oferece 2 setores', !/dois setores|2 setores/i.test(joined)],
+        ['menciona brinde (25 adultos)', /brinde|heineken|cortesia/i.test(joined)],
+        ['sábado certo (5/9)', /s[áa]bado/i.test(joined)],
+      ];
+    },
+  },
+  {
     nome: 'Jogo na TV → sim, com telão',
     async run(t) {
       const { joined, handoffs } = await conversar(t, 'Cris', ['vocês vão passar o jogo do corinthians domingo?']);
