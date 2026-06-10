@@ -50,6 +50,18 @@
         </nav>
 
         <div class="card">
+            <h3><span>Claude API — uso e custo REAIS <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(tokens contados pela própria API)</span></span></h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Hoje</div><div style="font-size:1.3em;font-weight:700" id="u-hoje">—</div><div class="muted" id="u-hoje-t"></div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">7 dias</div><div style="font-size:1.3em;font-weight:700" id="u-7d">—</div><div class="muted" id="u-7d-t"></div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">30 dias</div><div style="font-size:1.3em;font-weight:700" id="u-30d">—</div><div class="muted" id="u-30d-t"></div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Custo médio/conversa</div><div style="font-size:1.3em;font-weight:700" id="u-medio">—</div><div class="muted" id="u-medio-t"></div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Crédito restante</div><div style="font-size:1.3em;font-weight:700;color:#16a34a" id="u-saldo">—</div><div class="muted">comprado: US$ <input id="u-credito" type="number" step="1" min="0" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:2px 6px;font-size:12px"></div></div>
+            </div>
+            <p class="muted" style="margin-top:10px">Câmbio de exibição: US$ 1 = R$ <span id="u-cambio">5,50</span>. Tokens e custo vêm das respostas reais da API; o saldo oficial está em console.anthropic.com.</p>
+        </div>
+
+        <div class="card">
             <h3><span>Alertas — clientes esperando humano<span class="badge" id="alert-count" style="display:none"></span></span>
                 <span style="display:flex;gap:12px;align-items:center"><button class="btn btn-ghost" id="notif-btn" style="display:none">🔔 Ativar notificações</button>
                 <label class="chk"><input type="checkbox" id="show-resolved"> mostrar resolvidos</label></span></h3>
@@ -112,12 +124,46 @@
             renderAlertas();
         });
 
+        // ---- Uso real da Claude API (wa_usage: 1 doc por turno, tokens da própria API) ----
+        const USD_BRL=5.50; $('u-cambio').textContent=USD_BRL.toFixed(2).replace('.',',');
+        let usoDocs=[], custoPorTel={};
+        const diaSP=off=>{ const d=new Date(Date.now()-off*86400000); return d.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); };
+        const dinheiro=usd=>`US$ ${usd.toFixed(usd<1?3:2)} <span class="muted">(R$ ${(usd*USD_BRL).toFixed(2)})</span>`;
+        function renderUso(){
+            const hoje=diaSP(0), d7=new Set(Array.from({length:7},(_,i)=>diaSP(i))), d30=new Set(Array.from({length:30},(_,i)=>diaSP(i)));
+            let sHoje=0,s7=0,s30=0,tHoje=0,t7=0,t30=0,sTotal=0;
+            const convs30=new Set();
+            custoPorTel={};
+            for(const u of usoDocs){
+                const usd=u.USD||0, tok=(u.In||0)+(u.Out||0)+(u.CacheW||0)+(u.CacheR||0);
+                sTotal+=usd;
+                custoPorTel[u.Telefone]=(custoPorTel[u.Telefone]||0)+usd;
+                if(u.Dia===hoje){sHoje+=usd;tHoje+=tok;}
+                if(d7.has(u.Dia)){s7+=usd;t7+=tok;}
+                if(d30.has(u.Dia)){s30+=usd;t30+=tok;convs30.add(u.Telefone+'|'+u.Dia);}
+            }
+            $('u-hoje').innerHTML=dinheiro(sHoje); $('u-hoje-t').textContent=tHoje.toLocaleString('pt-BR')+' tokens';
+            $('u-7d').innerHTML=dinheiro(s7); $('u-7d-t').textContent=t7.toLocaleString('pt-BR')+' tokens';
+            $('u-30d').innerHTML=dinheiro(s30); $('u-30d-t').textContent=t30.toLocaleString('pt-BR')+' tokens';
+            $('u-medio').innerHTML=convs30.size?dinheiro(s30/convs30.size):'—'; $('u-medio-t').textContent=convs30.size+' conversa(s) em 30d';
+            const cred=parseFloat($('u-credito').value)||0;
+            $('u-saldo').innerHTML=cred?dinheiro(cred-sTotal):'—';
+        }
+        onSnapshot(doc(db,`${BASE}/wa_config`,'main'),s=>{ if(s.exists()&&s.data().CreditoUSD!=null&&document.activeElement!==$('u-credito')) $('u-credito').value=s.data().CreditoUSD; renderUso(); });
+        $('u-credito').addEventListener('change',async()=>{ await setDoc(doc(db,`${BASE}/wa_config`,'main'),{CreditoUSD:parseFloat($('u-credito').value)||0},{merge:true}); renderUso(); });
+        onSnapshot(collection(db,`${BASE}/wa_usage`),snap=>{ usoDocs=snap.docs.map(d=>d.data()); renderUso(); renderConvs(); });
+
         // ---- Conversas ----
         function ultimaMsg(c){ try{ const m=JSON.parse(c.HistoricoJson||'[]'); const u=m[m.length-1]; return u?`${u.role==='user'?'👤':'🤖'} ${String(u.content).slice(0,90)}`:'—'; }catch(e){ return '—'; } }
-        onSnapshot(collection(db,`${BASE}/wa_atendimento`),snap=>{
-            const convs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
-            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhuma conversa ainda.</td></tr></tbody>';
+        let convsCache=[];
+        function renderConvs(){
+            const convs=convsCache;
+            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhuma conversa ainda.</td></tr></tbody>';
             $('conv-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
+        }
+        onSnapshot(collection(db,`${BASE}/wa_atendimento`),snap=>{
+            convsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+            renderConvs();
         });
     </script>
 </body>

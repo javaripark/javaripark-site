@@ -68,7 +68,7 @@ COPA DO MUNDO 2026 — transmitimos os jogos do Brasil! ⚽🇧🇷
 
 ANIVERSARIANTES
 - Aniversariante do mês: entrada grátis + 1 acompanhante (chegando juntos, com RG).
-- Brinde de cortesia: SÓ para grupo com MAIS DE 20 ADULTOS confirmados na portaria (6 Heineken/Original 600ml OU combo vodka Smirnoff OU gin Gordon's), liberado a partir de 19h fim de semana / 21h dias de semana. Não acumulativo. Grupo com 20 ou menos NÃO tem brinde — NUNCA prometa brinde pra grupos menores; se o grupo for menor, nem mencione.
+- Brinde de cortesia: SÓ para grupo com MAIS DE 20 ADULTOS confirmados na portaria (6 Heineken/Original 600ml OU combo vodka Smirnoff OU gin Gordon's). Liberação: sexta às 21h · sábado às 19h · domingo às 16h. Não acumulativo. Grupo com 20 ou menos NÃO tem brinde — NUNCA prometa brinde pra grupos menores; se o grupo for menor, nem mencione.
 - O controle de convidados é da portaria: cada convidado informa na entrada para qual aniversário/evento está indo — é assim que comprovamos os 20+ e liberamos o brinde. Oriente o cliente a avisar os convidados.
 - Convite digital personalizado grátis: se a pessoa mencionar aniversário, venda assim — "tá fazendo aniversário? A gente disponibiliza um convite digital personalizado, você faz o seu em 3 cliques: javaripark.com.br/convite — testa lá!" 🥳
 

@@ -5,7 +5,22 @@ import express from 'express';
 import crypto from 'crypto';
 import { cfg } from './config.js';
 import { loadConv, saveConv } from './store.js';
+import { addDoc } from './firestore.js';
 import { atender, custoUSD } from './brain.js';
+
+// Uso REAL da API (tokens vêm da resposta da Anthropic) → wa_usage, 1 doc por turno
+async function gravarUso(telefone, usage) {
+  const t = usage.reduce((a, u) => ({
+    In: a.In + (u.input_tokens || 0), Out: a.Out + (u.output_tokens || 0),
+    CacheW: a.CacheW + (u.cache_creation_input_tokens || 0), CacheR: a.CacheR + (u.cache_read_input_tokens || 0),
+  }), { In: 0, Out: 0, CacheW: 0, CacheR: 0 });
+  const sp = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const dia = `${sp.getFullYear()}-${String(sp.getMonth() + 1).padStart(2, '0')}-${String(sp.getDate()).padStart(2, '0')}`;
+  await addDoc('wa_usage', {
+    Telefone: telefone, Dia: dia, CriadoEm: new Date().toISOString(),
+    ...t, Chamadas: usage.length, USD: usage.reduce((s, u) => s + custoUSD(u), 0), Modelo: cfg.model,
+  }).catch(e => console.error('[usage]', e.message));
+}
 
 // Janela de agrupamento de mensagens picadas (maxInstances=1 → memória compartilhada)
 const DEBOUNCE_MS = 4000;
@@ -112,6 +127,7 @@ async function processEvents(body) {
         const t0 = Date.now();
         const { reply, usage, handoff } = await atender(conv, textoFinal);
         await saveConv(conv);
+        await gravarUso(telefone, usage);
         if (reply) await sendText(telefone, reply);
         // Alerta ativo de handoff no WhatsApp do admin
         if (handoff && cfg.adminPhone) {
