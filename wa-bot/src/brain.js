@@ -1,12 +1,17 @@
 // Loop do agente: mensagem do cliente → Claude (+ ferramentas) → resposta.
 // Prompt caching no bloco estático; histórico já vem com janela do store.
+// Guardas: bloco pós-reserva anexado pelo código; detector de "anunciou
+// ação sem executar ferramenta" com 1 rodada corretiva.
 import Anthropic from '@anthropic-ai/sdk';
 import { cfg, PRICING } from './config.js';
-import { SYSTEM_KB, dynamicContext } from './prompt.js';
+import { SYSTEM_KB, POS_RESERVA, dynamicContext } from './prompt.js';
 import { toolDefs, runTool } from './tools.js';
 
 const client = new Anthropic({ apiKey: cfg.anthropicKey });
-const MAX_TOOL_ROUNDS = 5;
+const MAX_TOOL_ROUNDS = 6;
+
+// Anúncio de ação de estado (criar/alterar/cancelar) na resposta final
+const CLAIM_RE = /reserva\s+(tá\s+|está\s+)?(confirmada|feita|registrada|alterada|cancelada|trocada|atualizada|remarcada)|alterei|cancelei|registrei|troquei|remarquei|atualizei/i;
 
 export function custoUSD(u) {
   return (
@@ -17,7 +22,7 @@ export function custoUSD(u) {
   ) / 1e6;
 }
 
-// conv: {telefone, messages, nomePerfil, origem, status, convDoc?}
+// conv: {telefone, messages, nomePerfil, origem, status}
 // Retorna {reply, usage:[...], handoff:boolean}
 export async function atender(conv, textoCliente) {
   conv.messages.push({ role: 'user', content: textoCliente });
@@ -30,7 +35,17 @@ export async function atender(conv, textoCliente) {
   const ctx = { telefone: conv.telefone, nomePerfil: conv.nomePerfil, origem: conv.origem, convDoc: null };
   const usage = [];
   let handoff = false;
+  let acted = false;     // alguma ferramenta de estado retornou ok:true neste turno
+  let registrou = false; // reserva criada neste turno → anexa POS_RESERVA
+  let corrected = false; // rodada corretiva já usada
   let messages = conv.messages.map(m => ({ role: m.role, content: m.content }));
+
+  const finish = reply => {
+    if (registrou) reply = reply + '\n\n' + POS_RESERVA;
+    conv.messages.push({ role: 'assistant', content: reply });
+    if (handoff) conv.status = 'humano';
+    return { reply, usage, handoff };
+  };
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
     const resp = await client.messages.create({
@@ -44,9 +59,16 @@ export async function atender(conv, textoCliente) {
 
     if (resp.stop_reason !== 'tool_use') {
       const reply = resp.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-      conv.messages.push({ role: 'assistant', content: reply });
-      if (handoff) conv.status = 'humano';
-      return { reply, usage, handoff };
+      // anunciou criar/alterar/cancelar sem nenhuma ferramenta ok? 1 chance de corrigir
+      if (!acted && !corrected && CLAIM_RE.test(reply)) {
+        corrected = true;
+        messages = [...messages,
+          { role: 'assistant', content: reply },
+          { role: 'user', content: '[sistema] Você anunciou uma ação (reserva criada/alterada/cancelada) mas NENHUMA ferramenta retornou ok:true neste turno. Execute agora a ferramenta correta (buscar_reservas antes, se precisar do reservaId) e responda de novo. Se não era uma ação, reescreva sem afirmar que algo foi feito.' },
+        ];
+        continue;
+      }
+      return finish(reply);
     }
 
     const toolResults = [];
@@ -54,14 +76,18 @@ export async function atender(conv, textoCliente) {
       if (block.type !== 'tool_use') continue;
       if (block.name === 'chamar_humano') handoff = true;
       const result = await runTool(block.name, block.input, ctx);
+      if (result?.ok === true && ['registrar_reserva', 'alterar_reserva', 'cancelar_reserva'].includes(block.name)) {
+        acted = true;
+        if (block.name === 'registrar_reserva') registrou = true;
+      }
       toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
     }
     messages = [...messages, { role: 'assistant', content: resp.content }, { role: 'user', content: toolResults }];
   }
 
   const reply = 'Opa, deu um nó aqui do meu lado 😅 Já chamei alguém do time pra te responder por aqui!';
-  conv.messages.push({ role: 'assistant', content: reply });
   conv.status = 'humano';
   await runTool('chamar_humano', { motivo: 'loop de ferramentas excedido' }, ctx);
+  conv.messages.push({ role: 'assistant', content: reply });
   return { reply, usage, handoff: true };
 }
