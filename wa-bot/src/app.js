@@ -88,6 +88,12 @@ async function processEvents(body) {
         // Origem automática: clique em anúncio (CTWA) chega com referral
         if (lote.referral) conv.origem = 'anuncio';
 
+        // Admin respondendo alerta com "ok": só renova a janela de 24h — silêncio
+        if (telefone === cfg.adminPhone && textoFinal.trim().toLowerCase() === 'ok') {
+          console.log('[admin] janela renovada com "ok"');
+          continue;
+        }
+
         // Válvula de escape: "#bot" religa o atendente após handoff
         if (textoFinal.toLowerCase() === '#bot') {
           conv.status = 'bot';

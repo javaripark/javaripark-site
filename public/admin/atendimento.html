@@ -51,7 +51,8 @@
 
         <div class="card">
             <h3><span>Alertas — clientes esperando humano<span class="badge" id="alert-count" style="display:none"></span></span>
-                <label class="chk"><input type="checkbox" id="show-resolved"> mostrar resolvidos</label></h3>
+                <span style="display:flex;gap:12px;align-items:center"><button class="btn btn-ghost" id="notif-btn" style="display:none">🔔 Ativar notificações</button>
+                <label class="chk"><input type="checkbox" id="show-resolved"> mostrar resolvidos</label></span></h3>
             <div class="wrap"><table id="alertas-tbl"><tbody><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
         </div>
 
@@ -88,7 +89,28 @@
             $('alertas-tbl').querySelectorAll('[data-res]').forEach(b=>b.onclick=async()=>{ await updateDoc(doc(db,`${BASE}/wa_alertas`,b.dataset.res),{Resolvido:true}); });
         }
         $('show-resolved').onchange=renderAlertas;
-        onSnapshot(collection(db,`${BASE}/wa_alertas`),snap=>{ alertas=snap.docs.map(d=>({id:d.id,...d.data()})); renderAlertas(); });
+
+        // Notificações do navegador quando chega alerta novo (aba pode estar em segundo plano)
+        const notifBtn=$('notif-btn');
+        function syncNotifBtn(){ if(!('Notification' in window)) return; notifBtn.style.display=Notification.permission==='granted'?'none':'inline-block'; }
+        if('Notification' in window){ syncNotifBtn(); notifBtn.onclick=async()=>{ await Notification.requestPermission(); syncNotifBtn(); }; }
+        let primeiraCarga=true;
+        const vistos=new Set();
+        function notificar(novos){
+            if(!('Notification' in window)||Notification.permission!=='granted') return;
+            for(const a of novos){
+                const n=new Notification('⚠️ Cliente esperando atendimento',{ body:`${a.Nome||'Cliente'} · ${telBR(a.Telefone)}\n${(a.Motivo||'').slice(0,120)}`, tag:a.id });
+                n.onclick=()=>{ window.focus(); window.open(`https://wa.me/${a.Telefone}`,'_blank'); };
+            }
+        }
+        onSnapshot(collection(db,`${BASE}/wa_alertas`),snap=>{
+            alertas=snap.docs.map(d=>({id:d.id,...d.data()}));
+            const novos=alertas.filter(a=>!a.Resolvido&&!vistos.has(a.id));
+            alertas.forEach(a=>vistos.add(a.id));
+            if(!primeiraCarga) notificar(novos);
+            primeiraCarga=false;
+            renderAlertas();
+        });
 
         // ---- Conversas ----
         function ultimaMsg(c){ try{ const m=JSON.parse(c.HistoricoJson||'[]'); const u=m[m.length-1]; return u?`${u.role==='user'?'👤':'🤖'} ${String(u.content).slice(0,90)}`:'—'; }catch(e){ return '—'; } }
