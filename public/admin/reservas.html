@@ -837,17 +837,12 @@
         $('form-date').addEventListener('change', async () => {
             const dateIso = $('form-date').value;
             if (!dateIso) return;
-            const dow = new Date(dateIso + 'T00:00:00').getDay();
-            if (dow === 1 || dow === 2) { showMessage('Reservas não são permitidas às segundas e terças-feiras.', 'error'); return; }
             const excludeDocId = $('reservation-doc-id').value || null;
             await loadSectorsForDate(dateIso, $('form-sector').value, excludeDocId);
         });
 
         // Reservation form
         function openReservationForm(date, sector, edit = null) {
-            const dow = new Date(date + 'T00:00:00').getDay();
-            if (dow === 1 || dow === 2) { showMessage('Reservas não são permitidas às segundas e terças-feiras.', 'error'); return; }
-
             const form = $('reservation-form');
             form.reset();
             $('reservation-doc-id').value = edit ? edit.id : '';
@@ -877,8 +872,6 @@
             const fd = new FormData($('reservation-form'));
             const isoDate = fd.get('date');  // input type=date já entrega YYYY-MM-DD
             if (!isoDate) { showMessage('Selecione a data.', 'error'); return; }
-            const dow = new Date(isoDate + 'T00:00:00').getDay();
-            if (dow === 1 || dow === 2) { showMessage('Reservas não são permitidas às segundas e terças-feiras.', 'error'); return; }
             const data = {
                 Data: isoDate,
                 Setor: fd.get('sector'),
@@ -1111,14 +1104,6 @@
         // Date change
         datePicker.addEventListener('change', (e) => {
             selectedDate = e.target.value;
-            const d = new Date(selectedDate + 'T00:00:00');
-            const dow = d.getDay();
-            if (dow === 1 || dow === 2) {
-                showMessage('Não é possível visualizar reservas para segundas e terças-feiras.', 'error');
-                renderMap([]); updateDateIndicator(false);
-                $('total-reservations-display').textContent = 0; $('total-people-display').textContent = 0; updateOccupancy(0);
-                return;
-            }
             fetchAndRenderReservations(selectedDate);
             fetchAgendaPreview(selectedDate);
         });

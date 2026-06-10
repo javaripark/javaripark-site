@@ -7,7 +7,9 @@ const SETORES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
 // Exceções por data (ex: jogo do Brasil na Copa) — manter alinhado com EXCECOES_DIA do prompt.js
 const TOLERANCIA_EXCECAO = { '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)' };
-const tolerancia = (data, dow) => TOLERANCIA_EXCECAO[data] || TOLERANCIA[dow];
+const tolerancia = (data, dow) => TOLERANCIA_EXCECAO[data] || TOLERANCIA[dow] || 'a combinar com a equipe (dia de evento especial)';
+// seg/ter: sistema permite (eventos especiais/corporativo), mas o bot deve tratar como exceção
+const AVISO_SEG_TER = 'casa normalmente FECHADA neste dia (seg/ter); só existe reserva em evento especial confirmado pela equipe — não registre por conta própria, use chamar_humano';
 const DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
 export const toolDefs = [
@@ -102,11 +104,11 @@ async function consultarDisponibilidade({ data }) {
   if (!d) return { erro: 'data inválida, use YYYY-MM-DD' };
   if (data < hojeISO()) return { aberto: false, motivo: 'data no passado' };
   const dow = d.getDay();
-  if (dow === 1 || dow === 2) return { aberto: false, motivo: 'fechado às segundas e terças' };
   const reservas = await queryDocs('reservas', [['Data', data]]);
   const ocupados = reservas.map(r => String(r.Setor)).filter(s => s !== 'Extras');
   const livres = SETORES.filter(s => !ocupados.includes(s));
   const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, toleranciaChegada: tolerancia(data, dow) };
+  if (dow === 1 || dow === 2) out.atencao = AVISO_SEG_TER;
   if (!livres.length) { out.lotado = true; out.dica = 'ofereça reserva extra (setor "Extras"); equipe acomoda no dia'; }
   return out;
 }
@@ -132,7 +134,7 @@ async function registrarReserva(input, ctx) {
   if (!d) return { ok: false, erro: 'data inválida' };
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
-  if (dow === 1 || dow === 2) return { ok: false, erro: 'fechado às segundas e terças' };
+  if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   const isExtras = String(setor) === 'Extras';
   if (!isExtras && !SETORES.includes(String(setor))) return { ok: false, erro: 'setor inválido (1-9 ou Extras); Bus Lounge é via equipe humana' };
   if (!nome?.trim() || !sobrenome?.trim()) return { ok: false, erro: 'nome e sobrenome obrigatórios' };
@@ -208,7 +210,7 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   if (!d) return { ok: false, erro: 'data inválida' };
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
-  if (dow === 1 || dow === 2) return { ok: false, erro: 'fechado às segundas e terças' };
+  if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   if (!SETORES.includes(setor)) return { ok: false, erro: 'setor inválido (1-9); Bus Lounge é via equipe humana' };
   if (!pessoas || pessoas < 1 || pessoas > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
 
