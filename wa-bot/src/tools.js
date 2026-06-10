@@ -32,7 +32,7 @@ export const toolDefs = [
         nome: { type: 'string', description: 'Primeiro nome' },
         sobrenome: { type: 'string', description: 'Sobrenome' },
         pessoas: { type: 'integer', description: 'Quantidade de pessoas' },
-        setor: { type: 'string', description: 'Setor 1-9, ou "Extras" quando a casa estiver lotada' },
+        setor: { type: 'string', description: 'Setor 1-9, "Bus Lounge" (10-40 pessoas) ou "Extras" quando a casa estiver lotada' },
         observacoes: { type: 'string', description: 'Opcional: aniversário, preferências, bolo etc.' },
       },
       required: ['data', 'nome', 'sobrenome', 'pessoas', 'setor'],
@@ -72,7 +72,7 @@ export const toolDefs = [
         reservaId: { type: 'string', description: 'ID retornado por buscar_reservas' },
         novaData: { type: 'string', description: 'Opcional, YYYY-MM-DD' },
         novasPessoas: { type: 'integer', description: 'Opcional' },
-        novoSetor: { type: 'string', description: 'Opcional, setor 1-9' },
+        novoSetor: { type: 'string', description: 'Opcional, setor 1-9 ou "Bus Lounge"' },
         novasObservacoes: { type: 'string', description: 'Opcional' },
       },
       required: ['reservaId'],
@@ -137,9 +137,11 @@ async function registrarReserva(input, ctx) {
   const dow = d.getDay();
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   const isExtras = String(setor) === 'Extras';
-  if (!isExtras && !SETORES.includes(String(setor))) return { ok: false, erro: 'setor inválido (1-9 ou Extras); Bus Lounge é via equipe humana' };
+  const isBus = String(setor) === 'Bus Lounge';
+  if (!isExtras && !isBus && !SETORES.includes(String(setor))) return { ok: false, erro: 'setor inválido (1-9, "Bus Lounge" ou Extras)' };
   if (!nome?.trim() || !sobrenome?.trim()) return { ok: false, erro: 'nome e sobrenome obrigatórios' };
   const n = parseInt(pessoas, 10);
+  if (isBus && (n < 10 || n > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
   if (!n || n < 1 || n > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
 
   // Trava anti-abuso: 1 reserva por número de WhatsApp por dia
@@ -221,7 +223,9 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
-  if (!SETORES.includes(setor)) return { ok: false, erro: 'setor inválido (1-9); Bus Lounge é via equipe humana' };
+  const busAlvo = setor === 'Bus Lounge';
+  if (!busAlvo && !SETORES.includes(setor)) return { ok: false, erro: 'setor inválido (1-9 ou "Bus Lounge")' };
+  if (busAlvo && (pessoas < 10 || pessoas > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
   if (!pessoas || pessoas < 1 || pessoas > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
 
   // Trava anti-abuso também na mudança de data: 1 reserva por número por dia
