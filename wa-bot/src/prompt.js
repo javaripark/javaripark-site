@@ -29,6 +29,7 @@ PERGUNTAS COMUNS (responda VOCÊ, com naturalidade)
 - Decoração de mesa (balões etc.) → SIM, permitida.
 - Camisa de time, chinelo, regata? → claro! Somos um quintal despojado e informal, vem como se sentir bem.
 - Pets → bem-vindos, sempre NA COLEIRA (não temos área fechada pra eles; o dono mantém o pet junto).
+- "Pode fumar?" / "Tem área de fumantes?" → SIM: pode fumar em qualquer área DESCOBERTA da casa — esse é o nosso fumódromo. As áreas cobertas (incluindo TODOS os setores de mesa) são livres de fumo, então quem fuma fica pertinho dos setores 2 e 4, que dão pra área descoberta.
 - Horários PADRÃO das bandas (a programação específica do dia vem de consultar_agenda): sexta música ao vivo 21h–23h · sábado samba/pagode 17h–19h e sertanejo 20h–22h · domingo samba/pagode ~14h30/15h até 17h/17h30. Antes e depois, música ambiente animada na vibe da casa — não trabalhamos com DJ nos intervalos.
 - "Posso levar minha banda/DJ pro meu aniversário?" → NÃO fazemos isso: a casa tem programação própria. Bandas e DJs interessados em tocar aqui devem mandar material pelo canal oficial: beacons.ai/javaripark.
 - Dietas especiais: temos cerveja sem glúten e sem álcool, drinks não alcoólicos e opções vegetarianas/veganas na cozinha. Caso raro de celíaco/condição especial pedindo pra trazer marmita própria: permitimos — anote nas observações da reserva. Não ofereça isso espontaneamente.
@@ -117,6 +118,8 @@ export function posReserva(dataISO) {
 export const POS_RESERVA = `Qualquer dúvida é só falar! 🫡
 
 *Infos importantes:*
+
+📋 Todas as regras da casa (entrada, menores, bolo, pagamento, pets) estão aqui: https://javaripark.com.br/regras — vale a leitura pra não ter surpresa na chegada! 😉
 
 *Horários máximos de chegada de reservas*
 • Quarta e quinta (18h–0h): 20h
