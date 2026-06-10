@@ -44,6 +44,10 @@ let state = {
   me: null,          // número conectado
 };
 
+// Handler do bot reativo (registrado pelo server.js). Recebe (mensagem, type).
+let onMessage = null;
+export function setMessageHandler(fn) { onMessage = fn; }
+
 // Cache de mensagens enviadas (id -> conteúdo). Necessário pro getMessage:
 // quando o WhatsApp do destinatário pede reenvio (falha de descriptografia),
 // o Baileys precisa devolver o conteúdo original — senão fica "Aguardando esta mensagem".
@@ -140,14 +144,15 @@ export async function startWA() {
       }
     });
 
-    // Opt-out automático: cliente respondeu PARAR/SAIR/etc
-    sock.ev.on('messages.upsert', ({ messages }) => {
+    // Mensagens recebidas: opt-out + captura de anúncio + bot reativo
+    sock.ev.on('messages.upsert', ({ messages, type }) => {
       for (const m of messages) {
         if (!m.message || m.key.fromMe) continue;
         const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
         const text = m.message.conversation || m.message.extendedTextMessage?.text || '';
         if (isOptOutMessage(text)) {
           if (num && addOptOut(num)) console.log(`🚫 Opt-out automático: ${num}`);
+          continue; // quem pediu pra parar não aciona o bot
         }
         // Captura marcador de anúncio (lead via click-to-WhatsApp). Nunca pode quebrar o handler.
         try {
@@ -155,9 +160,10 @@ export async function startWA() {
           if (ad && num) {
             recordAdReferral(num, ad);
             console.log(`📣 Lead de anúncio: ${num} ← "${ad.title || ad.adId || ad.ctwaClid || 'ad'}"`);
-            console.log('   externalAdReply:', JSON.stringify(ad));  // log p/ validar com lead real
           }
         } catch (e) { console.warn('ad-referral parse falhou:', e?.message); }
+        // Bot reativo (assíncrono; nunca pode derrubar o handler)
+        if (onMessage) Promise.resolve(onMessage(m, type)).catch(e => console.error('[onMessage]', e?.message));
       }
     });
 

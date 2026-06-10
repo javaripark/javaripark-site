@@ -1,7 +1,8 @@
 // API REST do serviço de WhatsApp.
 import express from 'express';
 import { config } from './config.js';
-import { startWA, getWaState, getQrDataUrl } from './wa.js';
+import { startWA, getWaState, getQrDataUrl, setMessageHandler } from './wa.js';
+import { handleIncoming } from './agent.js';
 import { startQueue, queueStatus } from './queue.js';
 import { enqueue, readLog, addOptOut, getOptOuts, getAdReferral } from './store.js';
 
@@ -96,6 +97,7 @@ app.post('/optout', requirePin, (req, res) => {
 });
 
 async function main() {
+  setMessageHandler(handleIncoming); // bot reativo responde as mensagens recebidas
   await startWA();
   startQueue();
   app.listen(config.port, () => {
