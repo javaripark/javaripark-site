@@ -5,6 +5,15 @@ import { startWA, getWaState, getQrDataUrl, setMessageHandler } from './wa.js';
 import { handleIncoming } from './agent.js';
 import { startQueue, queueStatus } from './queue.js';
 import { enqueue, readLog, addOptOut, getOptOuts, getAdReferral } from './store.js';
+import { rodarResgate } from '../../wa-bot/src/nudge.js';
+
+// Silencia o ruído de sessão do libsignal (console.info/warn diretos a cada mensagem),
+// mantendo erros reais. Sem isso, o terminal fica ilegível com dumps de SessionEntry.
+const _ruidoSessao = /closing (open )?session|opening session|session already|migrating session|removing old closed session/i;
+for (const m of ['info', 'warn']) {
+  const orig = console[m].bind(console);
+  console[m] = (...a) => { if (typeof a[0] === 'string' && _ruidoSessao.test(a[0])) return; orig(...a); };
+}
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -96,10 +105,27 @@ app.post('/optout', requirePin, (req, res) => {
   res.json({ ok: true, added, total: getOptOuts().length });
 });
 
+// Resgate de abandono (ATIVO): cutuca quem estava negociando e sumiu (3-23h), via
+// a fila anti-ban. Respeita a trava: em modo teste só cutuca números autorizados.
+async function tickResgate() {
+  try {
+    const r = await rodarResgate({
+      send: async (telefone, texto) => {
+        const tel = String(telefone).replace(/\D/g, '');
+        if (config.botMode !== 'live' && !config.testNumbers.includes(tel)) return false; // trava
+        enqueue([{ to: tel, message: texto, nome: '' }]); // fila anti-ban faz o envio devagar
+        return true;
+      },
+    });
+    if (r.enviados) console.log(`[resgate] ${r.enviados} cutucada(s) enfileirada(s)`);
+  } catch (e) { console.error('[resgate]', e.message); }
+}
+
 async function main() {
   setMessageHandler(handleIncoming); // bot reativo responde as mensagens recebidas
   await startWA();
   startQueue();
+  setInterval(tickResgate, 30 * 60 * 1000); // resgate roda a cada 30 min
   app.listen(config.port, () => {
     console.log(`🚀 Serviço WhatsApp rodando na porta ${config.port}`);
     console.log(`   Health: http://localhost:${config.port}/health`);
