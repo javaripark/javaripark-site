@@ -4,7 +4,7 @@
 // ação sem executar ferramenta" com 1 rodada corretiva.
 import Anthropic from '@anthropic-ai/sdk';
 import { cfg, PRICING } from './config.js';
-import { SYSTEM_KB, POS_RESERVA, dynamicContext } from './prompt.js';
+import { SYSTEM_KB, posReserva, dynamicContext } from './prompt.js';
 import { toolDefs, runTool } from './tools.js';
 
 const client = new Anthropic({ apiKey: cfg.anthropicKey });
@@ -35,13 +35,13 @@ export async function atender(conv, textoCliente) {
   const ctx = { telefone: conv.telefone, nomePerfil: conv.nomePerfil, origem: conv.origem, convDoc: null };
   const usage = [];
   let handoff = false;
-  let acted = false;     // alguma ferramenta de estado retornou ok:true neste turno
-  let registrou = false; // reserva criada neste turno → anexa POS_RESERVA
-  let corrected = false; // rodada corretiva já usada
+  let acted = false;        // alguma ferramenta de estado retornou ok:true neste turno
+  let registrouData = null; // data da reserva criada neste turno → anexa bloco pós-reserva
+  let corrected = false;    // rodada corretiva já usada
   let messages = conv.messages.map(m => ({ role: m.role, content: m.content }));
 
   const finish = reply => {
-    if (registrou) reply = reply + '\n\n' + POS_RESERVA;
+    if (registrouData) reply = reply + '\n\n' + posReserva(registrouData);
     conv.messages.push({ role: 'assistant', content: reply });
     if (handoff) conv.status = 'humano';
     return { reply, usage, handoff };
@@ -78,7 +78,7 @@ export async function atender(conv, textoCliente) {
       const result = await runTool(block.name, block.input, ctx);
       if (result?.ok === true && ['registrar_reserva', 'alterar_reserva', 'cancelar_reserva'].includes(block.name)) {
         acted = true;
-        if (block.name === 'registrar_reserva') registrou = true;
+        if (block.name === 'registrar_reserva') registrouData = block.input?.data || '';
       }
       toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
     }

@@ -39,6 +39,14 @@ BUS LOUNGE
 - Para 10 a 40 pessoas. Consumação mínima de R$300, paga na entrada (pré-pago, 100% consumível, já inclui 10% de serviço).
 - Apenas 1 reserva de Bus por dia. Reserva sob consulta → chamar_humano.
 
+COPA DO MUNDO 2026 — transmitimos os jogos do Brasil! ⚽🇧🇷
+- Estrutura: telão de 4 metros, narração oficial no sistema de som da casa, TVs auxiliares e Bus Lounge com TV exclusiva. Use isso pra vender mesa pros jogos!
+- 13/6 (sábado) Brasil x Marrocos, 19h — casa abre normal (14h–0h), samba/pagode antes do jogo e sertanejo depois. Entrada e chegada de reserva: regras normais.
+- 19/6 (sexta) Brasil x Haiti, 21h30 — casa abre normal (18h–1h), samba/pagode antes do jogo. Entrada e chegada de reserva: regras normais.
+- 24/6 (quarta) Brasil x Escócia, 19h — casa abre normal (18h–0h), samba/pagode depois do jogo. ⚠ EXCEÇÕES do dia: entrada R$10 fixa a noite toda e chegada de reserva até 18h30.
+- Fase eliminatória (jogos do Brasil a confirmar): oitavas 4–7/7, quartas 9–12/7, semi 14–15/7, final 19/7. Pra datas além das listadas, use consultar_agenda ou chamar_humano.
+- Ao citar a programação de um dia de jogo, copie EXATAMENTE a ordem listada acima (antes/depois do jogo) — não invente.
+
 ANIVERSARIANTES
 - Aniversariante do mês: entrada grátis + 1 acompanhante (chegando juntos, com RG).
 - Grupo com 20+ adultos: brinde de cortesia (6 Heineken/Original 600ml OU combo vodka Smirnoff OU gin Gordon's), liberado a partir de 19h fim de semana / 21h dias de semana. Não acumulativo.
@@ -70,6 +78,16 @@ NUNCA: confirmar reserva sem o eco; prometer exceção às regras; discutir com 
 
 // Bloco fixo anexado pelo código após toda reserva criada (garante que a
 // pessoa SEMPRE recebe as regras de chegada — texto padrão do René).
+// Dias com exceção (jogo do Brasil) ganham um aviso no topo do bloco.
+export const EXCECOES_DIA = {
+  '2026-06-24': '⚽ *Atenção — dia de jogo do Brasil (24/6):* entrada R$10 fixa a noite toda e chegada de reservas até *18h30*.',
+};
+
+export function posReserva(dataISO) {
+  const exc = EXCECOES_DIA[dataISO];
+  return (exc ? exc + '\n\n' : '') + POS_RESERVA;
+}
+
 export const POS_RESERVA = `Qualquer dúvida é só falar! 🫡
 
 *Infos importantes:*
