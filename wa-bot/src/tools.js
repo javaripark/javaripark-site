@@ -141,6 +141,15 @@ async function registrarReserva(input, ctx) {
   const n = parseInt(pessoas, 10);
   if (!n || n < 1 || n > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
 
+  // Trava anti-abuso: 1 reserva por número de WhatsApp por dia
+  if (ctx.telefone) {
+    const doNumero = await queryDocs('reservas', [['Whatsapp', ctx.telefone], ['Data', data]]);
+    if (doNumero.length) {
+      const ex = doNumero[0];
+      return { ok: false, erro: 'este número já tem reserva nesse dia (limite: 1 por dia)', reservaExistente: { reservaId: ex.id, setor: String(ex.Setor), pessoas: ex['Quantidade de Pessoas'] }, dica: 'ofereça alterar a reserva existente (pessoas/setor) em vez de criar outra' };
+    }
+  }
+
   // Re-checa conflito na hora da gravação (Extras não tem trava, como no admin)
   if (!isExtras) {
     const conflito = await queryDocs('reservas', [['Data', data], ['Setor', String(setor)]]);
@@ -213,6 +222,12 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   if (!SETORES.includes(setor)) return { ok: false, erro: 'setor inválido (1-9); Bus Lounge é via equipe humana' };
   if (!pessoas || pessoas < 1 || pessoas > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
+
+  // Trava anti-abuso também na mudança de data: 1 reserva por número por dia
+  if (data !== atual.Data && ctx.telefone) {
+    const doNumero = (await queryDocs('reservas', [['Whatsapp', ctx.telefone], ['Data', data]])).filter(c => c.id !== reservaId);
+    if (doNumero.length) return { ok: false, erro: 'este número já tem outra reserva nesse dia (limite: 1 por dia)' };
+  }
 
   // Conflito no destino (data+setor), ignorando a própria reserva
   if (data !== atual.Data || setor !== String(atual.Setor)) {
