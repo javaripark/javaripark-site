@@ -41,7 +41,7 @@
 </head>
 <body>
     <div class="container">
-        <header class="header"><h1>Atendimento WhatsApp</h1><p id="user-email-display"></p><button class="logout-btn" id="logoutBtn">Sair</button></header>
+        <header class="header"><h1>Atendimento WhatsApp</h1><p id="user-email-display"></p><button class="logout-btn" id="senhaBtn" style="right:74px">Senha</button><button class="logout-btn" id="logoutBtn">Sair</button></header>
         <nav class="admin-nav">
             <a href="/admin/reservas.html">Reservas</a><a href="/admin/agenda.html">Agenda</a>
             <a href="/admin/cardapio.html">Cardápio</a><a href="/admin/blog.html">Blog</a>
@@ -90,10 +90,27 @@
         </div>
     </div>
 
+    <div id="senha-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:18px">
+        <div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:14px;color:#4f1964">Trocar senha</h3>
+            <label style="display:block;font-size:12px;font-weight:600;color:#666;margin-bottom:5px">Senha atual</label>
+            <input id="s-atual" type="password" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1px solid #dcdce2;border-radius:9px;font-size:14px;margin-bottom:12px">
+            <label style="display:block;font-size:12px;font-weight:600;color:#666;margin-bottom:5px">Nova senha (mín. 8 caracteres)</label>
+            <input id="s-nova" type="password" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1px solid #dcdce2;border-radius:9px;font-size:14px;margin-bottom:12px">
+            <label style="display:block;font-size:12px;font-weight:600;color:#666;margin-bottom:5px">Confirmar nova senha</label>
+            <input id="s-conf" type="password" autocomplete="new-password" style="width:100%;padding:10px 12px;border:1px solid #dcdce2;border-radius:9px;font-size:14px;margin-bottom:8px">
+            <p id="s-msg" style="font-size:13px;min-height:18px;margin-bottom:12px"></p>
+            <div style="display:flex;flex-direction:column;gap:9px">
+                <button id="s-salvar" class="btn btn-primary">Salvar nova senha</button>
+                <button id="s-fechar" class="btn" style="background:none;color:#999">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         const AUTH_KEY='javari_admin_auth';
         const app=initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"});
         const auth=getAuth(app);
@@ -103,6 +120,32 @@
         const $=id=>document.getElementById(id);
         $('user-email-display').textContent = __user.email||'';
         $('logoutBtn').onclick=()=>{ signOut(auth).finally(()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; }); };
+
+        // Trocar senha: reautentica com a senha atual e atualiza (evita "requires-recent-login")
+        const sm=$('senha-modal');
+        const setMsg=(t,erro)=>{ $('s-msg').textContent=t; $('s-msg').style.color=erro?'#ef4444':'#16a34a'; };
+        $('senhaBtn').onclick=()=>{ ['s-atual','s-nova','s-conf'].forEach(id=>$(id).value=''); setMsg(''); sm.style.display='flex'; $('s-atual').focus(); };
+        $('s-fechar').onclick=()=>{ sm.style.display='none'; };
+        $('s-salvar').onclick=async()=>{
+            const atual=$('s-atual').value, nova=$('s-nova').value, conf=$('s-conf').value;
+            if(!atual||!nova) return setMsg('Preencha a senha atual e a nova.', true);
+            if(nova.length<8) return setMsg('A nova senha precisa de ao menos 8 caracteres.', true);
+            if(nova!==conf) return setMsg('A confirmação não bate com a nova senha.', true);
+            if(nova===atual) return setMsg('A nova senha é igual à atual.', true);
+            $('s-salvar').disabled=true; setMsg('Trocando…');
+            try{
+                await reauthenticateWithCredential(__user, EmailAuthProvider.credential(__user.email, atual));
+                await updatePassword(__user, nova);
+                setMsg('Senha trocada com sucesso! ✓');
+                setTimeout(()=>{ sm.style.display='none'; }, 1500);
+            }catch(e){
+                const m=String(e.code||e.message||'');
+                if(m.includes('wrong-password')||m.includes('invalid-credential')) setMsg('Senha atual incorreta.', true);
+                else if(m.includes('too-many-requests')) setMsg('Muitas tentativas — espere um pouco e tente de novo.', true);
+                else if(m.includes('weak-password')) setMsg('Senha muito fraca.', true);
+                else setMsg('Não consegui trocar: '+m, true);
+            }finally{ $('s-salvar').disabled=false; }
+        };
         const db=getFirestore(app);
         const BASE='artifacts/central-de-reservas-jsp/public/data';
         const fmtDT=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return iso; } };
