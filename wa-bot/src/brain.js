@@ -38,13 +38,15 @@ export async function atender(conv, textoCliente) {
   let acted = false;        // alguma ferramenta de estado retornou ok:true neste turno
   let registrouData = null; // data da reserva criada neste turno → anexa bloco pós-reserva
   let corrected = false;    // rodada corretiva já usada
+  const toolsUsadas = [];   // pro funil: negociação = mexeu em ferramenta de reserva
   let messages = conv.messages.map(m => ({ role: m.role, content: m.content }));
 
   const finish = reply => {
     if (registrouData) reply = reply + '\n\n' + posReserva(registrouData);
     conv.messages.push({ role: 'assistant', content: reply });
     if (handoff) conv.status = 'humano';
-    return { reply, usage, handoff };
+    const negociou = toolsUsadas.some(n => ['consultar_disponibilidade', 'registrar_reserva', 'buscar_reservas', 'alterar_reserva', 'cancelar_reserva'].includes(n));
+    return { reply, usage, handoff, reservou: !!registrouData, negociou };
   };
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
@@ -78,6 +80,7 @@ export async function atender(conv, textoCliente) {
     const toolResults = [];
     for (const block of resp.content) {
       if (block.type !== 'tool_use') continue;
+      toolsUsadas.push(block.name);
       if (block.name === 'chamar_humano') handoff = true;
       const result = await runTool(block.name, block.input, ctx);
       if (result?.ok === true && ['registrar_reserva', 'alterar_reserva', 'cancelar_reserva'].includes(block.name)) {
@@ -93,5 +96,5 @@ export async function atender(conv, textoCliente) {
   conv.status = 'humano';
   await runTool('chamar_humano', { motivo: 'loop de ferramentas excedido' }, ctx);
   conv.messages.push({ role: 'assistant', content: reply });
-  return { reply, usage, handoff: true };
+  return { reply, usage, handoff: true, reservou: false, negociou: true };
 }

@@ -50,6 +50,19 @@
         </nav>
 
         <div class="card">
+            <h3><span>Funil de conversão — últimos 30 dias <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">("venda" = reserva criada pelo bot)</span></span></h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Leads</div><div style="font-size:1.4em;font-weight:700" id="f-leads">—</div><div class="muted">conversas iniciadas</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Abandono imediato</div><div style="font-size:1.4em;font-weight:700;color:#9a9aa3" id="f-abandono">—</div><div class="muted">1 msg e sumiu (+6h)</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Em negociação</div><div style="font-size:1.4em;font-weight:700;color:#b45309" id="f-negoc">—</div><div class="muted">ativas (&lt;24h)</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Ganhas 🏆</div><div style="font-size:1.4em;font-weight:700;color:#16a34a" id="f-ganhas">—</div><div class="muted">reservas criadas</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Perdidas</div><div style="font-size:1.4em;font-weight:700;color:#ef4444" id="f-perdidas">—</div><div class="muted">negociou e esfriou (+24h)</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Handoffs</div><div style="font-size:1.4em;font-weight:700;color:#4f1964" id="f-handoffs">—</div><div class="muted">em modo humano</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Taxa de conversão</div><div style="font-size:1.4em;font-weight:700;color:#16a34a" id="f-taxa">—</div><div class="muted">ganhas ÷ leads</div></div>
+            </div>
+        </div>
+
+        <div class="card">
             <h3><span>Claude API — uso e custo REAIS <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(tokens contados pela própria API)</span></span></h3>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Hoje</div><div style="font-size:1.3em;font-weight:700" id="u-hoje">—</div><div class="muted" id="u-hoje-t"></div></div>
@@ -161,9 +174,28 @@
             $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhuma conversa ainda.</td></tr></tbody>';
             $('conv-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
         }
+        // ---- Funil (30 dias, calculado dos campos Etapa/MsgsCliente/UltimaMsgCliente) ----
+        function renderFunil(){
+            const agora=Date.now(), h6=6*3600e3, h24=24*3600e3, d30=30*86400e3;
+            const periodo=convsCache.filter(c=>c.PrimeiroContato&&(agora-new Date(c.PrimeiroContato).getTime())<=d30);
+            const idade=c=>agora-new Date(c.UltimaMsgCliente||c.updatedAt||0).getTime();
+            const ganhas=periodo.filter(c=>c.Etapa==='ganho');
+            const handoffs=periodo.filter(c=>c.status==='humano');
+            const negocAtiva=periodo.filter(c=>c.Etapa==='negociacao'&&c.status!=='humano'&&idade(c)<h24);
+            const perdidas=periodo.filter(c=>c.Etapa==='negociacao'&&c.status!=='humano'&&idade(c)>=h24);
+            const abandono=periodo.filter(c=>c.Etapa==='lead'&&(c.MsgsCliente||0)<=1&&idade(c)>=h6);
+            $('f-leads').textContent=periodo.length;
+            $('f-abandono').textContent=abandono.length;
+            $('f-negoc').textContent=negocAtiva.length;
+            $('f-ganhas').textContent=ganhas.length;
+            $('f-perdidas').textContent=perdidas.length;
+            $('f-handoffs').textContent=handoffs.length;
+            $('f-taxa').textContent=periodo.length?((ganhas.length/periodo.length)*100).toFixed(0)+'%':'—';
+        }
         onSnapshot(collection(db,`${BASE}/wa_atendimento`),snap=>{
             convsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
             renderConvs();
+            renderFunil();
         });
     </script>
 </body>

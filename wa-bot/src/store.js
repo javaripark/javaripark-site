@@ -22,6 +22,12 @@ export async function loadConv(telefone) {
     messages,
     nomePerfil: doc.NomePerfil || '',
     origem: doc.Origem || 'organico',
+    // funil
+    etapa: doc.Etapa || 'lead',
+    primeiroContato: doc.PrimeiroContato || '',
+    ultimaMsgCliente: doc.UltimaMsgCliente || '',
+    msgsCliente: doc.MsgsCliente || 0,
+    reservouEm: doc.ReservouEm || '',
   };
 }
 
@@ -32,6 +38,11 @@ export async function saveConv(conv) {
     HistoricoJson: JSON.stringify(trimmed),
     NomePerfil: conv.nomePerfil || '',
     Origem: conv.origem || 'organico',
+    Etapa: conv.etapa || 'lead',
+    PrimeiroContato: conv.primeiroContato || '',
+    UltimaMsgCliente: conv.ultimaMsgCliente || '',
+    MsgsCliente: conv.msgsCliente || 0,
+    ReservouEm: conv.reservouEm || '',
     updatedAt: new Date().toISOString(),
   });
 }

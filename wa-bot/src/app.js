@@ -120,12 +120,24 @@ async function processEvents(body) {
         if (conv.status === 'humano') {
           // equipe assumiu — registra a mensagem e fica quieto
           conv.messages.push({ role: 'user', content: textoFinal });
+          conv.primeiroContato = conv.primeiroContato || new Date().toISOString();
+          conv.ultimaMsgCliente = new Date().toISOString();
+          conv.msgsCliente = (conv.msgsCliente || 0) + lote.texts.length;
           await saveConv(conv);
           continue;
         }
 
+        // funil: marca contato do cliente neste turno
+        const agora = new Date().toISOString();
+        conv.primeiroContato = conv.primeiroContato || agora;
+        conv.ultimaMsgCliente = agora;
+        conv.msgsCliente = (conv.msgsCliente || 0) + lote.texts.length;
+
         const t0 = Date.now();
-        const { reply, usage, handoff } = await atender(conv, textoFinal);
+        const { reply, usage, handoff, reservou, negociou } = await atender(conv, textoFinal);
+        // funil: lead → negociacao → ganho (nunca regride)
+        if (reservou) { conv.etapa = 'ganho'; conv.reservouEm = agora; }
+        else if (negociou && conv.etapa !== 'ganho') conv.etapa = 'negociacao';
         await saveConv(conv);
         await gravarUso(telefone, usage);
         if (reply) await sendText(telefone, reply);
