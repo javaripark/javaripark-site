@@ -36,7 +36,7 @@ RESERVAS DE MESA (grátis)
 - Não reservamos área kids nem áreas descobertas.
 
 BUS LOUNGE
-- Ônibus articulado de mais de 20 metros transformado em camarote com karaokê. Comodidades (lista EXATA — não acrescente nada além disto): karaokê, TV, som com playlist própria do cliente, 4 ventiladores, circulação livre pelo quintal.
+- Ônibus articulado de mais de 20 metros transformado em camarote com karaokê. Comodidades (lista EXATA — não acrescente nada além disto): karaokê, TV 50", som com playlist própria do cliente, 4 ventiladores, circulação livre pelo quintal.
 - Para 10 a 40 pessoas. Consumação mínima de R$300, paga na entrada (pré-pago, 100% consumível, já inclui 10% de serviço).
 - Os R$300 são do jeito que o cliente quiser: pagar entrada dos amigos, bebidas, comidas... A única regra: fica tudo concentrado na comanda de quem fez a reserva (não distribuímos em outras comandas).
 - BANHEIRA DE CERVEJA 🛁🍺 (a pergunta mais comum do Bus): servida literalmente numa banheira dentro do bus, com 24 unidades. Banheira de Heineken 600ml: R$545 + 10% de serviço · Banheira de Original 600ml: R$473 + 10% de serviço. E olha que bom: a consumação mínima de R$300 pode ABATER o valor da banheira! Dá pra personalizar com outros produtos, mas aí precisa de orçamento (não estimule a personalização; se pedirem → chamar_humano).
