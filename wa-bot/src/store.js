@@ -28,6 +28,7 @@ export async function loadConv(telefone) {
     ultimaMsgCliente: doc.UltimaMsgCliente || '',
     msgsCliente: doc.MsgsCliente || 0,
     reservouEm: doc.ReservouEm || '',
+    nudgeEm: doc.NudgeEm || '',
   };
 }
 
@@ -43,6 +44,7 @@ export async function saveConv(conv) {
     UltimaMsgCliente: conv.ultimaMsgCliente || '',
     MsgsCliente: conv.msgsCliente || 0,
     ReservouEm: conv.reservouEm || '',
+    NudgeEm: conv.nudgeEm || '',
     updatedAt: new Date().toISOString(),
   });
 }

@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { cfg } from './config.js';
 import { loadConv, saveConv } from './store.js';
 import { addDoc } from './firestore.js';
+import { sendText, markRead } from './zap.js';
 import { atender, custoUSD } from './brain.js';
 
 // Uso REAL da API (tokens vêm da resposta da Anthropic) → wa_usage, 1 doc por turno
@@ -42,22 +43,7 @@ function validSignature(req) {
   try { return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected)); } catch (e) { return false; }
 }
 
-async function sendText(to, body) {
-  const r = await fetch(`https://graph.facebook.com/v23.0/${cfg.metaPhoneNumberId}/messages`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.metaToken}` },
-    body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body } }),
-  });
-  if (!r.ok) console.error('[send] erro', r.status, (await r.text()).slice(0, 200));
-}
 
-async function markRead(messageId) {
-  await fetch(`https://graph.facebook.com/v23.0/${cfg.metaPhoneNumberId}/messages`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.metaToken}` },
-    body: JSON.stringify({ messaging_product: 'whatsapp', status: 'read', message_id: messageId }),
-  }).catch(() => {});
-}
 
 async function processEvents(body) {
   for (const entry of body.entry || []) {

@@ -59,6 +59,8 @@
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Perdidas</div><div style="font-size:1.4em;font-weight:700;color:#ef4444" id="f-perdidas">—</div><div class="muted">negociou e esfriou (+24h)</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Handoffs</div><div style="font-size:1.4em;font-weight:700;color:#4f1964" id="f-handoffs">—</div><div class="muted">em modo humano</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Taxa de conversão</div><div style="font-size:1.4em;font-weight:700;color:#16a34a" id="f-taxa">—</div><div class="muted">ganhas ÷ leads</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Resgates enviados</div><div style="font-size:1.4em;font-weight:700;color:#b45309" id="f-resgates">—</div><div class="muted">nudge de abandono</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Resgates → reserva</div><div style="font-size:1.4em;font-weight:700;color:#16a34a" id="f-resgconv">—</div><div class="muted">voltou e fechou</div></div>
             </div>
         </div>
 
@@ -191,6 +193,9 @@
             $('f-perdidas').textContent=perdidas.length;
             $('f-handoffs').textContent=handoffs.length;
             $('f-taxa').textContent=periodo.length?((ganhas.length/periodo.length)*100).toFixed(0)+'%':'—';
+            const resgates=periodo.filter(c=>c.NudgeEm);
+            $('f-resgates').textContent=resgates.length;
+            $('f-resgconv').textContent=resgates.filter(c=>c.ReservouEm&&new Date(c.ReservouEm)>new Date(c.NudgeEm)).length;
         }
         onSnapshot(collection(db,`${BASE}/wa_atendimento`),snap=>{
             convsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));

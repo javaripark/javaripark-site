@@ -61,6 +61,19 @@ export async function deleteDoc(relPath) {
   await fsFetch(`${cfg.fsBase}/${cfg.fsDataPath}/${relPath}`, { method: 'DELETE' });
 }
 
+// Lista todos os docs de uma coleção (paginado) — pro resgate varrer conversas
+export async function listDocs(collection) {
+  const out = [];
+  let pageToken = '';
+  do {
+    const url = `${cfg.fsBase}/${cfg.fsDataPath}/${collection}?pageSize=300${pageToken ? '&pageToken=' + pageToken : ''}`;
+    const d = await fsFetch(url);
+    for (const doc of d.documents || []) out.push({ id: doc.name.split('/').pop(), ...decFields(doc.fields) });
+    pageToken = d.nextPageToken || '';
+  } while (pageToken);
+  return out;
+}
+
 // runQuery com filtros de igualdade: where = [['Campo','valor'], ...]
 export async function queryDocs(collection, where) {
   const structuredQuery = {
