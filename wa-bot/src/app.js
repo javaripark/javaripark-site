@@ -55,6 +55,14 @@ async function processEvents(body) {
         // Origem automática: clique em anúncio (CTWA) chega com referral
         if (msg.referral) conv.origem = 'anuncio';
 
+        // Válvula de escape: "#bot" religa o atendente após handoff
+        if (texto.toLowerCase() === '#bot') {
+          conv.status = 'bot';
+          await saveConv(conv);
+          await sendText(telefone, 'Prontinho, tô de volta! 😉 Como posso ajudar?');
+          continue;
+        }
+
         if (conv.status === 'humano') {
           // equipe assumiu — registra a mensagem e fica quieto
           conv.messages.push({ role: 'user', content: texto });
