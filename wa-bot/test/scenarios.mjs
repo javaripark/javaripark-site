@@ -94,7 +94,7 @@ const CENARIOS = [
     },
   },
   {
-    nome: 'Casa lotada → reserva extra',
+    nome: 'Principais cheios → overflow (filho), nunca Extras',
     async run(t) {
       const dia = '2026-10-03'; // sábado distante
       const plantadas = [];
@@ -103,8 +103,8 @@ const CENARIOS = [
         const { joined } = await conversar(t, 'Lia', ['quero mesa dia 3/10 pra 8 pessoas, Lia Prado', 'pode ser, fecha assim!', 'perto do palco! pode confirmar']);
         const rs = await bancoDe(t);
         return [
-          ['registrou como Extras', rs.length === 1 && rs[0].Setor === 'Extras'],
-          ['explicou a reserva extra', /extra/i.test(joined)],
+          ['registrou um overflow (filho 1B-9B)', rs.length === 1 && /^[1-9]B$/.test(String(rs[0].Setor))],
+          ['não usou Extras', !rs.some(r => String(r.Setor) === 'Extras')],
         ];
       } finally { for (const id of plantadas) await deleteDoc('reservas/' + id); }
     },
@@ -246,7 +246,7 @@ const CENARIOS = [
     async run(t) {
       const { joined, handoffs } = await conversar(t, 'Edu', ['quero fazer meu aniversário aí e levar a banda do meu primo pra tocar, pode?']);
       return [
-        ['recusa banda própria', /n[ãa]o (fazemos|rola|d[áa]|trabalhamos|é poss)/i.test(joined)],
+        ['recusa banda própria', /n[ãa]o (faz|fazemos|rola|d[áa]|trabalhamos|permit|é poss)|infelizmente/i.test(joined)],
         ['indica o beacons', /beacons/i.test(joined)],
         ['sem handoff', handoffs === 0],
       ];

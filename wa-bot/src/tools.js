@@ -1,9 +1,39 @@
 // Ferramentas do atendente. Schemas compactos (tokens) + validações de
 // negócio espelhadas do admin (seg/ter fechado, 1 reserva por setor/data).
 // Cancelar/alterar só operam em reservas atreladas ao Whatsapp do remetente.
-import { queryDocs, addDoc, setDoc, getDoc, deleteDoc } from './firestore.js';
+import { queryDocs, addDoc, setDoc, getDoc, deleteDoc, listDocs } from './firestore.js';
 
-const SETORES = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+// Setores: fonte única é a collection 'setores' (capacidade, pai, ativoBot).
+// Cache leve (5min) + fallback defensivo se o fetch falhar.
+const SETORES_FALLBACK = (() => {
+  const a = [];
+  for (let i = 1; i <= 9; i++) {
+    a.push({ label: String(i), tipo: 'principal', pai: null, ativoBot: true, capacidadeSentados: 20 });
+    a.push({ label: i + 'B', tipo: 'filho', pai: String(i), ativoBot: true, capacidadeSentados: 20 });
+  }
+  a.push({ label: 'Bus Lounge', tipo: 'bus', pai: null, ativoBot: true });
+  return a;
+})();
+let _setCache = { at: 0, data: null };
+async function getSetoresCfg() {
+  if (_setCache.data && Date.now() - _setCache.at < 300000) return _setCache.data;
+  try {
+    const docs = await listDocs('setores', 100);
+    if (docs && docs.length) { _setCache = { at: Date.now(), data: docs }; return docs; }
+  } catch (e) { /* cai no fallback */ }
+  return _setCache.data || SETORES_FALLBACK;
+}
+// Deriva listas úteis: principais (1-9), mapa pai→filho, conjunto de válidos.
+async function setorMapa() {
+  const cfg = await getSetoresCfg();
+  const ativos = cfg.filter(s => s.ativoBot !== false);
+  const principais = ativos.filter(s => s.tipo === 'principal').map(s => s.label).sort((a, b) => a - b);
+  const filhoDe = {};
+  ativos.filter(s => s.tipo === 'filho').forEach(s => { filhoDe[s.pai] = s.label; });
+  const validos = new Set(ativos.map(s => s.label));
+  return { principais, filhoDe, validos };
+}
+const ehFilho = s => /^[1-9]B$/.test(String(s));
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
 // Exceções por data (ex: jogo do Brasil na Copa) — manter alinhado com EXCECOES_DIA do prompt.js
 const TOLERANCIA_EXCECAO = { '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)' };
@@ -32,7 +62,7 @@ export const toolDefs = [
         nome: { type: 'string', description: 'Primeiro nome' },
         sobrenome: { type: 'string', description: 'Sobrenome' },
         pessoas: { type: 'integer', description: 'Quantidade de pessoas' },
-        setor: { type: 'string', description: 'Setor 1-9, "Bus Lounge" (10-40 pessoas) ou "Extras" quando a casa estiver lotada' },
+        setor: { type: 'string', description: 'Setor principal 1-9, filho de overflow 1B-9B (só quando o pai 1-9 está ocupado) ou "Bus Lounge" (10-40 pessoas). NÃO use "Extras" — quando tudo encher, use chamar_humano.' },
         observacoes: { type: 'string', description: 'Opcional: aniversário, preferências, bolo etc.' },
       },
       required: ['data', 'nome', 'sobrenome', 'pessoas', 'setor'],
@@ -72,7 +102,7 @@ export const toolDefs = [
         reservaId: { type: 'string', description: 'ID retornado por buscar_reservas' },
         novaData: { type: 'string', description: 'Opcional, YYYY-MM-DD' },
         novasPessoas: { type: 'integer', description: 'Opcional' },
-        novoSetor: { type: 'string', description: 'Opcional, setor 1-9 ou "Bus Lounge"' },
+        novoSetor: { type: 'string', description: 'Opcional: setor 1-9, filho 1B-9B (overflow, só com o pai ocupado) ou "Bus Lounge"' },
         novasObservacoes: { type: 'string', description: 'Opcional' },
       },
       required: ['reservaId'],
@@ -116,14 +146,28 @@ async function consultarDisponibilidade({ data }) {
   if (data < hojeISO()) return { aberto: false, motivo: 'data no passado' };
   const dow = d.getDay();
   const reservas = await queryDocs('reservas', [['Data', data]]);
-  const ocupados = reservas.map(r => String(r.Setor)).filter(s => s !== 'Extras');
-  const livres = SETORES.filter(s => !ocupados.includes(s));
-  const busLivre = !reservas.some(r => String(r.Setor) === 'Bus Lounge');
-  const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, busLivre, toleranciaChegada: tolerancia(data, dow) };
+  const ocupados = new Set(reservas.map(r => String(r.Setor)));
+  const { principais, filhoDe } = await setorMapa();
+  const livres = principais.filter(s => !ocupados.has(s));
+  // Overflow: filho só entra quando o PAI está ocupado e o próprio filho está livre.
+  const overflowLivres = [];
+  for (const pai of principais) {
+    const f = filhoDe[pai];
+    if (f && ocupados.has(pai) && !ocupados.has(f)) overflowLivres.push(f);
+  }
+  const busLivre = !ocupados.has('Bus Lounge');
+  const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, overflowLivres, busLivre, toleranciaChegada: tolerancia(data, dow) };
   const cutoff = reservaHojeEncerrada(data, dow);
   if (cutoff) out.avisoHoje = cutoff;
   if (dow === 1 || dow === 2) out.atencao = AVISO_SEG_TER;
-  if (!livres.length) { out.lotado = true; out.dica = 'ofereça reserva extra (setor "Extras"); equipe acomoda no dia'; }
+  if (!livres.length) {
+    out.lotado = livres.length === 0 && overflowLivres.length === 0;
+    out.dica = livres.length === 0
+      ? (overflowLivres.length ? `setores principais cheios; ofereça um overflow disponível: ${overflowLivres.join(', ')}`
+        : (busLivre ? 'tudo cheio nos setores; ofereça o Bus Lounge se servir; senão use chamar_humano (reserva extra é manual da equipe)'
+          : 'casa lotada (setores, overflow e Bus cheios) — use chamar_humano; reserva extra é exceção manual da equipe'))
+      : undefined;
+  }
   return out;
 }
 
@@ -151,13 +195,21 @@ async function registrarReserva(input, ctx) {
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   const cutoff = reservaHojeEncerrada(data, dow);
   if (cutoff) return { ok: false, erro: cutoff };
-  const isExtras = String(setor) === 'Extras';
-  const isBus = String(setor) === 'Bus Lounge';
-  if (!isExtras && !isBus && !SETORES.includes(String(setor))) return { ok: false, erro: 'setor inválido (1-9, "Bus Lounge" ou Extras)' };
+  const setorStr = String(setor);
+  const { principais, filhoDe, validos } = await setorMapa();
+  if (setorStr === 'Extras') return { ok: false, erro: 'Extras é reserva manual da equipe, não reservável pelo bot — quando o catalogado esgotar, use chamar_humano' };
+  const isBus = setorStr === 'Bus Lounge';
+  if (!validos.has(setorStr)) return { ok: false, erro: 'setor inválido (1-9, filhos 1B-9B ou "Bus Lounge")' };
   if (!nome?.trim() || !sobrenome?.trim()) return { ok: false, erro: 'nome e sobrenome obrigatórios' };
   const n = parseInt(pessoas, 10);
   if (isBus && (n < 10 || n > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
   if (!n || n < 1 || n > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
+  // Filho (overflow) só pode ser reservado quando o PAI já está ocupado nessa data.
+  if (ehFilho(setorStr)) {
+    const pai = setorStr[0];
+    const paiOcup = await queryDocs('reservas', [['Data', data], ['Setor', pai]]);
+    if (!paiOcup.length) return { ok: false, erro: `o setor ${pai} ainda está livre — reserve o ${pai} primeiro; o ${setorStr} só vale como overflow quando o ${pai} está ocupado`, setorSugerido: pai };
+  }
 
   // Trava anti-abuso: 1 reserva por número de WhatsApp por dia
   if (ctx.telefone) {
@@ -168,13 +220,13 @@ async function registrarReserva(input, ctx) {
     }
   }
 
-  // Re-checa conflito na hora da gravação (Extras não tem trava, como no admin)
-  if (!isExtras) {
-    const conflito = await queryDocs('reservas', [['Data', data], ['Setor', String(setor)]]);
+  // Re-checa conflito na hora da gravação (vale também pros filhos, que agora têm trava)
+  {
+    const conflito = await queryDocs('reservas', [['Data', data], ['Setor', setorStr]]);
     if (conflito.length) {
       const todas = await queryDocs('reservas', [['Data', data]]);
-      const ocupados = todas.map(r => String(r.Setor));
-      return { ok: false, erro: `setor ${setor} acabou de ser ocupado`, setoresLivres: SETORES.filter(s => !ocupados.includes(s)) };
+      const ocupados = new Set(todas.map(r => String(r.Setor)));
+      return { ok: false, erro: `setor ${setorStr} acabou de ser ocupado`, setoresLivres: principais.filter(s => !ocupados.has(s)) };
     }
   }
 
@@ -240,10 +292,18 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   const cutoffAlt = data !== atual.Data ? reservaHojeEncerrada(data, dow) : null;
   if (cutoffAlt) return { ok: false, erro: cutoffAlt };
+  const { principais, validos } = await setorMapa();
+  if (setor === 'Extras') return { ok: false, erro: 'Extras é manual da equipe — use chamar_humano' };
   const busAlvo = setor === 'Bus Lounge';
-  if (!busAlvo && !SETORES.includes(setor)) return { ok: false, erro: 'setor inválido (1-9 ou "Bus Lounge")' };
+  if (!validos.has(setor)) return { ok: false, erro: 'setor inválido (1-9, filhos 1B-9B ou "Bus Lounge")' };
   if (busAlvo && (pessoas < 10 || pessoas > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
   if (!pessoas || pessoas < 1 || pessoas > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
+  // Filho só vale como overflow quando o pai está ocupado nessa data (ignora a própria reserva)
+  if (ehFilho(setor)) {
+    const pai = setor[0];
+    const paiOcup = (await queryDocs('reservas', [['Data', data], ['Setor', pai]])).filter(c => c.id !== reservaId);
+    if (!paiOcup.length) return { ok: false, erro: `o setor ${pai} está livre — mova pro ${pai}; ${setor} só vale como overflow com o ${pai} ocupado` };
+  }
 
   // Trava anti-abuso também na mudança de data: 1 reserva por número por dia
   if (data !== atual.Data && ctx.telefone) {
@@ -257,7 +317,7 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
     if (conflito.length) {
       const todas = await queryDocs('reservas', [['Data', data]]);
       const ocupados = todas.filter(c => c.id !== reservaId).map(c => String(c.Setor));
-      return { ok: false, erro: `setor ${setor} ocupado em ${data}`, setoresLivres: SETORES.filter(s => !ocupados.includes(s)) };
+      return { ok: false, erro: `setor ${setor} ocupado em ${data}`, setoresLivres: principais.filter(s => !ocupados.includes(s)) };
     }
   }
 
