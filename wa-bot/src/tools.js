@@ -164,8 +164,8 @@ async function consultarDisponibilidade({ data }) {
     out.lotado = livres.length === 0 && overflowLivres.length === 0;
     out.dica = livres.length === 0
       ? (overflowLivres.length ? `setores principais cheios; ofereça um overflow disponível: ${overflowLivres.join(', ')}`
-        : (busLivre ? 'tudo cheio nos setores; ofereça o Bus Lounge se servir; senão use chamar_humano (reserva extra é manual da equipe)'
-          : 'casa lotada (setores, overflow e Bus cheios) — use chamar_humano; reserva extra é exceção manual da equipe'))
+        : (busLivre ? 'tudo cheio nos setores; ofereça o Bus Lounge se servir; senão NUNCA negue: convide a vir sem reserva (a equipe acomoda no dia)'
+          : 'casa lotada (setores, overflow e Bus cheios) — NUNCA negue o cliente: convide a vir sem reserva, a equipe acomoda no dia'))
       : undefined;
   }
   return out;

@@ -110,6 +110,25 @@ const CENARIOS = [
     },
   },
   {
+    nome: 'Tudo lotado → convida sem reserva, JAMAIS nega',
+    async run(t) {
+      const dia = '2026-10-07'; // quarta distante
+      const todos = ['1','2','3','4','5','6','7','8','9','1B','2B','3B','4B','5B','6B','7B','8B','9B','Bus Lounge'];
+      const plantadas = [];
+      for (const s of todos) plantadas.push(await addDoc('reservas', { Data: dia, Setor: s, Nome: 'Plant', Sobrenome: 'X', 'Quantidade de Pessoas': 4, Whatsapp: '5500777770000', Observacoes: '', Origem: '', CriadoEm: new Date().toISOString() }));
+      try {
+        const { joined, handoffs } = await conversar(t, 'Bea', ['quero mesa dia 7/10 pra 6 pessoas, Bea Lima', 'e aí, consegue?']);
+        const rs = await bancoDe(t);
+        return [
+          ['convida a vir sem reserva', /sem reserva|vem assim|é só chegar|d[áa] um jeito|acomod/i.test(joined)],
+          ['não nega o cliente', !/n[ãa]o (temos|tem|d[áa] pra|consigo|vai dar|rola).{0,20}(reserva|vaga|mesa)|infelizmente n[ãa]o/i.test(joined)],
+          ['não registra reserva', rs.length === 0],
+          ['sem handoff', handoffs === 0],
+        ];
+      } finally { for (const id of plantadas) await deleteDoc('reservas/' + id); }
+    },
+  },
+  {
     nome: 'Bus livre → reserva direta com R$300',
     async run(t) {
       const { joined, handoffs } = await conversar(t, 'Carla', ['quero o bus lounge sexta 25/9, somos 15! Carla Souza', 'isso, pode confirmar!']);
