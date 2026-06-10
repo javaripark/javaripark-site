@@ -286,22 +286,24 @@
 
     <div id="message-box" class="message-box"></div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         const $ = id => document.getElementById(id);
         const messageBox = $('message-box');
 
-        // Auth guard (localStorage with TTL)
+        // Portão REAL (Firebase Auth) — sessão persiste por IndexedDB, sem TTL artificial
         const AUTH_KEY = 'javari_admin_auth';
-        const AUTH_TTL = 24 * 60 * 60 * 1000;
-        let session = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
-        if (session && !localStorage.getItem(AUTH_KEY)) localStorage.setItem(AUTH_KEY, JSON.stringify(session));
-        if (session && session.ts && (Date.now() - session.ts > AUTH_TTL)) { session = null; localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); }
-        if (!session) { window.location.href = '/admin/index.html'; }
+        const auth = getAuth(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
+        const __user = await new Promise(res => { const un = onAuthStateChanged(auth, u => { un(); res(u); }); });
+        if (!__user) { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; await new Promise(() => {}); }
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ email: __user.email, ts: Date.now() }));
+        const session = { email: __user.email };
         $('auth-loading').style.display = 'none';
         $('app-container').style.display = 'block';
-        $('user-email-display').textContent = session ? session.email : '';
+        $('user-email-display').textContent = __user.email || '';
 
-        $('logoutBtn').addEventListener('click', () => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; });
+        $('logoutBtn').addEventListener('click', () => { signOut(auth).finally(() => { localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); window.location.href = '/admin/index.html'; }); });
 
         function showMessage(message, type = 'info') {
             messageBox.textContent = message;
