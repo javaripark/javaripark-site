@@ -11,7 +11,7 @@ const client = new Anthropic({ apiKey: cfg.anthropicKey });
 const MAX_TOOL_ROUNDS = 6;
 
 // Anúncio de ação de estado (criar/alterar/cancelar) na resposta final
-const CLAIM_RE = /reserva\s+(tá\s+|está\s+)?(confirmada|feita|registrada|alterada|cancelada|trocada|atualizada|remarcada)|alterei|cancelei|registrei|troquei|remarquei|atualizei/i;
+const CLAIM_RE = /reserva\s+(tá\s+|está\s+)?(confirmada|feita|registrada|alterada|cancelada|trocada|atualizada|remarcada)|\b(alterei|cancelei|registrei|troquei|remarquei|atualizei)\b|pronto[,!]?\s*(tudo\s+)?(cancelad|alterad|confirmad|registrad)|\b(cancelada|alterada|remarcada)\s*[!.]/i;
 
 export function custoUSD(u) {
   return (

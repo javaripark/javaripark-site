@@ -45,8 +45,21 @@ async function processEvents(body) {
       const value = change.value || {};
       for (const msg of value.messages || []) {
         if (dedup(msg.id)) continue;
-        if (msg.type !== 'text') continue; // áudio/imagem: ignora por ora
         const telefone = msg.from;
+        // mídia (áudio é MUITO comum no Brasil): nunca deixar no vácuo
+        if (msg.type !== 'text') {
+          if (['audio', 'image', 'video', 'document'].includes(msg.type)) {
+            const conv = await loadConv(telefone);
+            if (conv.status !== 'humano') {
+              const aviso = 'Opa! Por aqui eu ainda não consigo abrir áudio e arquivos 🙈 Me conta por texto que eu te ajudo rapidinho!';
+              conv.messages.push({ role: 'user', content: `[cliente enviou ${msg.type}]` });
+              conv.messages.push({ role: 'assistant', content: aviso });
+              await saveConv(conv);
+              await sendText(telefone, aviso);
+            }
+          }
+          continue;
+        }
         const texto = msg.text?.body?.trim();
         if (!texto) continue;
 
