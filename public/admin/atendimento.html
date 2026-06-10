@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+    <title>Atendimento — Javari StrEat Park</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        html{overflow-y:scroll}
+        body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#333}
+        .container{max-width:1200px;margin:0 auto;padding:12px}
+        .header{background:linear-gradient(135deg,#1a1a1a 0%,#2d1640 50%,#1a1a1a 100%);padding:16px 20px;text-align:center;position:relative;border-radius:12px 12px 0 0}
+        .header h1{color:#fff;font-size:1.3em;font-weight:700;letter-spacing:.5px}
+        .header p{color:rgba(255,255,255,.65);font-size:.8em;margin-top:2px}
+        .header .logout-btn{position:absolute;top:50%;right:16px;transform:translateY(-50%);background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+        .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 8px rgba(0,0,0,.06);border-radius:0 0 12px 12px;margin-bottom:18px}
+        .admin-nav a{flex:1;text-align:center;padding:13px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;white-space:nowrap}
+        .admin-nav a.active{color:#4f1964;border-bottom-color:#4f1964;background:#f5f0f8}
+        .card{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 5px rgba(0,0,0,.05);margin-bottom:16px}
+        .card h3{font-size:.8em;font-weight:700;color:#4f1964;margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px;padding-bottom:10px;border-bottom:1px solid #f0eef3;display:flex;justify-content:space-between;align-items:center}
+        table{width:100%;border-collapse:collapse;font-size:13px}
+        th{text-align:left;padding:10px;background:#faf9fb;color:#777;font-weight:600;font-size:12px;border-bottom:2px solid #eee}
+        td{padding:10px;border-bottom:1px solid #f2f2f5;color:#3c3c44;vertical-align:top}
+        .wrap{overflow-x:auto}
+        .pill{padding:3px 10px;border-radius:11px;font-size:10px;font-weight:700;white-space:nowrap}
+        .st-bot{background:#dcfce7;color:#16a34a}.st-humano{background:#fef3c7;color:#b45309}
+        .btn{padding:7px 13px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
+        .btn-primary{background:#4f1964;color:#fff}.btn-ghost{background:#fff;color:#4f1964;border:1px solid #d9cfe0}
+        a.tel{color:#4f1964;font-weight:600;text-decoration:none}
+        .muted{color:#9a9aa3;font-size:12px}
+        .preview{color:#666;font-size:12px;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .empty{color:#aaa;padding:8px 10px}
+        .chk{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#777;text-transform:none;letter-spacing:0;cursor:pointer}
+        .badge{background:#ef4444;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;margin-left:8px}
+        @media(min-width:640px){.container{padding:20px}.header h1{font-size:1.6em}.admin-nav a{font-size:13px;padding:13px 8px}}
+        @media(max-width:600px){html,body{overflow-x:hidden}.container{padding:10px}.preview{max-width:160px}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header"><h1>Atendimento WhatsApp</h1><p id="user-email-display"></p><button class="logout-btn" id="logoutBtn">Sair</button></header>
+        <nav class="admin-nav">
+            <a href="/admin/reservas.html">Reservas</a><a href="/admin/agenda.html">Agenda</a>
+            <a href="/admin/cardapio.html">Cardápio</a><a href="/admin/blog.html">Blog</a>
+            <a href="/admin/eventos.html">Eventos</a><a href="/admin/atendimento.html" class="active">Atendimento</a>
+            <a href="/admin/dashboard.html">Dashboard</a>
+        </nav>
+
+        <div class="card">
+            <h3><span>Alertas — clientes esperando humano<span class="badge" id="alert-count" style="display:none"></span></span>
+                <label class="chk"><input type="checkbox" id="show-resolved"> mostrar resolvidos</label></h3>
+            <div class="wrap"><table id="alertas-tbl"><tbody><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
+        </div>
+
+        <div class="card">
+            <h3><span>Conversas do bot</span></h3>
+            <div class="wrap"><table id="conv-tbl"><tbody><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
+            <p class="muted" style="margin-top:10px">Conversa em <b>humano</b>: o bot fica em silêncio (você responde pelo app). "Devolver pro bot" religa o atendente — o cliente também consegue, mandando <b>#bot</b>. Sozinho, o modo humano expira após 24h sem mensagens.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        const AUTH_KEY='javari_admin_auth';
+        const session=JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null');
+        if(!session) location.href='/admin/index.html';
+        const $=id=>document.getElementById(id);
+        $('user-email-display').textContent = session ? (session.email||'') : '';
+        $('logoutBtn').onclick=()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; };
+        const db=getFirestore(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
+        const BASE='artifacts/central-de-reservas-jsp/public/data';
+        const fmtDT=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return iso; } };
+        const telBR=t=>{ const d=String(t||'').replace(/\D/g,''); const n=d.startsWith('55')?d.slice(2):d; return n.length>=10?`(${n.slice(0,2)}) ${n.slice(2,-4)}-${n.slice(-4)}`:t; };
+
+        // ---- Alertas ----
+        let alertas=[];
+        function renderAlertas(){
+            const showRes=$('show-resolved').checked;
+            const list=alertas.filter(a=>showRes||!a.Resolvido).sort((a,b)=>(b.CriadoEm||'').localeCompare(a.CriadoEm||''));
+            const pend=alertas.filter(a=>!a.Resolvido).length;
+            $('alert-count').style.display=pend?'inline-block':'none';
+            $('alert-count').textContent=pend;
+            $('alertas-tbl').innerHTML=list.length?`<thead><tr><th>Quando</th><th>Cliente</th><th>Motivo</th><th></th></tr></thead><tbody>${list.map(a=>`<tr style="${a.Resolvido?'opacity:.5':''}"><td>${fmtDT(a.CriadoEm)}</td><td>${a.Nome||'—'}<br><a class="tel" href="https://wa.me/${a.Telefone}" target="_blank">${telBR(a.Telefone)}</a></td><td class="preview" style="white-space:normal;max-width:420px">${a.Motivo||''}</td><td>${a.Resolvido?'<span class="muted">resolvido</span>':`<button class="btn btn-primary" data-res="${a.id}">Resolver</button>`}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhum alerta. 🎉</td></tr></tbody>';
+            $('alertas-tbl').querySelectorAll('[data-res]').forEach(b=>b.onclick=async()=>{ await updateDoc(doc(db,`${BASE}/wa_alertas`,b.dataset.res),{Resolvido:true}); });
+        }
+        $('show-resolved').onchange=renderAlertas;
+        onSnapshot(collection(db,`${BASE}/wa_alertas`),snap=>{ alertas=snap.docs.map(d=>({id:d.id,...d.data()})); renderAlertas(); });
+
+        // ---- Conversas ----
+        function ultimaMsg(c){ try{ const m=JSON.parse(c.HistoricoJson||'[]'); const u=m[m.length-1]; return u?`${u.role==='user'?'👤':'🤖'} ${String(u.content).slice(0,90)}`:'—'; }catch(e){ return '—'; } }
+        onSnapshot(collection(db,`${BASE}/wa_atendimento`),snap=>{
+            const convs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhuma conversa ainda.</td></tr></tbody>';
+            $('conv-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
+        });
+    </script>
+</body>
+</html>

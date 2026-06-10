@@ -7,6 +7,11 @@ import { cfg } from './config.js';
 import { loadConv, saveConv } from './store.js';
 import { atender, custoUSD } from './brain.js';
 
+// Janela de agrupamento de mensagens picadas (maxInstances=1 → memória compartilhada)
+const DEBOUNCE_MS = 4000;
+const pendentes = new Map();
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 const seen = new Set();
 function dedup(id) {
   if (seen.has(id)) return true;
@@ -63,13 +68,28 @@ async function processEvents(body) {
         const texto = msg.text?.body?.trim();
         if (!texto) continue;
 
+        markRead(msg.id);
+
+        // Agrupamento de mensagens picadas: junta o que chegar na janela e
+        // responde UMA vez (a requisição mais recente "vence"; as outras saem).
+        const lote = pendentes.get(telefone) || { texts: [], referral: false, nomePerfil: '' };
+        lote.texts.push(texto);
+        lote.last = msg.id;
+        if (msg.referral) lote.referral = true;
+        lote.nomePerfil = value.contacts?.[0]?.profile?.name || lote.nomePerfil;
+        pendentes.set(telefone, lote);
+        await sleep(DEBOUNCE_MS);
+        if (pendentes.get(telefone)?.last !== msg.id) continue; // chegou msg mais nova
+        pendentes.delete(telefone);
+        const textoFinal = lote.texts.join('\n');
+
         const conv = await loadConv(telefone);
-        conv.nomePerfil = value.contacts?.[0]?.profile?.name || conv.nomePerfil;
+        conv.nomePerfil = lote.nomePerfil || conv.nomePerfil;
         // Origem automática: clique em anúncio (CTWA) chega com referral
-        if (msg.referral) conv.origem = 'anuncio';
+        if (lote.referral) conv.origem = 'anuncio';
 
         // Válvula de escape: "#bot" religa o atendente após handoff
-        if (texto.toLowerCase() === '#bot') {
+        if (textoFinal.toLowerCase() === '#bot') {
           conv.status = 'bot';
           await saveConv(conv);
           await sendText(telefone, 'Prontinho, tô de volta! 😉 Como posso ajudar?');
@@ -78,23 +98,22 @@ async function processEvents(body) {
 
         if (conv.status === 'humano') {
           // equipe assumiu — registra a mensagem e fica quieto
-          conv.messages.push({ role: 'user', content: texto });
+          conv.messages.push({ role: 'user', content: textoFinal });
           await saveConv(conv);
           continue;
         }
 
-        markRead(msg.id);
         const t0 = Date.now();
-        const { reply, usage, handoff } = await atender(conv, texto);
+        const { reply, usage, handoff } = await atender(conv, textoFinal);
         await saveConv(conv);
         if (reply) await sendText(telefone, reply);
         // Alerta ativo de handoff no WhatsApp do admin
         if (handoff && cfg.adminPhone) {
           await sendText(cfg.adminPhone,
-            `⚠️ *Bot pausado — cliente esperando atendimento*\n👤 ${conv.nomePerfil || 'Cliente'} · wa.me/${telefone}\n💬 Última mensagem: "${texto.slice(0, 120)}"\n\n(Responda o cliente pelo app; o bot fica quieto até alguém mandar #bot ou passarem 24h.)`);
+            `⚠️ *Bot pausado — cliente esperando atendimento*\n👤 ${conv.nomePerfil || 'Cliente'} · wa.me/${telefone}\n💬 Última mensagem: "${textoFinal.slice(0, 120)}"\n\n(Responda o cliente pelo app; o bot fica quieto até alguém mandar #bot ou passarem 24h.)`);
         }
         const cost = usage.reduce((s, u) => s + custoUSD(u), 0);
-        console.log(`[${telefone}] ${Date.now() - t0}ms · US$${cost.toFixed(5)} · "${texto.slice(0, 60)}"${handoff ? ' · HANDOFF→admin avisado' : ''}`);
+        console.log(`[${telefone}] ${Date.now() - t0}ms · US$${cost.toFixed(5)} · ${lote.texts.length} msg(s) · "${textoFinal.slice(0, 60)}"${handoff ? ' · HANDOFF→admin avisado' : ''}`);
       }
     }
   }

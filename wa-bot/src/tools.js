@@ -98,6 +98,17 @@ const hojeISO = () => {
   const sp = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
   return `${sp.getFullYear()}-${String(sp.getMonth() + 1).padStart(2, '0')}-${String(sp.getDate()).padStart(2, '0')}`;
 };
+const horaSP = () => new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
+
+// Reserva pro próprio dia: só até 2h antes da casa abrir (regra do René)
+const ABERTURA = { 3: 18, 4: 18, 5: 18, 6: 14, 0: 12 };
+function reservaHojeEncerrada(data, dow) {
+  if (data !== hojeISO()) return null;
+  const abre = ABERTURA[dow];
+  if (!abre) return null; // seg/ter: evento especial, sem regra de cutoff
+  if (horaSP() >= abre - 2) return `reservas para hoje encerraram (aceitamos até 2h antes da abertura, ou seja, até ${abre - 2}h); ofereça outro dia`;
+  return null;
+}
 
 async function consultarDisponibilidade({ data }) {
   const d = validDate(data);
@@ -109,6 +120,8 @@ async function consultarDisponibilidade({ data }) {
   const livres = SETORES.filter(s => !ocupados.includes(s));
   const busLivre = !reservas.some(r => String(r.Setor) === 'Bus Lounge');
   const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, busLivre, toleranciaChegada: tolerancia(data, dow) };
+  const cutoff = reservaHojeEncerrada(data, dow);
+  if (cutoff) out.avisoHoje = cutoff;
   if (dow === 1 || dow === 2) out.atencao = AVISO_SEG_TER;
   if (!livres.length) { out.lotado = true; out.dica = 'ofereça reserva extra (setor "Extras"); equipe acomoda no dia'; }
   return out;
@@ -136,6 +149,8 @@ async function registrarReserva(input, ctx) {
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
+  const cutoff = reservaHojeEncerrada(data, dow);
+  if (cutoff) return { ok: false, erro: cutoff };
   const isExtras = String(setor) === 'Extras';
   const isBus = String(setor) === 'Bus Lounge';
   if (!isExtras && !isBus && !SETORES.includes(String(setor))) return { ok: false, erro: 'setor inválido (1-9, "Bus Lounge" ou Extras)' };
@@ -223,6 +238,8 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
+  const cutoffAlt = data !== atual.Data ? reservaHojeEncerrada(data, dow) : null;
+  if (cutoffAlt) return { ok: false, erro: cutoffAlt };
   const busAlvo = setor === 'Bus Lounge';
   if (!busAlvo && !SETORES.includes(setor)) return { ok: false, erro: 'setor inválido (1-9 ou "Bus Lounge")' };
   if (busAlvo && (pessoas < 10 || pessoas > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
