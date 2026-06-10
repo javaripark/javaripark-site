@@ -147,6 +147,8 @@ export async function startWA() {
     // Mensagens recebidas: opt-out + captura de anúncio + bot reativo
     sock.ev.on('messages.upsert', ({ messages, type }) => {
       for (const m of messages) {
+        const _t = m.message?.conversation || m.message?.extendedTextMessage?.text || (m.message ? Object.keys(m.message).join(',') : 'sem-message');
+        console.log(`[DEBUG upsert] type=${type} fromMe=${m.key?.fromMe} jid=${m.key?.remoteJid} ts=${m.messageTimestamp} → "${String(_t).slice(0,50)}"`);
         if (!m.message || m.key.fromMe) continue;
         const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
         const text = m.message.conversation || m.message.extendedTextMessage?.text || '';

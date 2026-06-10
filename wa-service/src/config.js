@@ -24,6 +24,13 @@ export const config = {
   // Vazio = aceita qualquer origem (o PIN é a proteção principal).
   allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
     .split(',').map(s => s.trim()).filter(Boolean),
+
+  // TRAVA DE SEGURANÇA do bot reativo:
+  // botMode 'test' (PADRÃO) → o bot SÓ responde os números em testNumbers; ignora o resto.
+  // botMode 'live' → responde todo mundo. Só mude pra 'live' quando for soltar de verdade.
+  botMode: (process.env.BOT_MODE || 'test').toLowerCase(),
+  testNumbers: (process.env.TEST_NUMBERS || '')
+    .split(',').map(s => s.replace(/\D/g, '')).filter(Boolean),
 };
 
 if (!config.authToken || config.authToken.startsWith('troque-isto')) {

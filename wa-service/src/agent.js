@@ -9,6 +9,7 @@ import { atender, custoUSD } from '../../wa-bot/src/brain.js';
 import { loadConv, saveConv } from '../../wa-bot/src/store.js';
 import { addDoc } from '../../wa-bot/src/firestore.js';
 import { cfg } from '../../wa-bot/src/config.js';
+import { config } from './config.js';
 import { sendText } from './wa.js';
 
 const DEBOUNCE_MS = 4000;      // agrupa mensagens picadas ao vivo
@@ -179,6 +180,13 @@ export async function handleIncoming(m, type) {
     if (!jid.endsWith('@s.whatsapp.net')) return;          // grupo/status → ignora
     const telefone = jid.replace('@s.whatsapp.net', '').replace(/\D/g, '');
     if (!telefone) return;
+
+    // 🔒 TRAVA DE SEGURANÇA: em modo teste, o bot SÓ responde números autorizados.
+    if (config.botMode !== 'live' && !config.testNumbers.includes(telefone)) {
+      console.log(`[modo-teste] ignorado (fora da allowlist): ${telefone}`);
+      return;
+    }
+
     if (dedup(m.key.id)) return;
 
     const ts = Number(m.messageTimestamp) || Math.floor(Date.now() / 1000);
