@@ -1919,6 +1919,7 @@
     <!-- Conversão Anúncio → Reserva: lê as reservas do Firestore e cruza com o snapshot de anúncios -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         const fbCfg = {
             apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
@@ -1930,7 +1931,11 @@
         const brl = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         async function loadConversao() {
             try {
-                const db = getFirestore(initializeApp(fbCfg, 'dash-conv'));
+                const appConv = initializeApp(fbCfg, 'dash-conv');
+                // rules fechadas: precisa do usuário logado (persistido pelo login real)
+                const user = await new Promise(res => { const un = onAuthStateChanged(getAuth(appConv), u => { un(); res(u); }); });
+                if (!user) return;
+                const db = getFirestore(appConv);
                 const [snap, ads] = await Promise.all([
                     getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/reservas')),
                     fetch('/data/ads-snapshot.json?v=' + Date.now()).then(r => r.json()).catch(() => null)

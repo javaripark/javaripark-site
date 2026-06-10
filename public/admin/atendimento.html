@@ -93,13 +93,17 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         const AUTH_KEY='javari_admin_auth';
-        const session=JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null');
-        if(!session) location.href='/admin/index.html';
+        const app=initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"});
+        const auth=getAuth(app);
+        const __user=await new Promise(res=>{ const un=onAuthStateChanged(auth,u=>{un();res(u);}); });
+        if(!__user){ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; await new Promise(()=>{}); }
+        localStorage.setItem(AUTH_KEY, JSON.stringify({email:__user.email,ts:Date.now()}));
         const $=id=>document.getElementById(id);
-        $('user-email-display').textContent = session ? (session.email||'') : '';
-        $('logoutBtn').onclick=()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; };
-        const db=getFirestore(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
+        $('user-email-display').textContent = __user.email||'';
+        $('logoutBtn').onclick=()=>{ signOut(auth).finally(()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; }); };
+        const db=getFirestore(app);
         const BASE='artifacts/central-de-reservas-jsp/public/data';
         const fmtDT=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return iso; } };
         const telBR=t=>{ const d=String(t||'').replace(/\D/g,''); const n=d.startsWith('55')?d.slice(2):d; return n.length>=10?`(${n.slice(0,2)}) ${n.slice(2,-4)}-${n.slice(-4)}`:t; };

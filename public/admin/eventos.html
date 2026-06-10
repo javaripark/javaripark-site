@@ -261,13 +261,17 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         const AUTH_KEY='javari_admin_auth';
-        const session=JSON.parse(localStorage.getItem(AUTH_KEY)||sessionStorage.getItem(AUTH_KEY)||'null');
-        if(!session) location.href='/admin/index.html';
+        const app=initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"});
+        const auth=getAuth(app);
+        const __user=await new Promise(res=>{ const un=onAuthStateChanged(auth,u=>{un();res(u);}); });
+        if(!__user){ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; await new Promise(()=>{}); }
+        localStorage.setItem(AUTH_KEY, JSON.stringify({email:__user.email,ts:Date.now()}));
         const $=id=>document.getElementById(id);
-        $('user-email-display').textContent = session ? (session.email||'') : '';
-        $('logoutBtn').onclick=()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; };
-        const db=getFirestore(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
+        $('user-email-display').textContent = __user.email||'';
+        $('logoutBtn').onclick=()=>{ signOut(auth).finally(()=>{ localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(AUTH_KEY); location.href='/admin/index.html'; }); };
+        const db=getFirestore(app);
         const BASE='artifacts/central-de-reservas-jsp/public/data';
         const PK_COL=BASE+'/eventos_pacotes', PROP_COL=BASE+'/eventos_propostas', CFG_COL=BASE+'/eventos_config';
         const brl=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});

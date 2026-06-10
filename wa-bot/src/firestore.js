@@ -1,6 +1,35 @@
-// Firestore via REST — o path público do projeto tem rules abertas, então
-// não precisa de service account. Encode/decode mínimo dos tipos usados.
+// Firestore via REST, AUTENTICADO (rules fechadas desde a blindagem):
+// - Na nuvem (Functions): OAuth da service account via metadata server
+//   (identidade IAM ignora as rules — é o "admin SDK" do bot).
+// - Local (bateria/simulador/fala): login Firebase do admin via .env
+//   (ADMIN_EMAIL/ADMIN_PASSWORD) — passa pelas rules como admin.
 import { cfg } from './config.js';
+
+const API_KEY = 'AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18';
+let tokCache = { token: '', exp: 0 };
+
+async function authHeader() {
+  if (Date.now() < tokCache.exp - 60e3) return { Authorization: 'Bearer ' + tokCache.token };
+  if (process.env.K_SERVICE) {
+    // Cloud Functions/Run: token da identidade da função
+    const r = await fetch('http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token', { headers: { 'Metadata-Flavor': 'Google' } });
+    const d = await r.json();
+    tokCache = { token: d.access_token, exp: Date.now() + (d.expires_in || 3600) * 1000 };
+    return { Authorization: 'Bearer ' + tokCache.token };
+  }
+  const email = process.env.ADMIN_EMAIL, senha = process.env.ADMIN_PASSWORD;
+  if (email && senha) {
+    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: senha, returnSecureToken: true }),
+    });
+    const d = await r.json();
+    if (!d.idToken) throw new Error('login admin falhou: ' + JSON.stringify(d.error || d).slice(0, 120));
+    tokCache = { token: d.idToken, exp: Date.now() + parseInt(d.expiresIn || '3600', 10) * 1000 };
+    return { Authorization: 'Bearer ' + tokCache.token };
+  }
+  return {}; // sem credencial: só funciona com rules abertas
+}
 
 function enc(v) {
   if (v === null || v === undefined) return { nullValue: null };
@@ -26,7 +55,8 @@ function dec(v) {
 const decFields = fields => Object.fromEntries(Object.entries(fields || {}).map(([k, v]) => [k, dec(v)]));
 
 async function fsFetch(url, opts = {}) {
-  const r = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  const auth = await authHeader();
+  const r = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...auth, ...(opts.headers || {}) } });
   if (!r.ok) {
     const body = await r.text().catch(() => '');
     throw new Error(`Firestore ${r.status}: ${body.slice(0, 300)}`);
@@ -35,7 +65,8 @@ async function fsFetch(url, opts = {}) {
 }
 
 export async function getDoc(relPath) {
-  const r = await fetch(`${cfg.fsBase}/${cfg.fsDataPath}/${relPath}`);
+  const auth = await authHeader();
+  const r = await fetch(`${cfg.fsBase}/${cfg.fsDataPath}/${relPath}`, { headers: auth });
   if (r.status === 404) return null;
   if (!r.ok) throw new Error(`Firestore get ${r.status}`);
   const d = await r.json();

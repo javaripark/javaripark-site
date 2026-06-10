@@ -121,42 +121,37 @@
     <div class="login-error" id="loginError"></div>
   </div>
 
-  <script>
+  <script type="module">
+    // Login REAL via Firebase Auth — a senha é verificada no servidor do
+    // Google e as rules do Firestore exigem usuário autenticado.
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     const AUTH_KEY = 'javari_admin_auth';
-    const AUTH_TTL = 24 * 60 * 60 * 1000; // 24h
-    const existing = JSON.parse(localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || 'null');
-    if (existing && existing.ts && (Date.now() - existing.ts < AUTH_TTL)) {
-      window.location.href = '/admin/reservas.html';
-    } else {
-      localStorage.removeItem(AUTH_KEY);
-      sessionStorage.removeItem(AUTH_KEY);
-    }
+    const auth = getAuth(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
 
-    const USERS = [
-      { email: 'admin@javaripark.com.br', password: 'javari2026', name: 'Administrador' },
-      { email: 'rene@javaripark.com.br', password: 'javari2026', name: 'René' }
-    ];
+    let saindo = false;
+    onAuthStateChanged(auth, user => {
+      if (user && !saindo) {
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ email: user.email, ts: Date.now() }));
+        window.location.href = '/admin/reservas.html';
+      }
+    });
 
     const form = document.getElementById('loginForm');
     const btn = document.getElementById('loginBtn');
     const errorBox = document.getElementById('loginError');
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       btn.disabled = true;
       errorBox.classList.remove('visible');
-
       const email = document.getElementById('email').value.trim().toLowerCase();
       const password = document.getElementById('password').value;
-
-      const user = USERS.find(u => u.email === email && u.password === password);
-
-      if (user) {
-        const authData = JSON.stringify({ email: user.email, name: user.name, ts: Date.now() });
-        localStorage.setItem(AUTH_KEY, authData);
-        sessionStorage.setItem(AUTH_KEY, authData);
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        localStorage.setItem(AUTH_KEY, JSON.stringify({ email: cred.user.email, ts: Date.now() }));
         window.location.href = '/admin/reservas.html';
-      } else {
+      } catch (err) {
         errorBox.textContent = 'E-mail ou senha incorretos.';
         errorBox.classList.add('visible');
         btn.disabled = false;
