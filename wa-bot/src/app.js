@@ -72,11 +72,16 @@ async function processEvents(body) {
 
         markRead(msg.id);
         const t0 = Date.now();
-        const { reply, usage } = await atender(conv, texto);
+        const { reply, usage, handoff } = await atender(conv, texto);
         await saveConv(conv);
         if (reply) await sendText(telefone, reply);
+        // Alerta ativo de handoff no WhatsApp do admin
+        if (handoff && cfg.adminPhone) {
+          await sendText(cfg.adminPhone,
+            `⚠️ *Bot pausado — cliente esperando atendimento*\n👤 ${conv.nomePerfil || 'Cliente'} · wa.me/${telefone}\n💬 Última mensagem: "${texto.slice(0, 120)}"\n\n(Responda o cliente pelo app; o bot fica quieto até alguém mandar #bot ou passarem 24h.)`);
+        }
         const cost = usage.reduce((s, u) => s + custoUSD(u), 0);
-        console.log(`[${telefone}] ${Date.now() - t0}ms · US$${cost.toFixed(5)} · "${texto.slice(0, 60)}"`);
+        console.log(`[${telefone}] ${Date.now() - t0}ms · US$${cost.toFixed(5)} · "${texto.slice(0, 60)}"${handoff ? ' · HANDOFF→admin avisado' : ''}`);
       }
     }
   }

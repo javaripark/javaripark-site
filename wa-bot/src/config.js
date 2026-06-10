@@ -12,6 +12,7 @@ export const cfg = {
   metaPhoneNumberId: process.env.META_PHONE_NUMBER_ID || '',
   metaAppSecret: process.env.META_APP_SECRET || '',
   metaVerifyToken: process.env.META_VERIFY_TOKEN || 'javari-webhook-2026',
+  adminPhone: (process.env.ADMIN_PHONE || '').replace(/\D/g, ''),
   port: parseInt(process.env.PORT || '3200', 10),
   usdBrl: parseFloat(process.env.USD_BRL || '5.50'),
   fsBase: 'https://firestore.googleapis.com/v1/projects/central-de-reservas-jsp/databases/(default)/documents',
