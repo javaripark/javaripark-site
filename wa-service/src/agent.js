@@ -10,7 +10,7 @@ import { loadConv, saveConv } from '../../wa-bot/src/store.js';
 import { addDoc } from '../../wa-bot/src/firestore.js';
 import { cfg } from '../../wa-bot/src/config.js';
 import { config } from './config.js';
-import { sendText } from './wa.js';
+import { sendText, sendToJid, resolvePhone } from './wa.js';
 
 const DEBOUNCE_MS = 4000;      // agrupa mensagens picadas ao vivo
 const LIVE_AGE_S = 90;         // mais novo que isso = ao vivo; mais velho = atrasado
@@ -66,7 +66,7 @@ async function gravarUso(telefone, usage) {
   }).catch(e => console.error('[usage]', e.message));
 }
 
-async function handleMedia(telefone, nome, mediaType) {
+async function handleMedia(telefone, nome, mediaType, replyJid) {
   const conv = await loadConv(telefone);
   if (conv.status === 'humano') return;
   conv.nomePerfil = nome || conv.nomePerfil;
@@ -74,13 +74,14 @@ async function handleMedia(telefone, nome, mediaType) {
   conv.messages.push({ role: 'user', content: `[cliente enviou ${mediaType}]` });
   conv.messages.push({ role: 'assistant', content: aviso });
   await saveConv(conv);
-  await sendText(telefone, aviso);
+  if (replyJid) await sendToJid(replyJid, aviso); else await sendText(telefone, aviso);
 }
 
 // Núcleo: processa um texto final (já agrupado) de um cliente.
-async function processar(telefone, nome, textoFinal, { recovery, ts }) {
+async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid }) {
   const conv = await loadConv(telefone);
   conv.nomePerfil = nome || conv.nomePerfil;
+  const responder = (txt) => replyJid ? sendToJid(replyJid, txt) : sendText(telefone, txt);
 
   // Watermark anti-duplicação (cobre o restart): se a conversa já foi atualizada
   // DEPOIS desta mensagem, ela já foi tratada — não responde de novo.
@@ -95,7 +96,7 @@ async function processar(telefone, nome, textoFinal, { recovery, ts }) {
   if (textoFinal.toLowerCase() === '#bot') {
     conv.status = 'bot';
     await saveConv(conv);
-    await sendText(telefone, 'Prontinho, tô de volta! 😉 Como posso ajudar?');
+    await responder('Prontinho, tô de volta! 😉 Como posso ajudar?');
     return;
   }
 
@@ -122,7 +123,7 @@ async function processar(telefone, nome, textoFinal, { recovery, ts }) {
 
   let out = reply;
   if (recovery && out) out = 'Oi! Desculpa a demora pra te responder 🙏\n\n' + out;
-  if (out) await sendText(telefone, out);
+  if (out) await responder(out);
 
   // Alerta de handoff pro admin (via Baileys — sem template, é não-oficial)
   if (handoff && cfg.adminPhone) {
@@ -135,23 +136,25 @@ async function processar(telefone, nome, textoFinal, { recovery, ts }) {
 }
 
 // Debounce de mensagens picadas ao vivo (a última "vence")
-async function liveDebounce(telefone, nome, text, msgId) {
-  const lote = pendentes.get(telefone) || { texts: [], nome: '' };
+async function liveDebounce(telefone, nome, text, msgId, replyJid) {
+  const lote = pendentes.get(telefone) || { texts: [], nome: '', replyJid };
   lote.texts.push(text);
   lote.last = msgId;
   lote.nome = nome || lote.nome;
+  lote.replyJid = replyJid;
   pendentes.set(telefone, lote);
   await sleep(DEBOUNCE_MS);
   if (pendentes.get(telefone)?.last !== msgId) return; // chegou msg mais nova
   pendentes.delete(telefone);
-  await processar(telefone, lote.nome, lote.texts.join('\n'), { recovery: false });
+  await processar(telefone, lote.nome, lote.texts.join('\n'), { recovery: false, replyJid: lote.replyJid });
 }
 
 // Recuperação: processa o backlog DEVAGAR, um cliente por vez, espaçado.
-function bufferRecovery(telefone, nome, text, ts) {
-  const b = recoveryBuf.get(telefone) || { texts: [], nome: '', ts };
+function bufferRecovery(telefone, nome, text, ts, replyJid) {
+  const b = recoveryBuf.get(telefone) || { texts: [], nome: '', ts, replyJid };
   b.texts.push(text);
   b.nome = nome || b.nome;
+  b.replyJid = replyJid;
   b.ts = Math.min(b.ts || ts, ts); // guarda o mais antigo pro watermark
   recoveryBuf.set(telefone, b);
 }
@@ -163,7 +166,7 @@ async function runRecovery() {
     while (recoveryBuf.size) {
       const [telefone, b] = recoveryBuf.entries().next().value;
       recoveryBuf.delete(telefone);
-      try { await processar(telefone, b.nome, b.texts.join('\n'), { recovery: true, ts: b.ts }); }
+      try { await processar(telefone, b.nome, b.texts.join('\n'), { recovery: true, ts: b.ts, replyJid: b.replyJid }); }
       catch (e) { console.error('[recovery]', telefone, e.message); }
       if (recoveryBuf.size) await sleep(RECOVERY_GAP_MS); // espaça → sem rajada
     }
@@ -177,8 +180,9 @@ export async function handleIncoming(m, type) {
     if (type === 'append') return;                         // histórico antigo → não responde
     if (!m.message || m.key?.fromMe) return;
     const jid = m.key?.remoteJid || '';
-    if (!jid.endsWith('@s.whatsapp.net')) return;          // grupo/status → ignora
-    const telefone = jid.replace('@s.whatsapp.net', '').replace(/\D/g, '');
+    if (jid.endsWith('@g.us') || jid.includes('broadcast')) return; // grupo/status → ignora
+
+    const telefone = await resolvePhone(m);                // resolve LID → telefone real
     if (!telefone) return;
 
     // 🔒 TRAVA DE SEGURANÇA: em modo teste, o bot SÓ responde números autorizados.
@@ -194,12 +198,13 @@ export async function handleIncoming(m, type) {
     if (ageS > STALE_MAX_H * 3600) return;                 // velho demais → ignora
 
     const nome = m.pushName || '';
+    const replyJid = jid;                                  // responde de volta no JID de origem (LID ou PN)
     const { text, mediaType } = extractContent(m.message);
 
-    if (!text) { if (mediaType) await handleMedia(telefone, nome, mediaType); return; }
+    if (!text) { if (mediaType) await handleMedia(telefone, nome, mediaType, replyJid); return; }
 
-    if (ageS > LIVE_AGE_S) { bufferRecovery(telefone, nome, text, ts); runRecovery(); }
-    else { liveDebounce(telefone, nome, text, m.key.id); }
+    if (ageS > LIVE_AGE_S) { bufferRecovery(telefone, nome, text, ts, replyJid); runRecovery(); }
+    else { liveDebounce(telefone, nome, text, m.key.id, replyJid); }
   } catch (e) {
     console.error('[agent] erro:', e.message);
   }

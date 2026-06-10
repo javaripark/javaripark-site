@@ -148,7 +148,7 @@ export async function startWA() {
     sock.ev.on('messages.upsert', ({ messages, type }) => {
       for (const m of messages) {
         const _t = m.message?.conversation || m.message?.extendedTextMessage?.text || (m.message ? Object.keys(m.message).join(',') : 'sem-message');
-        console.log(`[DEBUG upsert] type=${type} fromMe=${m.key?.fromMe} jid=${m.key?.remoteJid} ts=${m.messageTimestamp} → "${String(_t).slice(0,50)}"`);
+        console.log(`[DEBUG upsert] type=${type} fromMe=${m.key?.fromMe} jid=${m.key?.remoteJid} alt=${m.key?.remoteJidAlt || '-'} → "${String(_t).slice(0,40)}"`);
         if (!m.message || m.key.fromMe) continue;
         const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
         const text = m.message.conversation || m.message.extendedTextMessage?.text || '';
@@ -172,6 +172,40 @@ export async function startWA() {
     return sock;
   } finally {
     connecting = false;
+  }
+}
+
+// Resolve o telefone REAL (PN) de uma mensagem, lidando com o LID do WhatsApp.
+// Ordem: remoteJidAlt (PN que vem junto) → getPNForLID (mapeamento) → fallback LID.
+export async function resolvePhone(m) {
+  const jid = m?.key?.remoteJid || '';
+  const alt = m?.key?.remoteJidAlt || '';
+  const digits = j => String(j).replace(/@.*/, '').replace(/\D/g, '');
+  if (jid.endsWith('@s.whatsapp.net')) return digits(jid);
+  if (alt.endsWith('@s.whatsapp.net')) return digits(alt);
+  if (jid.endsWith('@lid')) {
+    try {
+      const pn = await sock?.signalRepository?.lidMapping?.getPNForLID?.(jid);
+      if (pn) return digits(pn);
+    } catch (e) { console.warn('[lid] getPNForLID falhou:', e?.message); }
+    // fallback: usa o próprio LID como chave (o bot ainda responde; reserva pode não casar telefone)
+    console.warn('[lid] PN não resolvido, usando LID como chave:', jid);
+    return 'lid' + digits(jid);
+  }
+  return null;
+}
+
+// Envia direto pra um JID já conhecido (LID ou PN) — usado pelas RESPOSTAS reativas,
+// que devem voltar exatamente de onde a mensagem veio.
+export async function sendToJid(jid, message) {
+  if (!sock || !state.connected) return { ok: false, reason: 'desconectado' };
+  if (!jid) return { ok: false, reason: 'jid_vazio' };
+  try {
+    const sent = await sock.sendMessage(jid, { text: message });
+    if (sent?.key?.id) cacheSent(sent.key.id, sent.message);
+    return { ok: true, jid };
+  } catch (e) {
+    return { ok: false, reason: 'erro_envio', detail: String(e?.message || e) };
   }
 }
 
