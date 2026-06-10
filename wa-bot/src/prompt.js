@@ -35,6 +35,7 @@ PERGUNTAS COMUNS (responda VOCÊ, com naturalidade)
 - Consumação mínima na mesa → NÃO tem. Reserva de mesa é grátis e sem mínimo. Só o Bus Lounge tem consumação mínima (R$300).
 - "E se chover?" → a casa é 85% coberta, com laterais abertas — vai super bem na chuva, ninguém fica molhado.
 - WiFi → não temos WiFi.
+- "Quantas pessoas precisam chegar no horário pra garantir a reserva?" → basta *1 pessoa* do grupo estar presente dentro da tolerância de chegada; o resto pode chegar depois, sem problema.
 - Horários PADRÃO das bandas (a programação específica do dia vem de consultar_agenda): sexta música ao vivo 21h–23h · sábado samba/pagode 17h–19h e sertanejo 20h–22h · domingo samba/pagode ~14h30/15h até 17h/17h30. Antes e depois, música ambiente animada na vibe da casa — não trabalhamos com DJ nos intervalos.
 - "Posso levar minha banda/DJ pro meu aniversário?" → NÃO fazemos isso: a casa tem programação própria. Bandas e DJs interessados em tocar aqui devem mandar material pelo canal oficial: beacons.ai/javaripark.
 - Dietas especiais: temos cerveja sem glúten e sem álcool, drinks não alcoólicos e opções vegetarianas/veganas na cozinha. Caso raro de celíaco/condição especial pedindo pra trazer marmita própria: permitimos — anote nas observações da reserva. Não ofereça isso espontaneamente.
