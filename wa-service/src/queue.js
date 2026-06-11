@@ -77,6 +77,16 @@ async function tick() {
     const item = dequeue();
     if (!item) { scheduleNext(2000); return; }
 
+    // 🔒 TRAVA: em modo teste, envio ATIVO (reconfirmação/campanha) só vai pros números
+    // autorizados — protege clientes reais durante os testes. Compara os últimos 8 dígitos.
+    const toDigits = String(item.to).replace(/\D/g, '');
+    if (config.botMode !== 'live' && !config.testNumbers.some(t => t.slice(-8) === toDigits.slice(-8))) {
+      logSend({ to: item.to, nome: item.nome, status: 'pulado', motivo: 'modo_teste' });
+      console.log(`[modo-teste] envio ativo pulado (fora da allowlist): ${item.to}`);
+      scheduleNext(500);
+      return;
+    }
+
     const res = await sendText(item.to, item.message);
     if (res.ok) {
       incDailySent();
