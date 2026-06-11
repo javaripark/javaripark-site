@@ -68,6 +68,7 @@ export function enqueue(items) {
       to: String(it.to),
       message: String(it.message),
       nome: it.nome || '',
+      reconfirm: !!it.reconfirm, // marca reconfirmação → bot trata a resposta do cliente
       addedAt: new Date().toISOString(),
     });
     added++;

@@ -29,6 +29,7 @@ export async function loadConv(telefone) {
     msgsCliente: doc.MsgsCliente || 0,
     reservouEm: doc.ReservouEm || '',
     nudgeEm: doc.NudgeEm || '',
+    reconfirmou: doc.Reconfirmou || '', // marca: equipe enviou reconfirmação; cliente respondendo
   };
 }
 
@@ -45,6 +46,7 @@ export async function saveConv(conv) {
     MsgsCliente: conv.msgsCliente || 0,
     ReservouEm: conv.reservouEm || '',
     NudgeEm: conv.nudgeEm || '',
+    Reconfirmou: conv.reconfirmou || '',
     updatedAt: new Date().toISOString(),
   });
 }

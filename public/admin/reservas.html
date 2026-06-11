@@ -630,7 +630,7 @@
             try {
                 const r = await fetch(endpoint + '/enqueue', {
                     method: 'POST', headers: waSendHeaders(),
-                    body: JSON.stringify({ messages: [{ to: res.Whatsapp, nome: `${res.Nome || ''} ${res.Sobrenome || ''}`.trim(), message: reconfirmMsg(res) }] })
+                    body: JSON.stringify({ messages: [{ to: res.Whatsapp, nome: `${res.Nome || ''} ${res.Sobrenome || ''}`.trim(), message: reconfirmMsg(res), reconfirm: true }] })
                 });
                 const d = await r.json();
                 if (!r.ok) { if (!silent) showMessage(d.error === 'pin_invalido' ? 'PIN incorreto.' : 'Erro: ' + (d.error || r.status), 'error'); return false; }

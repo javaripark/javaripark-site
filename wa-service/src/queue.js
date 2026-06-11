@@ -2,8 +2,21 @@
 import { config } from './config.js';
 import { getQueue, dequeue, requeue, getDailyState, incDailySent, logSend, daysSinceStart } from './store.js';
 import { sendText, getWaState } from './wa.js';
+import { loadConv, saveConv } from '../../wa-bot/src/store.js';
 
 const MAX_RETRIES = 3; // tentativas por mensagem antes de desistir
+
+// Marca na conversa que a equipe enviou uma reconfirmação — assim o bot reativo
+// entende a resposta do cliente (confirmar / mudar nº de pessoas / cancelar).
+async function marcarReconfirmacao(jid) {
+  try {
+    const tel = String(jid || '').replace(/@.*/, '').replace(/\D/g, '');
+    if (!tel) return;
+    const conv = await loadConv(tel);
+    conv.reconfirmou = new Date().toISOString();
+    await saveConv(conv);
+  } catch (e) { console.error('[reconfirm-flag]', e?.message); }
+}
 
 let running = false;
 let nextSendAt = 0; // timestamp do próximo envio liberado
@@ -69,6 +82,7 @@ async function tick() {
       incDailySent();
       logSend({ to: item.to, nome: item.nome, status: 'enviado', jid: res.jid });
       console.log(`✉  Enviado para ${item.nome || item.to}`);
+      if (item.reconfirm) await marcarReconfirmacao(res.jid); // bot saberá tratar a resposta
     } else if (res.reason === 'opt_out' || res.reason === 'sem_whatsapp' || res.reason === 'numero_invalido') {
       // Destinatário inválido/bloqueado: não conta no limite, descarta e segue rápido
       logSend({ to: item.to, nome: item.nome, status: 'pulado', motivo: res.reason });

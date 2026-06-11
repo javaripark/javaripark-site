@@ -27,9 +27,16 @@ export function custoUSD(u) {
 export async function atender(conv, textoCliente) {
   conv.messages.push({ role: 'user', content: textoCliente });
 
+  // Se a equipe acabou de mandar uma reconfirmação, esta mensagem é provavelmente
+  // a resposta — injeta o contexto e limpa a flag (usa uma vez).
+  const reconfNote = conv.reconfirmou
+    ? ` CONTEXTO IMPORTANTE: a equipe acabou de enviar uma RECONFIRMAÇÃO de reserva pra este cliente, e a mensagem dele é provavelmente a resposta. Trate assim: se ele só CONFIRMAR (disser que está tudo certo / segue o mesmo número), NÃO mexa em NADA e NÃO precisa de ferramenta — apenas acolha e confirme com carinho, SEM inventar data nem detalhe (ex: "Perfeito! Tá tudo certo, pode deixar que te espero! 🎉"); se informar OUTRO número de pessoas, aí sim rode buscar_reservas e ALTERE (alterar_reserva); se quiser cancelar ou mudar data/setor, use os fluxos normais; se perguntar qual reserva ou parecer perdido, mostre os detalhes (buscar_reservas).`
+    : '';
+  conv.reconfirmou = '';
+
   const system = [
     { type: 'text', text: SYSTEM_KB, cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: dynamicContext() + (conv.nomePerfil ? ` Nome no perfil do WhatsApp do cliente: ${conv.nomePerfil}.` : '') },
+    { type: 'text', text: dynamicContext() + (conv.nomePerfil ? ` Nome no perfil do WhatsApp do cliente: ${conv.nomePerfil}.` : '') + reconfNote },
   ];
 
   const ctx = { telefone: conv.telefone, nomePerfil: conv.nomePerfil, origem: conv.origem, convDoc: null };
