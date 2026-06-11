@@ -27,12 +27,14 @@ export function custoUSD(u) {
 export async function atender(conv, textoCliente) {
   conv.messages.push({ role: 'user', content: textoCliente });
 
-  // Se a equipe acabou de mandar uma reconfirmação, esta mensagem é provavelmente
-  // a resposta — injeta o contexto e limpa a flag (usa uma vez).
-  const reconfNote = conv.reconfirmou
-    ? ` CONTEXTO IMPORTANTE: a equipe acabou de enviar uma RECONFIRMAÇÃO de reserva pra este cliente, e a mensagem dele é provavelmente a resposta. Trate assim: se ele só CONFIRMAR (disser que está tudo certo / segue o mesmo número), NÃO mexa em NADA e NÃO precisa de ferramenta — apenas acolha e confirme com carinho, SEM inventar data nem detalhe (ex: "Perfeito! Tá tudo certo, pode deixar que te espero! 🎉"); se informar OUTRO número de pessoas, aí sim rode buscar_reservas e ALTERE (alterar_reserva); se quiser cancelar ou mudar data/setor, use os fluxos normais; se perguntar qual reserva ou parecer perdido, mostre os detalhes (buscar_reservas).`
+  // Reconfirmação enviada pela equipe: o contexto fica ATIVO por até 12h (NÃO é
+  // one-shot — o cliente pode responder em várias mensagens). Só sai quando uma
+  // ferramenta de reserva roda (limpo no finish) ou quando expira.
+  const reconfRecente = conv.reconfirmou && (Date.now() - new Date(conv.reconfirmou).getTime() < 12 * 3600 * 1000);
+  if (conv.reconfirmou && !reconfRecente) conv.reconfirmou = ''; // expirou
+  const reconfNote = reconfRecente
+    ? ` CONTEXTO IMPORTANTE: a equipe enviou uma RECONFIRMAÇÃO de reserva pra este cliente há pouco — ele JÁ TEM reserva. NUNCA pergunte se ele quer "fazer uma reserva" nem diga "pra fazer sua reserva é só mandar". Trate a resposta: se CONFIRMAR (tudo certo / segue o mesmo), responda SEMPRE com UMA frase curta e calorosa fechando o ciclo, SEM ferramenta e SEM inventar data/detalhe (ex: "Perfeito, tá tudo certo, te espero! 🎉") — NÃO fique em silêncio NA confirmação. Só nas mensagens SEGUINTES ("ok"/"valeu"/"boa noite") você responde __SILENCIO__; se informar OUTRO número de pessoas, rode buscar_reservas e ALTERE; se quiser cancelar/mudar data/setor, fluxos normais; se parecer perdido, buscar_reservas.`
     : '';
-  conv.reconfirmou = '';
 
   const system = [
     { type: 'text', text: SYSTEM_KB, cache_control: { type: 'ephemeral' } },
@@ -49,6 +51,7 @@ export async function atender(conv, textoCliente) {
   let messages = conv.messages.map(m => ({ role: m.role, content: m.content }));
 
   const finish = reply => {
+    if (acted) conv.reconfirmou = ''; // ação de reserva resolveu a reconfirmação
     if (registrouData) reply = reply + '\n\n' + posReserva(registrouData);
     conv.messages.push({ role: 'assistant', content: reply });
     if (handoff) conv.status = 'humano';
@@ -68,6 +71,12 @@ export async function atender(conv, textoCliente) {
 
     if (resp.stop_reason !== 'tool_use') {
       let reply = resp.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+      // Cliente só mandou fechamento/reconhecimento sem nada pendente → ficar quieto
+      // (humano não responde a todo "show"). Descarta o filler e não envia nada.
+      if (!acted && /^[_*\s]*sil[eê]ncio[_*\s]*$/i.test(reply)) {
+        conv.messages.pop();
+        return { reply: '', usage, handoff: false, reservou: false, negociou: false };
+      }
       // nunca deixar o cliente no vácuo (ex.: handoff sem texto)
       if (!reply) reply = handoff
         ? 'Já chamei alguém do time pra te ajudar por aqui — respondem rapidinho! 😉'

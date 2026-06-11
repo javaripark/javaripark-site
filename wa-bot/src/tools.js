@@ -54,7 +54,7 @@ export const toolDefs = [
   },
   {
     name: 'registrar_reserva',
-    description: 'Grava a reserva no sistema. Só chame APÓS o cliente confirmar o eco com todos os dados.',
+    description: 'Grava a reserva no sistema. Chame DIRETO assim que tiver data + pessoas + nome completo + setor — NÃO peça confirmação extra ao cliente.',
     input_schema: {
       type: 'object',
       properties: {
@@ -95,7 +95,7 @@ export const toolDefs = [
   },
   {
     name: 'alterar_reserva',
-    description: 'Altera data, quantidade de pessoas, setor ou observações de uma reserva do próprio cliente. Só chame APÓS o cliente confirmar o eco da alteração.',
+    description: 'Altera data, quantidade de pessoas, setor, nome ou observações de uma reserva do próprio cliente. Chame DIRETO quando o cliente pedir a mudança — sem pedir confirmação extra.',
     input_schema: {
       type: 'object',
       properties: {
@@ -103,6 +103,8 @@ export const toolDefs = [
         novaData: { type: 'string', description: 'Opcional, YYYY-MM-DD' },
         novasPessoas: { type: 'integer', description: 'Opcional' },
         novoSetor: { type: 'string', description: 'Opcional: setor 1-9, filho 1B-9B (overflow, só com o pai ocupado) ou "Bus Lounge"' },
+        novoNome: { type: 'string', description: 'Opcional: novo primeiro nome (correção ou troca de quem vai)' },
+        novoSobrenome: { type: 'string', description: 'Opcional: novo sobrenome' },
         novasObservacoes: { type: 'string', description: 'Opcional' },
       },
       required: ['reservaId'],
@@ -203,7 +205,9 @@ async function registrarReserva(input, ctx) {
   if (!nome?.trim() || !sobrenome?.trim()) return { ok: false, erro: 'nome e sobrenome obrigatórios' };
   const n = parseInt(pessoas, 10);
   if (isBus && (n < 10 || n > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
-  if (!n || n < 1 || n > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
+  // Sem limite de negócio pra grupo grande (garante-se 20 sentados, resto a equipe acomoda).
+  // O teto 500 é só guarda técnica contra typo/abuso.
+  if (!n || n < 1 || n > 500) return { ok: false, erro: 'quantidade de pessoas inválida' };
   // Filho (overflow) só pode ser reservado quando o PAI já está ocupado nessa data.
   if (ehFilho(setorStr)) {
     const pai = setorStr[0];
@@ -242,7 +246,9 @@ async function registrarReserva(input, ctx) {
     ViaBot: true,
     CriadoEm: new Date().toISOString(),
   });
-  return { ok: true, reservaId: id, diaSemana: DIAS[dow], toleranciaChegada: tolerancia(data, dow) };
+  // NÃO devolver toleranciaChegada aqui: o bloco pós-reserva automático já informa a
+  // chegada (incl. exceções de dia), e o modelo papagueia qualquer horário que receber.
+  return { ok: true, reservaId: id, diaSemana: DIAS[dow] };
 }
 
 // Acha a reserva e garante que pertence ao telefone do remetente
@@ -276,7 +282,7 @@ async function cancelarReserva({ reservaId }, ctx) {
   return { ok: true, cancelada: { data: dados.Data, setor: String(dados.Setor), pessoas: dados['Quantidade de Pessoas'] } };
 }
 
-async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, novasObservacoes }, ctx) {
+async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, novoNome, novoSobrenome, novasObservacoes }, ctx) {
   const r = await reservaDoCliente(reservaId, ctx);
   if (r.erro) return { ok: false, erro: r.erro };
   const atual = r.doc;
@@ -297,7 +303,7 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   const busAlvo = setor === 'Bus Lounge';
   if (!validos.has(setor)) return { ok: false, erro: 'setor inválido (1-9, filhos 1B-9B ou "Bus Lounge")' };
   if (busAlvo && (pessoas < 10 || pessoas > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
-  if (!pessoas || pessoas < 1 || pessoas > 60) return { ok: false, erro: 'quantidade de pessoas inválida (1-60)' };
+  if (!pessoas || pessoas < 1 || pessoas > 500) return { ok: false, erro: 'quantidade de pessoas inválida' };
   // Filho só vale como overflow quando o pai está ocupado nessa data (ignora a própria reserva)
   if (ehFilho(setor)) {
     const pai = setor[0];
@@ -322,16 +328,20 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   }
 
   const { id, ...dados } = atual;
+  const nome = novoNome?.trim() || dados.Nome;
+  const sobrenome = novoSobrenome?.trim() || dados.Sobrenome;
   await setDoc(`reservas/${reservaId}`, {
     ...dados,
     Data: data,
     Setor: setor,
+    Nome: nome,
+    Sobrenome: sobrenome,
     'Quantidade de Pessoas': pessoas,
     Observacoes: novasObservacoes != null ? novasObservacoes.trim() : (dados.Observacoes || ''),
     AlteradoEm: new Date().toISOString(),
     AlteradoVia: 'bot',
   });
-  return { ok: true, reserva: { data, setor, pessoas }, diaSemana: DIAS[dow], toleranciaChegada: tolerancia(data, dow) };
+  return { ok: true, reserva: { data, setor, pessoas, nome: `${nome} ${sobrenome}`.trim() }, diaSemana: DIAS[dow], toleranciaChegada: tolerancia(data, dow) };
 }
 
 async function chamarHumano({ motivo }, ctx) {
