@@ -10,8 +10,8 @@ import { loadConv, saveConv } from '../../wa-bot/src/store.js';
 import { addDoc } from '../../wa-bot/src/firestore.js';
 import { cfg } from '../../wa-bot/src/config.js';
 import { config } from './config.js';
-import { sendText, sendToJid, resolvePhone } from './wa.js';
-import { getAdReferral } from './store.js';
+import { sendText, sendToJid, resolvePhone, extractAdReferral } from './wa.js';
+import { getAdReferral, recordAdReferral } from './store.js';
 
 const DEBOUNCE_MS = 4000;      // agrupa mensagens picadas ao vivo
 const LIVE_AGE_S = 90;         // mais novo que isso = ao vivo; mais velho = atrasado
@@ -126,11 +126,13 @@ async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid })
   conv.ultimaMsgCliente = agora;
   conv.msgsCliente = (conv.msgsCliente || 0) + 1;
 
-  // Lead de anúncio: injeta o tema do anúncio na abertura da conversa — o bot
-  // conecta o assunto (Copa, dia dos namorados etc.) em vez de menu genérico.
-  if (conv.messages.length < 4) {
-    const ad = getAdReferral(telefone);
-    if (ad && (ad.title || ad.body)) conv.adInfo = `${ad.title || ''}${ad.body ? ' — ' + ad.body : ''}`.slice(0, 300);
+  // Lead de anúncio: marca a origem (persiste em Origem, alimenta o card do painel)
+  // e injeta o tema do anúncio na abertura — o bot conecta o assunto (Copa, dia
+  // dos namorados etc.) em vez de menu genérico.
+  const ad = getAdReferral(telefone);
+  if (ad) {
+    conv.origem = 'anuncio';
+    if (conv.messages.length < 4 && (ad.title || ad.body)) conv.adInfo = `${ad.title || ''}${ad.body ? ' — ' + ad.body : ''}`.slice(0, 300);
   }
 
   const { reply, usage, handoff, reservou, negociou } = await atender(conv, textoFinal);
@@ -203,6 +205,16 @@ export async function handleIncoming(m, type) {
 
     const telefone = await resolvePhone(m);                // resolve LID → telefone real
     if (!telefone) return;
+
+    // Captura o marcador de anúncio (click-to-WhatsApp) com o telefone JÁ resolvido.
+    // Antes era gravado em wa.js com o LID como chave → o contexto nunca casava.
+    try {
+      const ad = extractAdReferral(m.message);
+      if (ad) {
+        recordAdReferral(telefone, ad);
+        console.log(`📣 Lead de anúncio: ${telefone} ← "${ad.title || ad.adId || 'ad'}"`);
+      }
+    } catch (e) { console.warn('[ad-referral]', e?.message); }
 
     // 🔒 TRAVA DE SEGURANÇA: em modo teste, o bot SÓ responde números autorizados.
     if (config.botMode !== 'live' && !config.testNumbers.includes(telefone)) {

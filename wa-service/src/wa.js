@@ -6,12 +6,14 @@ import pino from 'pino';
 import qrcode from 'qrcode';
 import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { config } from './config.js';
-import { isOptedOut, addOptOut, recordAdReferral } from './store.js';
+import { isOptedOut, addOptOut } from './store.js';
 
 // Extrai o marcador de anúncio (click-to-WhatsApp) de uma mensagem recebida.
 // O Baileys expõe isso em contextInfo.externalAdReply de algum subtipo de mensagem.
 // Varre todos os subtipos defensivamente — retorna null se não houver.
-function extractAdReferral(message) {
+// A GRAVAÇÃO acontece no agent.js (handleIncoming), com o telefone JÁ resolvido —
+// gravar aqui usava o LID como chave e o contexto nunca casava.
+export function extractAdReferral(message) {
   if (!message || typeof message !== 'object') return null;
   for (const key of Object.keys(message)) {
     const sub = message[key];
@@ -154,15 +156,8 @@ export async function startWA() {
           if (num && addOptOut(num)) console.log(`🚫 Opt-out automático: ${num}`);
           continue; // quem pediu pra parar não aciona o bot
         }
-        // Captura marcador de anúncio (lead via click-to-WhatsApp). Nunca pode quebrar o handler.
-        try {
-          const ad = extractAdReferral(m.message);
-          if (ad && num) {
-            recordAdReferral(num, ad);
-            console.log(`📣 Lead de anúncio: ${num} ← "${ad.title || ad.adId || ad.ctwaClid || 'ad'}"`);
-          }
-        } catch (e) { console.warn('ad-referral parse falhou:', e?.message); }
-        // Bot reativo (assíncrono; nunca pode derrubar o handler)
+        // Bot reativo (assíncrono; nunca pode derrubar o handler).
+        // A captura de anúncio acontece lá dentro (handleIncoming), com telefone resolvido.
         if (onMessage) Promise.resolve(onMessage(m, type)).catch(e => console.error('[onMessage]', e?.message));
       }
     });

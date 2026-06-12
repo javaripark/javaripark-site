@@ -60,6 +60,7 @@
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Handoffs</div><div style="font-size:1.4em;font-weight:700;color:#4f1964" id="f-handoffs">—</div><div class="muted">em modo humano</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Bot × Humano</div><div style="font-size:1.4em;font-weight:700" id="f-bothum">—</div><div class="muted">só bot · precisou de humano</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Canceladas</div><div style="font-size:1.4em;font-weight:700;color:#ef4444" id="f-canc">—</div><div class="muted" id="f-canc-sub">via bot (30d)</div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Origem dos leads</div><div style="font-size:1.4em;font-weight:700" id="f-origem">—</div><div class="muted" id="f-origem-sub">anúncio · orgânico</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Taxa de conversão</div><div style="font-size:1.4em;font-weight:700;color:#16a34a" id="f-taxa">—</div><div class="muted">ganhas ÷ leads</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Resgates enviados</div><div style="font-size:1.4em;font-weight:700;color:#b45309" id="f-resgates">—</div><div class="muted">nudge de abandono</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Resgates → reserva</div><div style="font-size:1.4em;font-weight:700;color:#16a34a" id="f-resgconv">—</div><div class="muted">voltou e fechou</div></div>
@@ -204,6 +205,9 @@
             const canc30=cancDocs.filter(c=>c.CanceladoEm&&(agora-new Date(c.CanceladoEm).getTime())<=d30);
             $('f-canc').textContent=canc30.length;
             $('f-canc-sub').textContent=(ganhas.length+canc30.length)?`índice: ${((canc30.length/(ganhas.length+canc30.length))*100).toFixed(0)}% das reservas do bot`:'via bot (30d)';
+            const anuncio=periodo.filter(c=>c.Origem==='anuncio').length;
+            $('f-origem').innerHTML=periodo.length?`<span style="color:#b45309">${anuncio}</span> <span class="muted" style="font-weight:500;font-size:.7em">anúncio</span> · <span style="color:#16a34a">${periodo.length-anuncio}</span> <span class="muted" style="font-weight:500;font-size:.7em">org.</span>`:'—';
+            $('f-origem-sub').textContent=periodo.length?`${((anuncio/periodo.length)*100).toFixed(0)}% vieram de anúncio`:'anúncio · orgânico';
             $('f-taxa').textContent=periodo.length?((ganhas.length/periodo.length)*100).toFixed(0)+'%':'—';
             const resgates=periodo.filter(c=>c.NudgeEm);
             $('f-resgates').textContent=resgates.length;
