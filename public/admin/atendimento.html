@@ -217,5 +217,6 @@
         onSnapshot(collection(db,`${BASE}/wa_cancelamentos`),snap=>{ cancDocs=snap.docs.map(d=>d.data()); renderFunil(); });
     </script>
     <script type="module" src="/js/change-password.js"></script>
+    <script type="module" src="/js/realtime-resilience.js"></script>
 </body>
 </html>

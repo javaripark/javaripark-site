@@ -14,21 +14,38 @@ function montar(user) {
   const logout = document.getElementById('logoutBtn');
   if (!logout) return;
 
-  // Botão "Senha" ao lado de "Sair", herdando o estilo do logout
+  // Botão "Senha" herdando o estilo do "Sair"
   const btn = document.createElement('button');
   btn.id = 'senhaBtn';
   btn.className = logout.className;
   btn.textContent = 'Senha';
-  logout.parentNode.insertBefore(btn, logout);
-  // posiciona à esquerda do "Sair" (headers usam logout absoluto à direita)
-  const cs = getComputedStyle(logout);
-  if (cs.position === 'absolute') {
-    btn.style.position = 'absolute';
-    btn.style.top = cs.top; btn.style.transform = cs.transform;
-    btn.style.right = (logout.offsetWidth + 24) + 'px';
-  } else {
-    btn.style.marginRight = '8px';
-  }
+
+  // Agrupa Senha + Sair num container flex no canto direito do header.
+  // Antes o "Senha" era posicionado por conta manual (offsetWidth + 24px) que
+  // dava resultado diferente em cada página (paddings distintos do "Sair") →
+  // botões encavalados, cada aba torta de um jeito. O flex resolve o
+  // espaçamento sozinho, idêntico em todas as páginas.
+  const header = logout.parentNode; // <header class="header">
+  // Transforma o header num flex real: [títulos centralizados] [Senha | Sair].
+  // Antes os botões eram absolutos sobre um título centralizado → no mobile o
+  // texto longo passava POR BAIXO dos botões. Agora nada se sobrepõe.
+  const actions = document.createElement('div');
+  actions.id = 'header-actions';
+  actions.style.cssText = 'display:flex;gap:8px;align-items:center;flex:0 0 auto';
+  // zera o position:absolute herdado de .logout-btn nos DOIS botões
+  [btn, logout].forEach(el => { el.style.position = 'static'; el.style.top = ''; el.style.right = ''; el.style.transform = ''; });
+  // agrupa tudo que não é o botão (h1, subtítulo) num bloco central flexível
+  const titles = document.createElement('div');
+  titles.id = 'header-titles';
+  titles.style.cssText = 'flex:1 1 auto;min-width:0;text-align:center';
+  Array.from(header.childNodes).forEach(n => { if (n !== logout) titles.appendChild(n); });
+  actions.appendChild(btn);
+  actions.appendChild(logout);
+  header.appendChild(titles);
+  header.appendChild(actions);
+  header.style.display = 'flex';
+  header.style.alignItems = 'center';
+  header.style.gap = '10px';
 
   // Modal
   const wrap = document.createElement('div');
