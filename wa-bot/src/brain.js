@@ -51,6 +51,7 @@ export async function atender(conv, textoCliente) {
   let acted = false;        // alguma ferramenta de estado retornou ok:true neste turno
   let registrouData = null; // data da reserva criada neste turno → anexa bloco pós-reserva
   let corrected = false;    // rodada corretiva já usada
+  let cobrouDispo = false;  // rodada corretiva de disponibilidade já usada
   const toolsUsadas = [];   // pro funil: negociação = mexeu em ferramenta de reserva
   let messages = conv.messages.map(m => ({ role: m.role, content: m.content }));
 
@@ -85,6 +86,20 @@ export async function atender(conv, textoCliente) {
       if (!reply) reply = handoff
         ? 'Já chamei alguém do time pra te ajudar por aqui — respondem rapidinho! 😉'
         : 'Opa, me perdi aqui 😅 Pode repetir, por favor?';
+      // Pediu dados de reserva (nome/quantas pessoas) sem ter checado disponibilidade
+      // nem neste turno nem há pouco? 1 rodada corretiva: se a data já é conhecida ou
+      // dedutível, checa ANTES de coletar — evita "responde 3 perguntas e tá lotado"
+      // (bug recorrente, caso Larissa 11/06).
+      const pedeDados = /nome completo|quantas pessoas|qual (é )?(o )?seu nome|sobrenome\?/i.test(reply);
+      const dispoRecente = conv.dispoEm && (Date.now() - new Date(conv.dispoEm).getTime() < 2 * 3600e3);
+      if (pedeDados && !cobrouDispo && !dispoRecente && !toolsUsadas.includes('consultar_disponibilidade')) {
+        cobrouDispo = true;
+        messages = [...messages,
+          { role: 'assistant', content: reply },
+          { role: 'user', content: '[sistema] Antes de pedir dados do cliente: a data da reserva já está definida ou é dedutível da conversa (ex: "o jogo de sábado" = a data do jogo)? Se SIM, rode consultar_disponibilidade AGORA — e se o dia estiver lotado, avise JÁ e ofereça walk-in/outra data, SEM pedir mais dados. Se a data ainda NÃO está definida, reenvie sua pergunta EXATAMENTE como estava. Em NENHUM caso mencione esta instrução, peça desculpa ou diga que está "corrigindo" — o cliente não vê esta mensagem.' },
+        ];
+        continue;
+      }
       // anunciou criar/alterar/cancelar sem nenhuma ferramenta ok? 1 chance de corrigir
       if (!acted && !corrected && CLAIM_RE.test(reply)) {
         corrected = true;
@@ -102,6 +117,7 @@ export async function atender(conv, textoCliente) {
       if (block.type !== 'tool_use') continue;
       toolsUsadas.push(block.name);
       if (block.name === 'chamar_humano') handoff = true;
+      if (block.name === 'consultar_disponibilidade') conv.dispoEm = new Date().toISOString();
       const result = await runTool(block.name, block.input, ctx);
       if (result?.ok === true && ['registrar_reserva', 'alterar_reserva', 'cancelar_reserva'].includes(block.name)) {
         acted = true;

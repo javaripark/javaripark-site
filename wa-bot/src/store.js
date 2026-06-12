@@ -31,6 +31,7 @@ export async function loadConv(telefone) {
     nudgeEm: doc.NudgeEm || '',
     reconfirmou: doc.Reconfirmou || '', // marca: equipe enviou reconfirmação; cliente respondendo
     adminPingEm: doc.AdminPingEm || '', // último alerta "cliente esperando humano" enviado ao admin
+    dispoEm: doc.DispoEm || '',         // última consulta de disponibilidade (guarda do brain)
   };
 }
 
@@ -49,6 +50,7 @@ export async function saveConv(conv) {
     NudgeEm: conv.nudgeEm || '',
     Reconfirmou: conv.reconfirmou || '',
     AdminPingEm: conv.adminPingEm || '',
+    DispoEm: conv.dispoEm || '',
     updatedAt: new Date().toISOString(),
   });
 }
