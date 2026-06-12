@@ -35,6 +35,12 @@
         .empty{color:#aaa;padding:8px 10px}
         .chk{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#777;text-transform:none;letter-spacing:0;cursor:pointer}
         .badge{background:#ef4444;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;margin-left:8px}
+        .ad-pill{background:#fef3c7;color:#b45309;border-radius:11px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:6px;white-space:nowrap}
+        .per-btn{padding:5px 11px;border:1px solid #d9cfe0;background:#fff;color:#666;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
+        .per-btn.active{background:#4f1964;color:#fff;border-color:#4f1964}
+        .per-btn:hover{border-color:#4f1964}
+        .topbar input[type=date]{border:1px solid #d9cfe0;border-radius:8px;padding:4px 8px;font-size:12px;color:#666;font-family:inherit}
+        .dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:#9a9aa3}
         @media(min-width:640px){.container{padding:20px}.header h1{font-size:1.6em}.admin-nav a{font-size:13px;padding:13px 8px}}
         @media(max-width:600px){html,body{overflow-x:hidden}.container{padding:10px}.preview{max-width:160px}}
     </style>
@@ -49,8 +55,24 @@
             <a href="/admin/dashboard.html">Dashboard</a>
         </nav>
 
+        <div class="topbar" style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:16px;padding:0 4px">
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#555">
+                <span class="dot" id="bot-dot"></span><span id="bot-status-txt">verificando bot…</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                <span class="muted" style="font-weight:700">Período:</span>
+                <button class="per-btn" data-per="0">Hoje</button>
+                <button class="per-btn" data-per="7">7 dias</button>
+                <button class="per-btn active" data-per="30">30 dias</button>
+                <button class="per-btn" data-per="90">90 dias</button>
+                <button class="per-btn" data-per="tudo">Tudo</button>
+                <span class="muted" style="margin-left:4px">ou</span>
+                <input type="date" id="per-de" title="De"><span class="muted">→</span><input type="date" id="per-ate" title="Até">
+            </div>
+        </div>
+
         <div class="card">
-            <h3><span>Funil de conversão — últimos 30 dias <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">("venda" = reserva criada pelo bot)</span></span></h3>
+            <h3><span>Funil de conversão — <span id="funil-periodo">últimos 30 dias</span> <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">("venda" = reserva criada pelo bot)</span></span></h3>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Leads</div><div style="font-size:1.4em;font-weight:700" id="f-leads">—</div><div class="muted">conversas iniciadas</div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Abandono imediato</div><div style="font-size:1.4em;font-weight:700;color:#9a9aa3" id="f-abandono">—</div><div class="muted">1 msg e sumiu (+6h)</div></div>
@@ -87,7 +109,7 @@
         </div>
 
         <div class="card">
-            <h3><span>Conversas do bot</span></h3>
+            <h3><span>Conversas do bot <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500" id="conv-count"></span></span></h3>
             <div class="wrap"><table id="conv-tbl"><tbody><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
             <p class="muted" style="margin-top:10px">Conversa em <b>humano</b>: o bot fica em silêncio (você responde pelo app). "Devolver pro bot" religa o atendente — o cliente também consegue, mandando <b>#bot</b>. Sozinho, o modo humano expira após 24h sem mensagens.</p>
         </div>
@@ -111,6 +133,51 @@
         const BASE='artifacts/central-de-reservas-jsp/public/data';
         const fmtDT=iso=>{ if(!iso) return '—'; try{ return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return iso; } };
         const telBR=t=>{ const d=String(t||'').replace(/\D/g,''); const n=d.startsWith('55')?d.slice(2):d; return n.length>=10?`(${n.slice(0,2)}) ${n.slice(2,-4)}-${n.slice(-4)}`:t; };
+
+        // ---- Filtro de período (dirige a lista de conversas E o funil) ----
+        const filtro={ preset:30, de:null, ate:null };
+        function rangeMs(){
+            const now=Date.now();
+            if(filtro.de||filtro.ate){
+                const s=filtro.de?new Date(filtro.de+'T00:00:00-03:00').getTime():0;
+                const e=filtro.ate?new Date(filtro.ate+'T23:59:59-03:00').getTime():now;
+                return [s,e];
+            }
+            if(filtro.preset==='tudo') return [0,now];
+            if(filtro.preset===0){ const hoje=new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); return [new Date(hoje+'T00:00:00-03:00').getTime(),now]; }
+            return [now-filtro.preset*86400e3,now];
+        }
+        const noPeriodo=c=>{ const t=new Date(c.PrimeiroContato||c.updatedAt||0).getTime(); const [s,e]=rangeMs(); return t>=s&&t<=e; };
+        function periodoLabel(){
+            if(filtro.de||filtro.ate) return `${filtro.de?fmtDT(filtro.de+'T00:00:00').slice(0,5):'início'} até ${filtro.ate?fmtDT(filtro.ate+'T00:00:00').slice(0,5):'hoje'}`;
+            if(filtro.preset==='tudo') return 'todo o histórico';
+            if(filtro.preset===0) return 'hoje';
+            return `últimos ${filtro.preset} dias`;
+        }
+        document.querySelectorAll('.per-btn').forEach(b=>b.onclick=()=>{
+            filtro.preset=b.dataset.per==='tudo'?'tudo':Number(b.dataset.per); filtro.de=null; filtro.ate=null;
+            $('per-de').value=''; $('per-ate').value='';
+            document.querySelectorAll('.per-btn').forEach(x=>x.classList.toggle('active',x===b));
+            renderConvs(); renderFunil();
+        });
+        ['per-de','per-ate'].forEach(id=>$(id).onchange=()=>{
+            filtro.de=$('per-de').value||null; filtro.ate=$('per-ate').value||null;
+            if(filtro.de||filtro.ate) document.querySelectorAll('.per-btn').forEach(x=>x.classList.remove('active'));
+            renderConvs(); renderFunil();
+        });
+
+        // ---- Status do bot (conectado / reconectando / offline) ----
+        const WA_ENDPOINT='https://macbook-pro-de-rene.tailf78ede.ts.net';
+        const setStatus=(cor,txt)=>{ $('bot-dot').style.background=cor; $('bot-status-txt').textContent=txt; };
+        async function pollStatus(){
+            try{
+                const r=await fetch(WA_ENDPOINT+'/health',{cache:'no-store'});
+                const j=await r.json();
+                if(j&&j.connected) setStatus('#16a34a','Bot conectado'); else setStatus('#f59e0b','Bot reconectando…');
+            }catch(e){ setStatus('#ef4444','Bot offline (Mac fora do ar)'); }
+        }
+        pollStatus(); setInterval(pollStatus,12000);
+        document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pollStatus(); });
 
         // ---- Alertas ----
         let alertas=[];
@@ -180,15 +247,17 @@
         function ultimaMsg(c){ try{ const m=JSON.parse(c.HistoricoJson||'[]'); const u=m[m.length-1]; return u?`${u.role==='user'?'👤':'🤖'} ${String(u.content).slice(0,90)}`:'—'; }catch(e){ return '—'; } }
         let convsCache=[];
         function renderConvs(){
-            const convs=convsCache;
-            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhuma conversa ainda.</td></tr></tbody>';
+            const convs=convsCache.filter(noPeriodo);
+            $('conv-count').textContent=convsCache.length?`· ${convs.length} no período (${periodoLabel()})`:'';
+            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}${c.Origem==='anuncio'?'<span class="ad-pill">📣 anúncio</span>':''}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:`<tbody><tr><td class="empty">Nenhuma conversa ${convsCache.length?'neste período':'ainda'}.</td></tr></tbody>`;
             $('conv-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
         }
         // ---- Funil (30 dias, calculado dos campos Etapa/MsgsCliente/UltimaMsgCliente) ----
         let cancDocs=[];
         function renderFunil(){
-            const agora=Date.now(), h6=6*3600e3, h24=24*3600e3, d30=30*86400e3;
-            const periodo=convsCache.filter(c=>c.PrimeiroContato&&(agora-new Date(c.PrimeiroContato).getTime())<=d30);
+            const agora=Date.now(), h6=6*3600e3, h24=24*3600e3;
+            $('funil-periodo').textContent=periodoLabel();
+            const periodo=convsCache.filter(noPeriodo);
             const idade=c=>agora-new Date(c.UltimaMsgCliente||c.updatedAt||0).getTime();
             const ganhas=periodo.filter(c=>c.Etapa==='ganho');
             const handoffs=periodo.filter(c=>c.status==='humano');
@@ -202,7 +271,8 @@
             $('f-perdidas').textContent=perdidas.length;
             $('f-handoffs').textContent=handoffs.length;
             $('f-bothum').innerHTML=periodo.length?(periodo.length-handoffs.length)+' <span class="muted" style="font-weight:500;font-size:.7em">×</span> '+handoffs.length:'—';
-            const canc30=cancDocs.filter(c=>c.CanceladoEm&&(agora-new Date(c.CanceladoEm).getTime())<=d30);
+            const [rS,rE]=rangeMs();
+            const canc30=cancDocs.filter(c=>{ const t=new Date(c.CanceladoEm||0).getTime(); return c.CanceladoEm&&t>=rS&&t<=rE; });
             $('f-canc').textContent=canc30.length;
             $('f-canc-sub').textContent=(ganhas.length+canc30.length)?`índice: ${((canc30.length/(ganhas.length+canc30.length))*100).toFixed(0)}% das reservas do bot`:'via bot (30d)';
             const anuncio=periodo.filter(c=>c.Origem==='anuncio').length;
