@@ -34,12 +34,24 @@ async function setorMapa() {
   return { principais, filhoDe, validos };
 }
 const ehFilho = s => /^[1-9]B$/.test(String(s));
+
+// Telefone chega em formatos diferentes: o painel grava "(11) 94310-4425" (mascarado,
+// sem 55) e o WhatsApp entrega "5511943104425". Match exato NÃO funciona — 55 das 58
+// reservas futuras eram invisíveis pro bot (bug de 11/06). Compara DDD + últimos 8
+// dígitos (ignora máscara, código do país e o 9º dígito).
+function phoneKey(v) {
+  let d = String(v || '').replace(/\D/g, '');
+  if (d.length >= 12 && d.startsWith('55')) d = d.slice(2);
+  if (d.length < 10) return d; // curto/estrangeiro: compara o que tem
+  return d.slice(0, 2) + d.slice(-8);
+}
+const samePhone = (a, b) => { const k = phoneKey(a); return !!k && k === phoneKey(b); };
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
 // Exceções por data (ex: jogo do Brasil na Copa) — manter alinhado com EXCECOES_DIA do prompt.js
 const TOLERANCIA_EXCECAO = { '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)' };
 const tolerancia = (data, dow) => TOLERANCIA_EXCECAO[data] || TOLERANCIA[dow] || 'a combinar com a equipe (dia de evento especial)';
 // seg/ter: sistema permite (eventos especiais/corporativo), mas o bot deve tratar como exceção
-const AVISO_SEG_TER = 'casa normalmente FECHADA neste dia (seg/ter); só existe reserva em evento especial confirmado pela equipe — não registre por conta própria, use chamar_humano';
+const AVISO_SEG_TER = 'esta data cai em SEGUNDA ou TERÇA: casa FECHADA ao público. EXPLIQUE isso ao cliente em linguagem simples (ex: "o dia X cai numa terça e a casa fecha ao público seg/ter") e ofereça quarta a domingo; se for grupo grande/evento querendo um dia fechado, é evento especial → chamar_humano DEPOIS de explicar. NUNCA registre por conta própria';
 const DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
 export const toolDefs = [
@@ -215,9 +227,11 @@ async function registrarReserva(input, ctx) {
     if (!paiOcup.length) return { ok: false, erro: `o setor ${pai} ainda está livre — reserve o ${pai} primeiro; o ${setorStr} só vale como overflow quando o ${pai} está ocupado`, setorSugerido: pai };
   }
 
-  // Trava anti-abuso: 1 reserva por número de WhatsApp por dia
+  // Trava anti-abuso: 1 reserva por número de WhatsApp por dia (match tolerante:
+  // pega também reserva manual do painel gravada com número mascarado)
   if (ctx.telefone) {
-    const doNumero = await queryDocs('reservas', [['Whatsapp', ctx.telefone], ['Data', data]]);
+    const doDia = await queryDocs('reservas', [['Data', data]]);
+    const doNumero = doDia.filter(r => samePhone(r.Whatsapp, ctx.telefone));
     if (doNumero.length) {
       const ex = doNumero[0];
       return { ok: false, erro: 'este número já tem reserva nesse dia (limite: 1 por dia)', reservaExistente: { reservaId: ex.id, setor: String(ex.Setor), pessoas: ex['Quantidade de Pessoas'] }, dica: 'ofereça alterar a reserva existente (pessoas/setor) em vez de criar outra' };
@@ -256,7 +270,7 @@ async function reservaDoCliente(reservaId, ctx) {
   if (!reservaId || /[\/.]/.test(reservaId)) return { erro: 'reservaId inválido' };
   const doc = await getDoc(`reservas/${reservaId}`);
   if (!doc) return { erro: 'reserva não encontrada' };
-  if (!ctx.telefone || doc.Whatsapp !== ctx.telefone) {
+  if (!ctx.telefone || !samePhone(doc.Whatsapp, ctx.telefone)) {
     return { erro: 'reserva não pertence a este WhatsApp — use chamar_humano' };
   }
   return { doc };
@@ -264,10 +278,12 @@ async function reservaDoCliente(reservaId, ctx) {
 
 async function buscarReservas(_input, ctx) {
   if (!ctx.telefone) return { reservas: [] };
-  const todas = await queryDocs('reservas', [['Whatsapp', ctx.telefone]]);
+  // Scan + match tolerante: reservas manuais do painel têm o número mascarado
+  // ("(11) 9...") — query por igualdade nunca acha. Banco pequeno, scan ok.
+  const todas = await listDocs('reservas', 2000);
   const hoje = hojeISO();
   const futuras = todas
-    .filter(r => (r.Data || '') >= hoje)
+    .filter(r => (r.Data || '') >= hoje && samePhone(r.Whatsapp, ctx.telefone))
     .sort((a, b) => (a.Data || '').localeCompare(b.Data || ''))
     .map(r => ({ reservaId: r.id, data: r.Data, setor: String(r.Setor), pessoas: r['Quantidade de Pessoas'], nome: `${r.Nome || ''} ${r.Sobrenome || ''}`.trim() }));
   return { reservas: futuras, aviso: futuras.length ? undefined : 'nenhuma reserva futura neste número; se foi feita por outro telefone ou Instagram, use chamar_humano' };
@@ -313,7 +329,8 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
 
   // Trava anti-abuso também na mudança de data: 1 reserva por número por dia
   if (data !== atual.Data && ctx.telefone) {
-    const doNumero = (await queryDocs('reservas', [['Whatsapp', ctx.telefone], ['Data', data]])).filter(c => c.id !== reservaId);
+    const doNumero = (await queryDocs('reservas', [['Data', data]]))
+      .filter(c => c.id !== reservaId && samePhone(c.Whatsapp, ctx.telefone));
     if (doNumero.length) return { ok: false, erro: 'este número já tem outra reserva nesse dia (limite: 1 por dia)' };
   }
 
