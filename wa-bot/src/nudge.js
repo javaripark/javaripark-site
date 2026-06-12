@@ -36,6 +36,15 @@ export async function rodarResgate({ send, agora = Date.now(), horaSP = horaSPAg
       if (new Date(c.UltimaMsgCliente).getTime() <= new Date(c.NudgeEm).getTime()) continue; // não insiste sem resposta
     }
 
+    // Desfecho "casa lotada → vem sem reserva" NÃO é abandono: cutucar com
+    // "garanto sua mesa!" contradiz o que o bot acabou de dizer (bug 11/06).
+    let ultimaBot = '';
+    try {
+      const ms = JSON.parse(c.HistoricoJson || '[]');
+      for (let i = ms.length - 1; i >= 0; i--) if (ms[i].role === 'assistant') { ultimaBot = String(ms[i].content); break; }
+    } catch (e) { /* histórico ilegível: segue avaliação normal */ }
+    if (/sem reserva|fecharam|lotad/i.test(ultimaBot)) { resultado.pulados.push(c.id + ': desfecho lotado/walk-in'); continue; }
+
     const texto = TEXTOS[resultado.enviados % TEXTOS.length]((c.NomePerfil || '').split(' ')[0]);
     const ok = await send(c.id, texto);
     if (!ok) { resultado.pulados.push(c.id + ': envio falhou'); continue; }

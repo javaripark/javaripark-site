@@ -11,6 +11,7 @@ import { addDoc } from '../../wa-bot/src/firestore.js';
 import { cfg } from '../../wa-bot/src/config.js';
 import { config } from './config.js';
 import { sendText, sendToJid, resolvePhone } from './wa.js';
+import { getAdReferral } from './store.js';
 
 const DEBOUNCE_MS = 4000;      // agrupa mensagens picadas ao vivo
 const LIVE_AGE_S = 90;         // mais novo que isso = ao vivo; mais velho = atrasado
@@ -106,7 +107,17 @@ async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid })
     conv.primeiroContato = conv.primeiroContato || new Date().toISOString();
     conv.ultimaMsgCliente = new Date().toISOString();
     conv.msgsCliente = (conv.msgsCliente || 0) + 1;
+    // Cliente segue falando e ninguém da equipe respondeu → re-alerta o admin
+    // (cooldown 15min pra não virar spam). Pedido do René 11/06.
+    const PING_COOLDOWN_MS = 15 * 60 * 1000;
+    const ultimoPing = conv.adminPingEm ? new Date(conv.adminPingEm).getTime() : 0;
+    const devePingar = cfg.adminPhone && Date.now() - ultimoPing > PING_COOLDOWN_MS;
+    if (devePingar) conv.adminPingEm = new Date().toISOString();
     await saveConv(conv);
+    if (devePingar) {
+      await sendText(cfg.adminPhone,
+        `⏰ *Cliente AINDA esperando atendimento humano*\n👤 ${conv.nomePerfil || 'Cliente'} · wa.me/${telefone}\n💬 "${textoFinal.slice(0, 120)}"`);
+    }
     return;
   }
 
@@ -115,7 +126,15 @@ async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid })
   conv.ultimaMsgCliente = agora;
   conv.msgsCliente = (conv.msgsCliente || 0) + 1;
 
+  // Lead de anúncio: injeta o tema do anúncio na abertura da conversa — o bot
+  // conecta o assunto (Copa, dia dos namorados etc.) em vez de menu genérico.
+  if (conv.messages.length < 4) {
+    const ad = getAdReferral(telefone);
+    if (ad && (ad.title || ad.body)) conv.adInfo = `${ad.title || ''}${ad.body ? ' — ' + ad.body : ''}`.slice(0, 300);
+  }
+
   const { reply, usage, handoff, reservou, negociou } = await atender(conv, textoFinal);
+  if (handoff) conv.adminPingEm = agora; // alerta inicial conta pro cooldown do re-ping
   if (reservou) { conv.etapa = 'ganho'; conv.reservouEm = agora; }
   else if (negociou && conv.etapa !== 'ganho') conv.etapa = 'negociacao';
   await saveConv(conv);

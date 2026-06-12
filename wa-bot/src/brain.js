@@ -33,12 +33,16 @@ export async function atender(conv, textoCliente) {
   const reconfRecente = conv.reconfirmou && (Date.now() - new Date(conv.reconfirmou).getTime() < 12 * 3600 * 1000);
   if (conv.reconfirmou && !reconfRecente) conv.reconfirmou = ''; // expirou
   const reconfNote = reconfRecente
-    ? ` CONTEXTO IMPORTANTE: a equipe enviou uma RECONFIRMAÇÃO de reserva pra este cliente há pouco — ele JÁ TEM reserva. NUNCA pergunte se ele quer "fazer uma reserva" nem diga "pra fazer sua reserva é só mandar". Trate a resposta: se CONFIRMAR (tudo certo / segue o mesmo), responda SEMPRE com UMA frase curta e calorosa fechando o ciclo, SEM ferramenta e SEM inventar data/detalhe (ex: "Perfeito, tá tudo certo, te espero! 🎉") — NÃO fique em silêncio NA confirmação. Só nas mensagens SEGUINTES ("ok"/"valeu"/"boa noite") você responde __SILENCIO__; se informar OUTRO número de pessoas, rode buscar_reservas e ALTERE; se quiser cancelar/mudar data/setor, fluxos normais; se parecer perdido, buscar_reservas.`
+    ? ` CONTEXTO IMPORTANTE: a equipe enviou uma RECONFIRMAÇÃO de reserva pra este cliente há pouco — ele JÁ TEM reserva. NUNCA pergunte se ele quer "fazer uma reserva" nem diga "pra fazer sua reserva é só mandar". Trate a resposta: se CONFIRMAR (tudo certo / segue o mesmo), responda SEMPRE com UMA frase curta e calorosa fechando o ciclo, SEM ferramenta e SEM inventar data/detalhe (ex: "Perfeito, tá tudo certo, te espero! 🎉") — NÃO fique em silêncio NA confirmação. Só nas mensagens SEGUINTES ("ok"/"valeu"/"boa noite") você responde __SILENCIO__; se informar OUTRO número de pessoas, rode buscar_reservas e ALTERE; se quiser cancelar/mudar data/setor, fluxos normais; se parecer perdido, buscar_reservas. IMPORTANTE: NÃO existe prazo pra responder a reconfirmação e a falta de resposta NÃO cancela a reserva — se o cliente se desculpar pela demora ou perguntar se "perdeu o prazo", tranquilize: a reserva está de pé, a reconfirmação é só pra ajudar a casa a se organizar.`
+    : '';
+
+  const adNote = conv.adInfo
+    ? ` CONTEXTO: este cliente chegou clicando num anúncio da casa: «${conv.adInfo}». Conecte sua abertura ao tema do anúncio (sem inventar nada além do que está nele e neste prompt) e vá direto ao ponto — nada de menu genérico de opções.`
     : '';
 
   const system = [
     { type: 'text', text: SYSTEM_KB, cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: dynamicContext() + (conv.nomePerfil ? ` Nome no perfil do WhatsApp do cliente: ${conv.nomePerfil}.` : '') + reconfNote },
+    { type: 'text', text: dynamicContext() + (conv.nomePerfil ? ` Nome no perfil do WhatsApp do cliente: ${conv.nomePerfil}.` : '') + adNote + reconfNote },
   ];
 
   const ctx = { telefone: conv.telefone, nomePerfil: conv.nomePerfil, origem: conv.origem, convDoc: null };
