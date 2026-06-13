@@ -47,6 +47,11 @@
         .info-i::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#2d1640;color:#fff;font:500 11px/1.35 'Inter',sans-serif;text-transform:none;letter-spacing:0;text-align:left;padding:7px 9px;border-radius:8px;width:max-content;max-width:min(170px,72vw);white-space:normal;box-shadow:0 4px 14px rgba(0,0,0,.22);opacity:0;visibility:hidden;transition:opacity .12s;z-index:30;pointer-events:none}
         .info-i:hover::after,.info-i:focus::after,.info-i:focus-visible::after{opacity:1;visibility:visible}
         @media(max-width:600px){.funil-grid{grid-template-columns:repeat(2,1fr)!important}.funil-grid>div:nth-child(odd) .info-i::after{left:0;right:auto;transform:none}.funil-grid>div:nth-child(even) .info-i::after{left:auto;right:0;transform:none}}
+        .stat{background:#fff;border:1px solid #ecebf0;border-left:3px solid var(--ac,#d9cfe0);border-radius:12px;padding:12px 13px;display:flex;flex-direction:column;gap:6px;min-height:80px;transition:box-shadow .15s,transform .15s}
+        .stat:hover{box-shadow:0 5px 16px rgba(79,25,100,.09);transform:translateY(-1px)}
+        .stat .val{margin-top:auto;font-size:1.5em;font-weight:800;color:var(--ac,#2b2b33);line-height:1.05}
+        .stat .val .u{font-size:.5em;font-weight:600;color:#9a9aa3;margin-left:2px;letter-spacing:.2px}
+        .stat .val.dash{color:#c9c9d0}
         @media(min-width:640px){.container{padding:20px}.header h1{font-size:1.6em}.admin-nav a{font-size:13px;padding:13px 8px}}
         @media(max-width:600px){html,body{overflow-x:hidden}.container{padding:10px}.preview{max-width:160px}}
     </style>
@@ -79,19 +84,19 @@
 
         <div class="card">
             <h3><span>Funil de conversão — <span id="funil-periodo">últimos 30 dias</span> <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">("venda" = reserva criada pelo bot)</span></span></h3>
-            <div class="funil-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
-                <div><div class="f-label">Leads <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="conversas iniciadas">i</span></div><div class="f-num" id="f-leads">—</div></div>
-                <div><div class="f-label">Abandono imediato <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="1 msg e sumiu (+6h)">i</span></div><div class="f-num" style="color:#9a9aa3" id="f-abandono">—</div></div>
-                <div><div class="f-label">Em negociação <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="ativas (&lt;24h)">i</span></div><div class="f-num" style="color:#b45309" id="f-negoc">—</div></div>
-                <div><div class="f-label">Ganhas 🏆 <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="reservas criadas">i</span></div><div class="f-num" style="color:#16a34a" id="f-ganhas">—</div></div>
-                <div><div class="f-label">Perdidas <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="negociou e esfriou (+24h)">i</span></div><div class="f-num" style="color:#ef4444" id="f-perdidas">—</div></div>
-                <div><div class="f-label">Handoffs <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="em modo humano">i</span></div><div class="f-num" style="color:#4f1964" id="f-handoffs">—</div></div>
-                <div><div class="f-label">Bot × Humano <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="só bot · precisou de humano">i</span></div><div class="f-num" id="f-bothum">—</div></div>
-                <div><div class="f-label">Canceladas <span class="info-i" id="f-canc-sub" tabindex="0" role="button" aria-label="o que é" data-tip="via bot (30d)">i</span></div><div class="f-num" style="color:#ef4444" id="f-canc">—</div></div>
-                <div><div class="f-label">Origem dos leads <span class="info-i" id="f-origem-sub" tabindex="0" role="button" aria-label="o que é" data-tip="anúncio · orgânico">i</span></div><div class="f-num" id="f-origem">—</div></div>
-                <div><div class="f-label">Taxa de conversão <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="ganhas ÷ leads">i</span></div><div class="f-num" style="color:#16a34a" id="f-taxa">—</div></div>
-                <div><div class="f-label">Resgates enviados <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="nudge de abandono">i</span></div><div class="f-num" style="color:#b45309" id="f-resgates">—</div></div>
-                <div><div class="f-label">Resgates → reserva <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="voltou e fechou">i</span></div><div class="f-num" style="color:#16a34a" id="f-resgconv">—</div></div>
+            <div class="funil-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+                <div class="stat" style="--ac:#4f1964"><div class="f-label">Leads <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="conversas iniciadas">i</span></div><div class="val dash" id="f-leads">—</div></div>
+                <div class="stat" style="--ac:#9a9aa3"><div class="f-label">Abandono imediato <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="1 msg e sumiu (+6h)">i</span></div><div class="val dash" id="f-abandono">—</div></div>
+                <div class="stat" style="--ac:#b45309"><div class="f-label">Em negociação <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="ativas (&lt;24h)">i</span></div><div class="val dash" id="f-negoc">—</div></div>
+                <div class="stat" style="--ac:#16a34a"><div class="f-label">Ganhas 🏆 <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="reservas criadas pelo bot (fonte: collection reservas)">i</span></div><div class="val dash" id="f-ganhas">—</div></div>
+                <div class="stat" style="--ac:#ef4444"><div class="f-label">Perdidas <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="negociou e esfriou (+24h)">i</span></div><div class="val dash" id="f-perdidas">—</div></div>
+                <div class="stat" style="--ac:#7c3aed"><div class="f-label">Handoffs <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="em modo humano">i</span></div><div class="val dash" id="f-handoffs">—</div></div>
+                <div class="stat" style="--ac:#4f1964"><div class="f-label">Bot × Humano <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="só bot · precisou de humano">i</span></div><div class="val dash" id="f-bothum">—</div></div>
+                <div class="stat" style="--ac:#ef4444"><div class="f-label">Canceladas <span class="info-i" id="f-canc-sub" tabindex="0" role="button" aria-label="o que é" data-tip="via bot no período">i</span></div><div class="val dash" id="f-canc">—</div></div>
+                <div class="stat" style="--ac:#b45309"><div class="f-label">Origem dos leads <span class="info-i" id="f-origem-sub" tabindex="0" role="button" aria-label="o que é" data-tip="anúncio · orgânico">i</span></div><div class="val dash" id="f-origem">—</div></div>
+                <div class="stat" style="--ac:#16a34a"><div class="f-label">Taxa de conversão <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="ganhas ÷ leads">i</span></div><div class="val dash" id="f-taxa">—</div></div>
+                <div class="stat" style="--ac:#b45309"><div class="f-label">Resgates enviados <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="nudge de abandono">i</span></div><div class="val dash" id="f-resgates">—</div></div>
+                <div class="stat" style="--ac:#16a34a"><div class="f-label">Resgates → reserva <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="voltou e fechou">i</span></div><div class="val dash" id="f-resgconv">—</div></div>
             </div>
         </div>
 
@@ -172,18 +177,20 @@
             renderConvs(); renderFunil();
         });
 
-        // ---- Status do bot (conectado / reconectando / offline) ----
-        const WA_ENDPOINT='https://macbook-pro-de-rene.tailf78ede.ts.net';
+        // ---- Status do bot via HEARTBEAT no Firestore (independente do Funnel, que cai com sleep do Mac) ----
+        // O wa-service grava wa_config/heartbeat a cada 45s. Fresco + Connected = online.
         const setStatus=(cor,txt)=>{ $('bot-dot').style.background=cor; $('bot-status-txt').textContent=txt; };
-        async function pollStatus(){
-            try{
-                const r=await fetch(WA_ENDPOINT+'/health',{cache:'no-store'});
-                const j=await r.json();
-                if(j&&j.connected) setStatus('#16a34a','Bot conectado'); else setStatus('#f59e0b','Bot reconectando…');
-            }catch(e){ setStatus('#ef4444','Bot offline (Mac fora do ar)'); }
+        let hb=null;
+        function renderBotStatus(){
+            if(!hb||!hb.At){ setStatus('#ef4444','Bot offline (Mac fora do ar)'); return; }
+            const age=Date.now()-new Date(hb.At).getTime();
+            if(age>150000) setStatus('#ef4444','Bot offline (Mac fora do ar)');
+            else if(hb.Connected) setStatus('#16a34a','Bot conectado');
+            else setStatus('#f59e0b','Bot reconectando…');
         }
-        pollStatus(); setInterval(pollStatus,12000);
-        document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pollStatus(); });
+        onSnapshot(doc(db,`${BASE}/wa_config`,'heartbeat'),s=>{ hb=s.exists()?s.data():null; renderBotStatus(); });
+        setInterval(renderBotStatus,20000);
+        document.addEventListener('visibilitychange',()=>{ if(!document.hidden) renderBotStatus(); });
 
         // ---- Alertas ----
         let alertas=[];
@@ -258,36 +265,41 @@
             $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}${c.Origem==='anuncio'?'<span class="ad-pill">📣 anúncio</span>':''}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:`<tbody><tr><td class="empty">Nenhuma conversa ${convsCache.length?'neste período':'ainda'}.</td></tr></tbody>`;
             $('conv-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
         }
-        // ---- Funil (30 dias, calculado dos campos Etapa/MsgsCliente/UltimaMsgCliente) ----
-        let cancDocs=[];
+        // ---- Funil — "Ganhas" vem da fonte de verdade (collection reservas, ViaBot),
+        //      cruzada por Whatsapp; o resto vem dos campos da conversa. ----
+        let cancDocs=[], resvDocs=[];
+        const normTel=s=>String(s||'').replace(/\D/g,'').slice(-11);
         function renderFunil(){
             const agora=Date.now(), h6=6*3600e3, h24=24*3600e3;
             $('funil-periodo').textContent=periodoLabel();
             const periodo=convsCache.filter(noPeriodo);
             const idade=c=>agora-new Date(c.UltimaMsgCliente||c.updatedAt||0).getTime();
-            const ganhas=periodo.filter(c=>c.Etapa==='ganho');
+            const winSet=new Set(resvDocs.filter(r=>r.ViaBot).map(r=>normTel(r.Whatsapp)));
+            const ganhou=c=>winSet.has(normTel(c.id));
+            const ganhas=periodo.filter(ganhou);
             const handoffs=periodo.filter(c=>c.status==='humano');
-            const negocAtiva=periodo.filter(c=>c.Etapa==='negociacao'&&c.status!=='humano'&&idade(c)<h24);
-            const perdidas=periodo.filter(c=>c.Etapa==='negociacao'&&c.status!=='humano'&&idade(c)>=h24);
-            const abandono=periodo.filter(c=>c.Etapa==='lead'&&(c.MsgsCliente||0)<=1&&idade(c)>=h6);
-            $('f-leads').textContent=periodo.length;
-            $('f-abandono').textContent=abandono.length;
-            $('f-negoc').textContent=negocAtiva.length;
-            $('f-ganhas').textContent=ganhas.length;
-            $('f-perdidas').textContent=perdidas.length;
-            $('f-handoffs').textContent=handoffs.length;
-            $('f-bothum').innerHTML=periodo.length?(periodo.length-handoffs.length)+' <span class="muted" style="font-weight:500;font-size:.7em">×</span> '+handoffs.length:'—';
+            const negocAtiva=periodo.filter(c=>c.Etapa==='negociacao'&&!ganhou(c)&&c.status!=='humano'&&idade(c)<h24);
+            const perdidas=periodo.filter(c=>c.Etapa==='negociacao'&&!ganhou(c)&&c.status!=='humano'&&idade(c)>=h24);
+            const abandono=periodo.filter(c=>c.Etapa==='lead'&&!ganhou(c)&&(c.MsgsCliente||0)<=1&&idade(c)>=h6);
+            const set=(id,v)=>{ const e=$(id); e.innerHTML=v; e.classList.toggle('dash', v==='—'); };
+            set('f-leads', periodo.length||'—');
+            set('f-abandono', abandono.length);
+            set('f-negoc', negocAtiva.length);
+            set('f-ganhas', ganhas.length);
+            set('f-perdidas', perdidas.length);
+            set('f-handoffs', handoffs.length);
+            set('f-bothum', periodo.length?`${periodo.length-handoffs.length}<span class="u">×</span>${handoffs.length}`:'—');
             const [rS,rE]=rangeMs();
-            const canc30=cancDocs.filter(c=>{ const t=new Date(c.CanceladoEm||0).getTime(); return c.CanceladoEm&&t>=rS&&t<=rE; });
-            $('f-canc').textContent=canc30.length;
-            $('f-canc-sub').dataset.tip=(ganhas.length+canc30.length)?`índice: ${((canc30.length/(ganhas.length+canc30.length))*100).toFixed(0)}% das reservas do bot`:'via bot (30d)';
+            const canc=cancDocs.filter(c=>{ const t=new Date(c.CanceladoEm||0).getTime(); return c.CanceladoEm&&t>=rS&&t<=rE; });
+            set('f-canc', canc.length);
+            $('f-canc-sub').dataset.tip=(ganhas.length+canc.length)?`índice: ${((canc.length/(ganhas.length+canc.length))*100).toFixed(0)}% das reservas do bot`:'via bot no período';
             const anuncio=periodo.filter(c=>c.Origem==='anuncio').length;
-            $('f-origem').innerHTML=periodo.length?`<span style="color:#b45309">${anuncio}</span> <span class="muted" style="font-weight:500;font-size:.7em">anúncio</span> · <span style="color:#16a34a">${periodo.length-anuncio}</span> <span class="muted" style="font-weight:500;font-size:.7em">org.</span>`:'—';
-            $('f-origem-sub').dataset.tip=periodo.length?`${((anuncio/periodo.length)*100).toFixed(0)}% vieram de anúncio`:'anúncio · orgânico';
-            $('f-taxa').textContent=periodo.length?((ganhas.length/periodo.length)*100).toFixed(0)+'%':'—';
+            set('f-origem', periodo.length?`${((anuncio/periodo.length)*100).toFixed(0)}<span class="u">% anúncio</span>`:'—');
+            $('f-origem-sub').dataset.tip=periodo.length?`${anuncio} de anúncio · ${periodo.length-anuncio} orgânico`:'anúncio · orgânico';
+            set('f-taxa', periodo.length?`${((ganhas.length/periodo.length)*100).toFixed(0)}<span class="u">%</span>`:'—');
             const resgates=periodo.filter(c=>c.NudgeEm);
-            $('f-resgates').textContent=resgates.length;
-            $('f-resgconv').textContent=resgates.filter(c=>c.ReservouEm&&new Date(c.ReservouEm)>new Date(c.NudgeEm)).length;
+            set('f-resgates', resgates.length);
+            set('f-resgconv', resgates.filter(c=>c.ReservouEm&&new Date(c.ReservouEm)>new Date(c.NudgeEm)).length);
         }
         onSnapshot(collection(db,`${BASE}/wa_atendimento`),snap=>{
             convsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
@@ -295,6 +307,7 @@
             renderFunil();
         });
         onSnapshot(collection(db,`${BASE}/wa_cancelamentos`),snap=>{ cancDocs=snap.docs.map(d=>d.data()); renderFunil(); });
+        onSnapshot(collection(db,`${BASE}/reservas`),snap=>{ resvDocs=snap.docs.map(d=>d.data()); renderFunil(); });
     </script>
     <script type="module" src="/js/change-password.js"></script>
     <script type="module" src="/js/realtime-resilience.js"></script>

@@ -6,6 +6,16 @@ import { handleIncoming } from './agent.js';
 import { startQueue, queueStatus } from './queue.js';
 import { enqueue, readLog, addOptOut, getOptOuts, getAdReferral } from './store.js';
 import { rodarResgate } from '../../wa-bot/src/nudge.js';
+import { setDoc } from '../../wa-bot/src/firestore.js';
+
+// Heartbeat: grava o estado da conexão no Firestore a cada 45s. O painel lê isso
+// (não o Funnel, que é frágil e cai com sleep do Mac) pra mostrar online/offline.
+async function baterHeartbeat() {
+  const s = getWaState();
+  try {
+    await setDoc('wa_config/heartbeat', { Connected: !!s.connected, Me: s.me || '', At: new Date().toISOString() });
+  } catch (e) { console.error('[heartbeat]', e.message); }
+}
 
 // Silencia o ruído de sessão do libsignal (console.info/warn diretos a cada mensagem),
 // mantendo erros reais. Sem isso, o terminal fica ilegível com dumps de SessionEntry.
@@ -126,6 +136,8 @@ async function main() {
   await startWA();
   startQueue();
   setInterval(tickResgate, 30 * 60 * 1000); // resgate roda a cada 30 min
+  baterHeartbeat();                          // status inicial no Firestore
+  setInterval(baterHeartbeat, 45 * 1000);    // heartbeat a cada 45s (painel lê isso)
   app.listen(config.port, () => {
     console.log(`🚀 Serviço WhatsApp rodando na porta ${config.port}`);
     console.log(`   Health: http://localhost:${config.port}/health`);
