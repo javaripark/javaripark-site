@@ -62,14 +62,16 @@ const CENARIOS = [
     async run(t) {
       const { joined } = await conversar(t, 'Paula', ['quero reservar sexta 18/9 pra 10 pessoas, é meu aniversário! Paula Mendes']);
       const rs = await bancoDe(t);
+      console.log(`\n──[RESERVA 10p]──────────────\n${joined}\n─────────────────────────────`);
+      const resumoBot = joined.split('📋')[0] || ''; // texto do bot ANTES do bloco automático
       return [
         ['gravou no banco', rs.length === 1],
         ['10 pessoas', rs[0]?.['Quantidade de Pessoas'] === 10],
         ['ViaBot', rs[0]?.ViaBot === true],
         ['tolerância 20h (sexta)', /20\s*h/.test(joined)],
-        ['bloco pós-reserva anexado', /Infos importantes/.test(joined)],
+        ['bloco pós-reserva anexado', /Hor[áa]rios m[áa]ximos de chegada/.test(joined)],
         ['NÃO promete brinde pra 10', !/garant\w+ (o )?brinde|ganham? (o )?brinde|direito a( um)? brinde/i.test(joined)],
-        ['oferece convite', /convite/i.test(joined)],
+        ['resumo do bot enxuto (não repete reconfirmação/bolo do bloco)', !/reconfirma|\bbolo\b/i.test(resumoBot)],
       ];
     },
   },
@@ -167,6 +169,19 @@ const CENARIOS = [
     },
   },
   {
+    nome: 'Comanda do Bus → individual, nunca única/concentrada',
+    async run(t) {
+      const { joined, handoffs } = await conversar(t, 'Bel', ['oi! quero saber do bus lounge pra uns 15, como funciona a comanda? é uma só pro grupo ou cada um paga a sua?']);
+      console.log(`\n──[COMANDA BUS]──────────────\n${joined}\n─────────────────────────────`);
+      const bad = /concentrad|compartilh|coletiv|conjunt|única comanda|comanda única|numa? (única )?comanda|na mesma comanda/i;
+      return [
+        ['diz individual/pulseira', /individual|pulseira/i.test(joined)],
+        ['NÃO chama a comanda de única/concentrada/compartilhada', !bad.test(joined)],
+        ['sem handoff', handoffs === 0],
+      ];
+    },
+  },
+  {
     nome: 'Banheira: preços exatos sem handoff',
     async run(t) {
       const { joined, handoffs } = await conversar(t, 'Nina', ['quanto custa a banheira de cerveja?']);
@@ -237,14 +252,14 @@ const CENARIOS = [
     },
   },
   {
-    nome: 'Grupo de 25 → 1 setor só (nunca 2) + brinde mencionado',
+    nome: 'Grupo de 25 → 1 setor só (nunca 2), sem brinde proativo',
     async run(t) {
       const { joined } = await conversar(t, 'Pedro', ['meu aniversário dia 5/9, 25 pessoas, Pedro Albuquerque! fecha num setor perto do palco']);
       const rs = await bancoDe(t);
       return [
         ['registrou 1 reserva', rs.length === 1 && rs[0]['Quantidade de Pessoas'] === 25],
         ['NÃO oferece 2 setores', !/dois setores|2 setores/i.test(joined)],
-        ['menciona brinde (25 adultos)', /brinde|heineken|cortesia/i.test(joined)],
+        ['NÃO promete brinde proativo (só se perguntarem — decisão René 13/06)', !/brinde|cortesia/i.test(joined)],
         ['sábado certo (5/9)', /s[áa]bado/i.test(joined)],
       ];
     },
