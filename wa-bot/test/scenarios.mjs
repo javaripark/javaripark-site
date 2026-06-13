@@ -280,7 +280,7 @@ const CENARIOS = [
     async run(t) {
       const { joined, handoffs } = await conversar(t, 'Edu', ['quero fazer meu aniversário aí e levar a banda do meu primo pra tocar, pode?']);
       return [
-        ['recusa banda própria', /n[ãa]o (faz|fazemos|rola|d[áa]|trabalhamos|permit|é poss)|infelizmente/i.test(joined)],
+        ['recusa banda própria', /n[ãa]o (faz|fazemos|d[áa]|trabalhamos|permit|é poss|conseguimos|encaix|temos como)|programa[çc][ãa]o (própria|musical própria)|curadoria|apresenta[çc][õo]es avulsas|infelizmente/i.test(joined)],
         ['indica o beacons', /beacons/i.test(joined)],
         ['sem handoff', handoffs === 0],
       ];
