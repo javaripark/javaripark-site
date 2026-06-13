@@ -56,6 +56,9 @@ export async function atender(conv, textoCliente) {
   let messages = conv.messages.map(m => ({ role: m.role, content: m.content }));
 
   const finish = reply => {
+    // WhatsApp: negrito é UM asterisco; o Haiku às vezes manda ** (markdown), que
+    // vira asterisco literal na tela. Guarda no código — não confiar só no prompt.
+    reply = String(reply).replace(/\*{2,}/g, '*');
     if (acted) conv.reconfirmou = ''; // ação de reserva resolveu a reconfirmação
     if (registrouData) reply = reply + '\n\n' + posReserva(registrouData);
     conv.messages.push({ role: 'assistant', content: reply });
