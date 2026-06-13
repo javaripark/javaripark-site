@@ -262,7 +262,7 @@ async function registrarReserva(input, ctx) {
   });
   // NÃO devolver toleranciaChegada aqui: o bloco pós-reserva automático já informa a
   // chegada (incl. exceções de dia), e o modelo papagueia qualquer horário que receber.
-  return { ok: true, reservaId: id, diaSemana: DIAS[dow] };
+  return { ok: true, reservaId: id, diaSemana: DIAS[dow], setor: setorCliente(setor, observacoes), setorCliente: setorCliente(setor, observacoes) };
 }
 
 // Acha a reserva e garante que pertence ao telefone do remetente
@@ -276,6 +276,23 @@ async function reservaDoCliente(reservaId, ctx) {
   return { doc };
 }
 
+// Rótulo do setor PARA O CLIENTE — nunca expõe rótulo interno (regra do René, 13/06):
+// overflow "6B"/"1B".."9B" -> "6" (só o número); "Extras" -> número que está na observação
+// (ex: "6C" -> "6"); 1-9 e "Bus Lounge" ficam iguais. Se não der pra saber o número
+// (Extras sem pista na obs), retorna '' -> o bot não cita setor específico.
+function setorCliente(setor, obs) {
+  const s = String(setor || '').trim();
+  const mB = s.match(/^([1-9])B$/i);
+  if (mB) return mB[1];
+  if (/^extras$/i.test(s)) {
+    const o = String(obs || '');
+    // prioridade: "6C"/"6 C" (número+nível) → "setor 6" → dígito 1-9 isolado (não pega "10")
+    const mo = o.match(/\b([1-9])\s*[A-Ca-c]\b/) || o.match(/setor\s*([1-9])\b/i) || o.match(/\b([1-9])\b(?!\d)/);
+    return mo ? mo[1] : '';
+  }
+  return s;
+}
+
 async function buscarReservas(_input, ctx) {
   if (!ctx.telefone) return { reservas: [] };
   // Scan + match tolerante: reservas manuais do painel têm o número mascarado
@@ -285,7 +302,7 @@ async function buscarReservas(_input, ctx) {
   const futuras = todas
     .filter(r => (r.Data || '') >= hoje && samePhone(r.Whatsapp, ctx.telefone))
     .sort((a, b) => (a.Data || '').localeCompare(b.Data || ''))
-    .map(r => ({ reservaId: r.id, data: r.Data, setor: String(r.Setor), pessoas: r['Quantidade de Pessoas'], nome: `${r.Nome || ''} ${r.Sobrenome || ''}`.trim() }));
+    .map(r => ({ reservaId: r.id, data: r.Data, setor: setorCliente(r.Setor, r.Observacoes), pessoas: r['Quantidade de Pessoas'], nome: `${r.Nome || ''} ${r.Sobrenome || ''}`.trim() }));
   return { reservas: futuras, aviso: futuras.length ? undefined : 'nenhuma reserva futura neste número; se foi feita por outro telefone ou Instagram, use chamar_humano' };
 }
 
@@ -295,7 +312,7 @@ async function cancelarReserva({ reservaId }, ctx) {
   const { id, ...dados } = r.doc;
   await addDoc('wa_cancelamentos', { ...dados, ReservaId: reservaId, CanceladoEm: new Date().toISOString(), CanceladoVia: 'bot' });
   await deleteDoc(`reservas/${reservaId}`);
-  return { ok: true, cancelada: { data: dados.Data, setor: String(dados.Setor), pessoas: dados['Quantidade de Pessoas'] } };
+  return { ok: true, cancelada: { data: dados.Data, setor: setorCliente(dados.Setor, dados.Observacoes), pessoas: dados['Quantidade de Pessoas'] } };
 }
 
 async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, novoNome, novoSobrenome, novasObservacoes }, ctx) {
@@ -358,7 +375,8 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
     AlteradoEm: new Date().toISOString(),
     AlteradoVia: 'bot',
   });
-  return { ok: true, reserva: { data, setor, pessoas, nome: `${nome} ${sobrenome}`.trim() }, diaSemana: DIAS[dow], toleranciaChegada: tolerancia(data, dow) };
+  const obsFinal = novasObservacoes != null ? novasObservacoes : (dados.Observacoes || '');
+  return { ok: true, reserva: { data, setor: setorCliente(setor, obsFinal), pessoas, nome: `${nome} ${sobrenome}`.trim() }, diaSemana: DIAS[dow], toleranciaChegada: tolerancia(data, dow) };
 }
 
 async function chamarHumano({ motivo }, ctx) {
