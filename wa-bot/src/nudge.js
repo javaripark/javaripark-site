@@ -18,16 +18,30 @@ export function horaSPAgora() {
 }
 
 // send: async (telefone, texto) => boolean — injetável pra teste
+// O bot estava ATIVAMENTE coletando um dado de reserva (nome/data/pessoas) e o
+// cliente sumiu → abandono real. Genérico "quer fazer uma reserva?" NÃO conta.
+const COLETANDO_RE = /(nome completo|qual.{0,15}\bnome\b|quantas pessoas|quantos? (adultos|v[ãa]o)|qual.{0,10}(o dia|a data)|que dia (voc|v[ãa]o|seria|querem)|me (passa|diz|fala|manda).{0,30}(nome|sobrenome|data|dia|quantas)|sobrenome|s[óo] (falta|preciso).{0,20}(nome|data|dia|pessoas)|fechamos)/i;
+const norm9 = s => String(s || '').replace(/\D/g, '').slice(-9);
+
 export async function rodarResgate({ send, agora = Date.now(), horaSP = horaSPAgora() } = {}) {
   const resultado = { avaliadas: 0, enviados: 0, pulados: [] };
   if (horaSP < HORA_INI || horaSP >= HORA_FIM) { resultado.pulados.push('fora do horário (' + horaSP + 'h)'); return resultado; }
 
   const convs = await listDocs('wa_atendimento');
+  // Quem TEM reserva (qualquer data, ViaBot ou não) NUNCA é "abandono" — não cutuca.
+  const hoje = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).toISOString().slice(0, 10);
+  let comReserva = new Set();
+  try {
+    const reservas = await listDocs('reservas', 2000);
+    comReserva = new Set(reservas.filter(r => (r.Data || '') >= hoje).map(r => norm9(r.Whatsapp)));
+  } catch (e) { /* sem reservas: segue (o filtro de conteúdo ainda protege) */ }
+
   for (const c of convs) {
     resultado.avaliadas++;
     if ((c.Etapa || 'lead') !== 'negociacao') continue;
     if (c.status === 'humano') continue;
     if (!c.UltimaMsgCliente) continue;
+    if (comReserva.has(norm9(c.id))) { resultado.pulados.push(c.id + ': já tem reserva'); continue; }
     const idleH = (agora - new Date(c.UltimaMsgCliente).getTime()) / 3600e3;
     if (idleH < MIN_IDLE_H || idleH > MAX_IDLE_H) continue;
     if (c.NudgeEm) {
@@ -36,14 +50,15 @@ export async function rodarResgate({ send, agora = Date.now(), horaSP = horaSPAg
       if (new Date(c.UltimaMsgCliente).getTime() <= new Date(c.NudgeEm).getTime()) continue; // não insiste sem resposta
     }
 
-    // Desfecho "casa lotada → vem sem reserva" NÃO é abandono: cutucar com
-    // "garanto sua mesa!" contradiz o que o bot acabou de dizer (bug 11/06).
     let ultimaBot = '';
     try {
       const ms = JSON.parse(c.HistoricoJson || '[]');
       for (let i = ms.length - 1; i >= 0; i--) if (ms[i].role === 'assistant') { ultimaBot = String(ms[i].content); break; }
     } catch (e) { /* histórico ilegível: segue avaliação normal */ }
-    if (/sem reserva|fecharam|lotad/i.test(ultimaBot)) { resultado.pulados.push(c.id + ': desfecho lotado/walk-in'); continue; }
+    // Desfecho "casa lotada → vem sem reserva"/cancelamento NÃO é abandono.
+    if (/sem reserva|fecharam|lotad|cancel/i.test(ultimaBot)) { resultado.pulados.push(c.id + ': desfecho lotado/walk-in/cancel'); continue; }
+    // Só cutuca se o bot estava REALMENTE no meio de coletar a reserva (não FAQ, não confirmação).
+    if (!COLETANDO_RE.test(ultimaBot)) { resultado.pulados.push(c.id + ': não estava coletando reserva (FAQ/encerrado)'); continue; }
 
     const texto = TEXTOS[resultado.enviados % TEXTOS.length]((c.NomePerfil || '').split(' ')[0]);
     const ok = await send(c.id, texto);

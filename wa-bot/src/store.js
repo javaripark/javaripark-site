@@ -1,9 +1,9 @@
 // Estado de conversa por telefone em wa_atendimento/{telefone}.
 // Histórico vira string JSON (simples de codificar via REST); janela de 24h
-// idle reseta o contexto; janela de 20 mensagens controla tokens.
+// idle reseta o contexto; janela de N mensagens controla tokens.
 import { getDoc, setDoc } from './firestore.js';
 
-const MAX_MSGS = 20;
+const MAX_MSGS = 40;
 const IDLE_RESET_MS = 24 * 60 * 60 * 1000;
 
 export async function loadConv(telefone) {
