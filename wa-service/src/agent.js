@@ -7,7 +7,7 @@
 // "desculpa a demora". Mensagens ao vivo são respondidas na hora, normalmente.
 import { atender, custoUSD } from '../../wa-bot/src/brain.js';
 import { loadConv, saveConv } from '../../wa-bot/src/store.js';
-import { addDoc } from '../../wa-bot/src/firestore.js';
+import { addDoc, getDoc } from '../../wa-bot/src/firestore.js';
 import { cfg } from '../../wa-bot/src/config.js';
 import { config } from './config.js';
 import { sendText, sendToJid, resolvePhone, extractAdReferral } from './wa.js';
@@ -17,6 +17,17 @@ const DEBOUNCE_MS = 10000;     // agrupa mensagens picadas ao vivo (espera 10s a
 const LIVE_AGE_S = 90;         // mais novo que isso = ao vivo; mais velho = atrasado
 const STALE_MAX_H = 12;        // não responde nada mais velho que isso (janela já fechada)
 const RECOVERY_GAP_MS = 25000; // espaço entre respostas de recuperação (anti-rajada)
+
+// Pausa GLOBAL do bot — o painel grava wa_config/main.BotPausado (true/false).
+// Cache de 15s pra não ler o Firestore a cada mensagem; aplicar leva no máx ~15s.
+// Pausado = o bot fica em silêncio (a equipe atende manual pelo app); retomar é 1 clique.
+let _pausa = { v: false, at: 0 };
+async function botPausado() {
+  if (Date.now() - _pausa.at < 15000) return _pausa.v;
+  try { const d = await getDoc('wa_config/main'); _pausa = { v: !!(d && d.BotPausado), at: Date.now() }; }
+  catch { /* falha de leitura: fail-open (não pausa) */ }
+  return _pausa.v;
+}
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -80,6 +91,7 @@ async function handleMedia(telefone, nome, mediaType, replyJid) {
 
 // Núcleo: processa um texto final (já agrupado) de um cliente.
 async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid }) {
+  if (await botPausado()) { console.log(`[${telefone}] BOT PAUSADO — não respondeu`); return; }
   const conv = await loadConv(telefone);
   conv.nomePerfil = nome || conv.nomePerfil;
   const responder = (txt) => replyJid ? sendToJid(replyJid, txt) : sendText(telefone, txt);

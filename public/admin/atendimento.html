@@ -52,6 +52,17 @@
         .stat .val{margin-top:auto;font-size:1.5em;font-weight:800;color:var(--ac,#2b2b33);line-height:1.05}
         .stat .val .u{font-size:.5em;font-weight:600;color:#9a9aa3;margin-left:2px;letter-spacing:.2px}
         .stat .val.dash{color:#c9c9d0}
+        .btn-warn{background:#fff8e6;color:#b45309;border:1px solid #f3d98a}
+        .modal{position:fixed;inset:0;background:rgba(25,12,38,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:14px}
+        .modal.open{display:flex}
+        .modal-card{background:#fff;border-radius:14px;max-width:580px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 14px 44px rgba(0,0,0,.32);overflow:hidden}
+        .modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #f0eef3;font-weight:700;color:#4f1964;font-size:14px}
+        .chat{padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;background:#f5f3f8}
+        .bubble{max-width:82%;padding:8px 12px;border-radius:13px;font-size:13px;line-height:1.42;white-space:pre-wrap;word-break:break-word}
+        .bubble.u{align-self:flex-end;background:#4f1964;color:#fff;border-bottom-right-radius:3px}
+        .bubble.b{align-self:flex-start;background:#fff;color:#333;border:1px solid #e6e3ec;border-bottom-left-radius:3px}
+        .bubble.sys{align-self:center;background:#fef3c7;color:#92400e;font-size:11px;border-radius:8px;max-width:90%;text-align:center}
+        .btn-ver{background:none;border:none;color:#4f1964;font-weight:600;font-size:12px;cursor:pointer;text-decoration:underline;padding:4px}
         @media(min-width:640px){.container{padding:20px}.header h1{font-size:1.6em}.admin-nav a{font-size:13px;padding:13px 8px}}
         @media(max-width:600px){html,body{overflow-x:hidden}.container{padding:10px}.preview{max-width:160px}}
     </style>
@@ -67,8 +78,9 @@
         </nav>
 
         <div class="topbar" style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:16px;padding:0 4px">
-            <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#555">
-                <span class="dot" id="bot-dot"></span><span id="bot-status-txt">verificando bot…</span>
+            <div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#555;flex-wrap:wrap">
+                <span style="display:flex;align-items:center;gap:7px"><span class="dot" id="bot-dot"></span><span id="bot-status-txt">verificando bot…</span></span>
+                <button class="btn btn-warn" id="pause-btn" style="font-size:12px;padding:5px 11px">⏸ Pausar bot</button>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
                 <span class="muted" style="font-weight:700">Período:</span>
@@ -126,6 +138,13 @@
         </div>
     </div>
 
+    <div class="modal" id="chat-modal">
+        <div class="modal-card">
+            <div class="modal-head"><span id="chat-modal-title">Conversa</span><button class="btn btn-ghost" id="chat-modal-close">Fechar</button></div>
+            <div class="chat" id="chat-body"></div>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -180,8 +199,9 @@
         // ---- Status do bot via HEARTBEAT no Firestore (independente do Funnel, que cai com sleep do Mac) ----
         // O wa-service grava wa_config/heartbeat a cada 45s. Fresco + Connected = online.
         const setStatus=(cor,txt)=>{ $('bot-dot').style.background=cor; $('bot-status-txt').textContent=txt; };
-        let hb=null;
+        let hb=null, pausado=false;
         function renderBotStatus(){
+            if(pausado){ setStatus('#9a7bb0','Bot pausado — atendimento manual'); return; }
             if(!hb||!hb.At){ setStatus('#ef4444','Bot offline (Mac fora do ar)'); return; }
             const age=Date.now()-new Date(hb.At).getTime();
             if(age>150000) setStatus('#ef4444','Bot offline (Mac fora do ar)');
@@ -252,18 +272,45 @@
             const cred=parseFloat($('u-credito').value)||0;
             $('u-saldo').innerHTML=cred?dinheiro(cred-sTotal):'—';
         }
-        onSnapshot(doc(db,`${BASE}/wa_config`,'main'),s=>{ if(s.exists()&&s.data().CreditoUSD!=null&&document.activeElement!==$('u-credito')) $('u-credito').value=s.data().CreditoUSD; renderUso(); });
+        function renderPause(){ const b=$('pause-btn'); b.textContent=pausado?'▶ Retomar bot':'⏸ Pausar bot'; b.className=pausado?'btn btn-primary':'btn btn-warn'; renderBotStatus(); }
+        $('pause-btn').onclick=async()=>{ $('pause-btn').disabled=true; try{ await setDoc(doc(db,`${BASE}/wa_config`,'main'),{BotPausado:!pausado},{merge:true}); }finally{ $('pause-btn').disabled=false; } };
+        renderPause();
+        onSnapshot(doc(db,`${BASE}/wa_config`,'main'),s=>{ const d=s.exists()?s.data():{}; if(d.CreditoUSD!=null&&document.activeElement!==$('u-credito')) $('u-credito').value=d.CreditoUSD; pausado=!!d.BotPausado; renderPause(); renderUso(); });
         $('u-credito').addEventListener('change',async()=>{ await setDoc(doc(db,`${BASE}/wa_config`,'main'),{CreditoUSD:parseFloat($('u-credito').value)||0},{merge:true}); renderUso(); });
         onSnapshot(collection(db,`${BASE}/wa_usage`),snap=>{ usoDocs=snap.docs.map(d=>d.data()); renderUso(); renderConvs(); });
 
         // ---- Conversas ----
         function ultimaMsg(c){ try{ const m=JSON.parse(c.HistoricoJson||'[]'); const u=m[m.length-1]; return u?`${u.role==='user'?'👤':'🤖'} ${String(u.content).slice(0,90)}`:'—'; }catch(e){ return '—'; } }
+        // ---- Ver histórico da conversa (modal) ----
+        const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+        function abrirChat(c){
+            let h=[]; try{ h=JSON.parse(c.HistoricoJson||'[]'); }catch(e){}
+            $('chat-modal-title').textContent=`${c.NomePerfil||'Cliente'} · ${telBR(c.id)}`;
+            const parts=[];
+            for(const m of h){
+                let txt='';
+                if(Array.isArray(m.content)) txt=m.content.filter(b=>b&&b.type==='text').map(b=>b.text).join('\n').trim();
+                else txt=String(m.content||'').trim();
+                if(!txt) continue; // pula turnos só de ferramenta (sem texto pro cliente)
+                const resgate=/\[resgate autom[^\]]*\]/i.test(txt);
+                const clean=esc(txt.replace(/\s*\[resgate autom[^\]]*\]/i,''));
+                parts.push(`<div class="bubble ${m.role==='user'?'u':'b'}">${resgate?'<span style="opacity:.55;font-size:11px">↩︎ resgate automático</span><br>':''}${clean}</div>`);
+            }
+            $('chat-body').innerHTML=parts.length?parts.join(''):'<div class="muted" style="text-align:center;padding:24px">Sem mensagens registradas.</div>';
+            $('chat-modal').classList.add('open');
+            $('chat-body').scrollTop=$('chat-body').scrollHeight;
+        }
+        const fecharChat=()=>$('chat-modal').classList.remove('open');
+        $('chat-modal-close').onclick=fecharChat;
+        $('chat-modal').onclick=e=>{ if(e.target===$('chat-modal')) fecharChat(); };
+        document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharChat(); });
         let convsCache=[];
         function renderConvs(){
             const convs=convsCache.filter(noPeriodo);
             $('conv-count').textContent=convsCache.length?`· ${convs.length} no período (${periodoLabel()})`:'';
-            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}${c.Origem==='anuncio'?'<span class="ad-pill">📣 anúncio</span>':''}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td>${(c.status||'bot')==='humano'?`<button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:`<tbody><tr><td class="empty">Nenhuma conversa ${convsCache.length?'neste período':'ainda'}.</td></tr></tbody>`;
+            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}${c.Origem==='anuncio'?'<span class="ad-pill">📣 anúncio</span>':''}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td><button class="btn-ver" data-ver="${c.id}">ver conversa</button>${(c.status||'bot')==='humano'?` · <button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:`<tbody><tr><td class="empty">Nenhuma conversa ${convsCache.length?'neste período':'ainda'}.</td></tr></tbody>`;
             $('conv-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
+            $('conv-tbl').querySelectorAll('[data-ver]').forEach(b=>b.onclick=()=>{ const c=convsCache.find(x=>x.id===b.dataset.ver); if(c) abrirChat(c); });
         }
         // ---- Funil — "Ganhas" vem da fonte de verdade (collection reservas, ViaBot),
         //      cruzada por Whatsapp; o resto vem dos campos da conversa. ----

@@ -74,6 +74,9 @@ export async function atender(conv, textoCliente) {
       system,
       tools: toolDefs,
       messages,
+      // Sonnet/Opus: effort baixo + sem thinking = rápido e barato (sem o default 'high').
+      // Haiku não suporta effort (cfg.effort vem vazio) → mantém a chamada como era.
+      ...(cfg.effort ? { output_config: { effort: cfg.effort }, thinking: { type: 'disabled' } } : {}),
     });
     usage.push(resp.usage);
 
