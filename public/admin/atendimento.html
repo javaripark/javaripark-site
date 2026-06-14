@@ -119,9 +119,9 @@
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">7 dias</div><div style="font-size:1.3em;font-weight:700" id="u-7d">—</div><div class="muted" id="u-7d-t"></div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">30 dias</div><div style="font-size:1.3em;font-weight:700" id="u-30d">—</div><div class="muted" id="u-30d-t"></div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Custo médio/conversa</div><div style="font-size:1.3em;font-weight:700" id="u-medio">—</div><div class="muted" id="u-medio-t"></div></div>
-                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Crédito restante</div><div style="font-size:1.3em;font-weight:700;color:#16a34a" id="u-saldo">—</div><div class="muted">comprado: US$ <input id="u-credito" type="number" step="1" min="0" style="width:64px;border:1px solid #ddd;border-radius:6px;padding:2px 6px;font-size:12px"></div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Crédito restante</div><div style="font-size:1.3em;font-weight:700;color:#16a34a" id="u-saldo">—</div><div class="muted">saldo no console: US$ <input id="u-credito" type="number" step="0.01" min="0" style="width:72px;border:1px solid #ddd;border-radius:6px;padding:2px 6px;font-size:12px"><br><span id="u-credito-em" style="font-size:10px;color:#9a9aa3"></span></div></div>
             </div>
-            <p class="muted" style="margin-top:10px">Câmbio de exibição: US$ 1 = R$ <span id="u-cambio">5,50</span>. Tokens e custo vêm das respostas reais da API; o saldo oficial está em console.anthropic.com.</p>
+            <p class="muted" style="margin-top:10px">Câmbio de exibição: US$ 1 = R$ <span id="u-cambio">5,50</span>. Tokens e custo vêm das respostas reais da API. <b>Crédito restante</b>: informe o saldo que aparece em console.anthropic.com no campo "saldo no console" — o card desconta o gasto registrado a partir daí. Reabra o console de vez em quando e atualize o número pra re-sincronizar.</p>
         </div>
 
         <div class="card">
@@ -270,13 +270,16 @@
             $('u-30d').innerHTML=dinheiro(s30); $('u-30d-t').textContent=t30.toLocaleString('pt-BR')+' tokens';
             $('u-medio').innerHTML=convs30.size?dinheiro(s30/convs30.size):'—'; $('u-medio-t').textContent=convs30.size+' conversa(s) em 30d';
             const cred=parseFloat($('u-credito').value)||0;
-            $('u-saldo').innerHTML=cred?dinheiro(cred-sTotal):'—';
+            // saldo informado no console − gasto registrado DESDE o sync (não acumula erro histórico)
+            let sAposSync=0; for(const u of usoDocs){ if(!creditoEm || (u.CriadoEm||'')>creditoEm) sAposSync+=(u.USD||0); }
+            $('u-saldo').innerHTML=cred?dinheiro(Math.max(0,cred-sAposSync)):'—';
         }
         function renderPause(){ const b=$('pause-btn'); b.textContent=pausado?'▶ Retomar bot':'⏸ Pausar bot'; b.className=pausado?'btn btn-primary':'btn btn-warn'; renderBotStatus(); }
         $('pause-btn').onclick=async()=>{ $('pause-btn').disabled=true; try{ await setDoc(doc(db,`${BASE}/wa_config`,'main'),{BotPausado:!pausado},{merge:true}); }finally{ $('pause-btn').disabled=false; } };
         renderPause();
-        onSnapshot(doc(db,`${BASE}/wa_config`,'main'),s=>{ const d=s.exists()?s.data():{}; if(d.CreditoUSD!=null&&document.activeElement!==$('u-credito')) $('u-credito').value=d.CreditoUSD; pausado=!!d.BotPausado; renderPause(); renderUso(); });
-        $('u-credito').addEventListener('change',async()=>{ await setDoc(doc(db,`${BASE}/wa_config`,'main'),{CreditoUSD:parseFloat($('u-credito').value)||0},{merge:true}); renderUso(); });
+        let creditoEm='';
+        onSnapshot(doc(db,`${BASE}/wa_config`,'main'),s=>{ const d=s.exists()?s.data():{}; if(d.CreditoUSD!=null&&document.activeElement!==$('u-credito')) $('u-credito').value=d.CreditoUSD; creditoEm=d.CreditoEm||''; $('u-credito-em').textContent=creditoEm?('sincronizado '+fmtDT(creditoEm)):'informe o saldo do console'; pausado=!!d.BotPausado; renderPause(); renderUso(); });
+        $('u-credito').addEventListener('change',async()=>{ const v=parseFloat($('u-credito').value)||0; const now=new Date().toISOString(); creditoEm=now; $('u-credito-em').textContent='sincronizado '+fmtDT(now); await setDoc(doc(db,`${BASE}/wa_config`,'main'),{CreditoUSD:v,CreditoEm:now},{merge:true}); renderUso(); });
         onSnapshot(collection(db,`${BASE}/wa_usage`),snap=>{ usoDocs=snap.docs.map(d=>d.data()); renderUso(); renderConvs(); });
 
         // ---- Conversas ----
