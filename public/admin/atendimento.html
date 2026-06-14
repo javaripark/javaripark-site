@@ -134,7 +134,7 @@
         <div class="card">
             <h3><span>Conversas do bot <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500" id="conv-count"></span></span></h3>
             <div class="wrap"><table id="conv-tbl"><tbody><tr><td class="empty">Carregando…</td></tr></tbody></table></div>
-            <p class="muted" style="margin-top:10px">Conversa em <b>humano</b>: o bot fica em silêncio (você responde pelo app). "Devolver pro bot" religa o atendente — o cliente também consegue, mandando <b>#bot</b>. Sozinho, o modo humano expira após 24h sem mensagens.</p>
+            <p class="muted" style="margin-top:10px">Conversa em <b>humano</b> = bot pausado (você atende pelo app). O bot <b>pausa sozinho</b> quando você responde o cliente pela própria linha; ou clique <b>pausar bot aqui</b> pra assumir. Pra religar: <b>Devolver pro bot</b> (o cliente também consegue, mandando <b>#bot</b>). Sozinho, o modo humano expira após 24h sem mensagens.</p>
         </div>
     </div>
 
@@ -220,8 +220,14 @@
             const pend=alertas.filter(a=>!a.Resolvido).length;
             $('alert-count').style.display=pend?'inline-block':'none';
             $('alert-count').textContent=pend;
-            $('alertas-tbl').innerHTML=list.length?`<thead><tr><th>Quando</th><th>Cliente</th><th>Motivo</th><th></th></tr></thead><tbody>${list.map(a=>`<tr style="${a.Resolvido?'opacity:.5':''}"><td>${fmtDT(a.CriadoEm)}</td><td>${a.Nome||'—'}<br><a class="tel" href="https://wa.me/${a.Telefone}" target="_blank">${telBR(a.Telefone)}</a></td><td class="preview" style="white-space:normal;max-width:420px">${a.Motivo||''}</td><td>${a.Resolvido?'<span class="muted">resolvido</span>':`<button class="btn btn-primary" data-res="${a.id}">Resolver</button>`}</td></tr>`).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhum alerta. 🎉</td></tr></tbody>';
+            $('alertas-tbl').innerHTML=list.length?`<thead><tr><th>Quando</th><th>Cliente</th><th>Motivo</th><th></th></tr></thead><tbody>${list.map(a=>{
+                const cv=convsCache.find(c=>normTel(c.id)===normTel(a.Telefone));
+                const pausada=cv&&cv.status==='humano';
+                return `<tr style="${a.Resolvido?'opacity:.5':''}"><td>${fmtDT(a.CriadoEm)}</td><td>${a.Nome||'—'}<br><a class="tel" href="https://wa.me/${a.Telefone}" target="_blank">${telBR(a.Telefone)}</a></td><td class="preview" style="white-space:normal;max-width:360px">${a.Motivo||''}</td><td style="white-space:nowrap">${cv?`<button class="btn-ver" data-ver="${cv.id}">ver</button> · `:''}${pausada?`<button class="btn-ver" style="color:#16a34a" data-volta="${cv.id}">devolver pro bot</button> · `:''}${a.Resolvido?'<span class="muted">resolvido</span>':`<button class="btn btn-primary" style="padding:4px 10px" data-res="${a.id}">Resolver</button>`}</td></tr>`;
+            }).join('')}</tbody>`:'<tbody><tr><td class="empty">Nenhum alerta. 🎉</td></tr></tbody>';
             $('alertas-tbl').querySelectorAll('[data-res]').forEach(b=>b.onclick=async()=>{ await updateDoc(doc(db,`${BASE}/wa_alertas`,b.dataset.res),{Resolvido:true}); });
+            $('alertas-tbl').querySelectorAll('[data-ver]').forEach(b=>b.onclick=()=>{ const c=convsCache.find(x=>x.id===b.dataset.ver); if(c) abrirChat(c); });
+            $('alertas-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ b.disabled=true; await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
         }
         $('show-resolved').onchange=renderAlertas;
 
@@ -309,9 +315,10 @@
         function renderConvs(){
             const convs=convsCache.filter(noPeriodo);
             $('conv-count').textContent=convsCache.length?`· ${convs.length} no período (${periodoLabel()})`:'';
-            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}${c.Origem==='anuncio'?'<span class="ad-pill">📣 anúncio</span>':''}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td><button class="btn-ver" data-ver="${c.id}">ver conversa</button>${(c.status||'bot')==='humano'?` · <button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:''}</td></tr>`).join('')}</tbody>`:`<tbody><tr><td class="empty">Nenhuma conversa ${convsCache.length?'neste período':'ainda'}.</td></tr></tbody>`;
+            $('conv-tbl').innerHTML=convs.length?`<thead><tr><th>Cliente</th><th>Status</th><th>Última mensagem</th><th class="muted">Custo API</th><th>Atualizada</th><th></th></tr></thead><tbody>${convs.map(c=>`<tr><td>${c.NomePerfil||'—'}${c.Origem==='anuncio'?'<span class="ad-pill">📣 anúncio</span>':''}<br><a class="tel" href="https://wa.me/${c.id}" target="_blank">${telBR(c.id)}</a></td><td><span class="pill st-${c.status||'bot'}">${(c.status||'bot')==='humano'?'humano':'bot'}</span></td><td class="preview">${ultimaMsg(c)}</td><td class="muted">${custoPorTel[c.id]!=null?'US$ '+custoPorTel[c.id].toFixed(3):'—'}</td><td class="muted">${fmtDT(c.updatedAt)}</td><td style="white-space:nowrap"><button class="btn-ver" data-ver="${c.id}">ver conversa</button>${(c.status||'bot')==='humano'?` · <button class="btn btn-ghost" data-volta="${c.id}">Devolver pro bot</button>`:` · <button class="btn-ver" style="color:#b45309" data-pausar="${c.id}">pausar bot aqui</button>`}</td></tr>`).join('')}</tbody>`:`<tbody><tr><td class="empty">Nenhuma conversa ${convsCache.length?'neste período':'ainda'}.</td></tr></tbody>`;
             $('conv-tbl').querySelectorAll('[data-volta]').forEach(b=>b.onclick=async()=>{ await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.volta),{status:'bot',updatedAt:new Date().toISOString()},{merge:true}); });
             $('conv-tbl').querySelectorAll('[data-ver]').forEach(b=>b.onclick=()=>{ const c=convsCache.find(x=>x.id===b.dataset.ver); if(c) abrirChat(c); });
+            $('conv-tbl').querySelectorAll('[data-pausar]').forEach(b=>b.onclick=async()=>{ b.disabled=true; await setDoc(doc(db,`${BASE}/wa_atendimento`,b.dataset.pausar),{status:'humano',adminPingEm:new Date().toISOString(),updatedAt:new Date().toISOString()},{merge:true}); });
         }
         // ---- Funil — "Ganhas" vem da fonte de verdade (collection reservas, ViaBot),
         //      cruzada por Whatsapp; o resto vem dos campos da conversa. ----
@@ -353,6 +360,7 @@
             convsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
             renderConvs();
             renderFunil();
+            renderAlertas(); // alertas mostram o status atual da conversa (pausada/ativa)
         });
         onSnapshot(collection(db,`${BASE}/wa_cancelamentos`),snap=>{ cancDocs=snap.docs.map(d=>d.data()); renderFunil(); });
         onSnapshot(collection(db,`${BASE}/reservas`),snap=>{ resvDocs=snap.docs.map(d=>d.data()); renderFunil(); });

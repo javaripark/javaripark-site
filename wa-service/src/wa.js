@@ -49,6 +49,10 @@ let state = {
 // Handler do bot reativo (registrado pelo server.js). Recebe (mensagem, type).
 let onMessage = null;
 export function setMessageHandler(fn) { onMessage = fn; }
+// Chamado quando um HUMANO responde o cliente pela nossa própria linha (digitou no
+// app do WhatsApp) — o bot então pausa essa conversa pra não atravessar.
+let onHumanTakeover = null;
+export function setHumanTakeoverHandler(fn) { onHumanTakeover = fn; }
 
 // Cache de mensagens enviadas (id -> conteúdo). Necessário pro getMessage:
 // quando o WhatsApp do destinatário pede reenvio (falha de descriptografia),
@@ -149,7 +153,21 @@ export async function startWA() {
     // Mensagens recebidas: opt-out + captura de anúncio + bot reativo
     sock.ev.on('messages.upsert', ({ messages, type }) => {
       for (const m of messages) {
-        if (!m.message || m.key.fromMe) continue;
+        if (!m.message) continue;
+        if (m.key.fromMe) {
+          // Saiu da NOSSA linha. Se o bot NÃO enviou (id fora do cache de enviadas),
+          // foi um humano digitando no app → pausa o bot nessa conversa (não atravessar).
+          const id = m.key.id, jid = m.key.remoteJid || '';
+          if (sentMessages.has(id)) continue; // o próprio bot enviou
+          const t = m.message.conversation || m.message.extendedTextMessage?.text || '';
+          if (!t || !/@(s\.whatsapp\.net|lid)$/.test(jid)) continue; // ignora status/grupo/sem texto
+          // Guarda anti-corrida: o upsert pode chegar ANTES do cacheSent do próprio bot.
+          setTimeout(() => {
+            if (sentMessages.has(id)) return; // era o bot (cacheSent rodou depois)
+            if (onHumanTakeover) Promise.resolve(onHumanTakeover(m)).catch(e => console.error('[takeover]', e?.message));
+          }, 2500);
+          continue;
+        }
         const num = (m.key.remoteJid || '').replace('@s.whatsapp.net', '').replace(/\D/g, '');
         const text = m.message.conversation || m.message.extendedTextMessage?.text || '';
         if (isOptOutMessage(text)) {

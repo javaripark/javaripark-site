@@ -208,6 +208,23 @@ async function runRecovery() {
 
 // Handler chamado pelo wa.js a cada mensagem recebida.
 // type: 'notify' = nova/entregue agora · 'append' = sync de histórico antigo (ignorar)
+// Humano respondeu o cliente pela nossa linha (digitou no app) → pausa o bot nessa
+// conversa pra não atravessar (caso Thaís 14/06: Rodrigo assumiu e o bot continuou).
+// Retomar = "Devolver pro bot" no painel ou o cliente manda #bot.
+export async function handleHumanTakeover(m) {
+  try {
+    const telefone = await resolvePhone(m);
+    if (!telefone) return;
+    if (telefone === cfg.adminPhone) return; // o próprio admin não é "cliente"
+    const conv = await loadConv(telefone);
+    if (conv.status === 'humano') return;     // já pausado
+    conv.status = 'humano';
+    conv.adminPingEm = new Date().toISOString(); // humano já está atendendo → não auto-pingar
+    await saveConv(conv);
+    console.log(`[${telefone}] HUMANO assumiu (resposta pela linha) → bot pausado nesta conversa`);
+  } catch (e) { console.error('[takeover]', e?.message); }
+}
+
 export async function handleIncoming(m, type) {
   try {
     if (type === 'append') return;                         // histórico antigo → não responde

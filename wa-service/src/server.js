@@ -1,8 +1,8 @@
 // API REST do serviço de WhatsApp.
 import express from 'express';
 import { config } from './config.js';
-import { startWA, getWaState, getQrDataUrl, setMessageHandler } from './wa.js';
-import { handleIncoming } from './agent.js';
+import { startWA, getWaState, getQrDataUrl, setMessageHandler, setHumanTakeoverHandler } from './wa.js';
+import { handleIncoming, handleHumanTakeover } from './agent.js';
 import { startQueue, queueStatus } from './queue.js';
 import { enqueue, readLog, addOptOut, getOptOuts, getAdReferral } from './store.js';
 import { rodarResgate } from '../../wa-bot/src/nudge.js';
@@ -133,6 +133,7 @@ async function tickResgate() {
 
 async function main() {
   setMessageHandler(handleIncoming); // bot reativo responde as mensagens recebidas
+  setHumanTakeoverHandler(handleHumanTakeover); // humano respondeu pela linha → pausa o bot na conversa
   await startWA();
   startQueue();
   setInterval(tickResgate, 30 * 60 * 1000); // resgate roda a cada 30 min
