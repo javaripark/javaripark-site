@@ -155,6 +155,7 @@ export async function startWA() {
       for (const m of messages) {
         if (!m.message) continue;
         if (m.key.fromMe) {
+          if (type === 'append') continue; // sync de histórico antigo → não é takeover ao vivo
           // Saiu da NOSSA linha. Se o bot NÃO enviou (id fora do cache de enviadas),
           // foi um humano digitando no app → pausa o bot nessa conversa (não atravessar).
           const id = m.key.id, jid = m.key.remoteJid || '';

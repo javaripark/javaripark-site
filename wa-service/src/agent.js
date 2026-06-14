@@ -213,15 +213,22 @@ async function runRecovery() {
 // Retomar = "Devolver pro bot" no painel ou o cliente manda #bot.
 export async function handleHumanTakeover(m) {
   try {
+    if (dedup(m.key?.id)) return;             // mesma msg não entra 2x no histórico
     const telefone = await resolvePhone(m);
     if (!telefone) return;
     if (telefone === cfg.adminPhone) return; // o próprio admin não é "cliente"
     const conv = await loadConv(telefone);
-    if (conv.status === 'humano') return;     // já pausado
+    // Registra a resposta do humano no histórico (marcador [atendente] → o painel
+    // mostra "Humano respondeu"; o bot, ao retomar, vê o contexto do que foi dito).
+    const { text, mediaType } = extractContent(m.message);
+    const corpo = text || (mediaType ? `[atendente enviou ${mediaType}]` : '');
+    if (corpo) conv.messages.push({ role: 'assistant', content: `[atendente] ${corpo}` });
+    const jaPausado = conv.status === 'humano';
     conv.status = 'humano';
     conv.adminPingEm = new Date().toISOString(); // humano já está atendendo → não auto-pingar
     await saveConv(conv);
-    console.log(`[${telefone}] HUMANO assumiu (resposta pela linha) → bot pausado nesta conversa`);
+    if (!jaPausado) console.log(`[${telefone}] HUMANO assumiu (resposta pela linha) → bot pausado nesta conversa`);
+    else console.log(`[${telefone}] humano respondeu (registrado no histórico)`);
   } catch (e) { console.error('[takeover]', e?.message); }
 }
 

@@ -61,6 +61,7 @@
         .bubble{max-width:82%;padding:8px 12px;border-radius:13px;font-size:13px;line-height:1.42;white-space:pre-wrap;word-break:break-word}
         .bubble.u{align-self:flex-end;background:#4f1964;color:#fff;border-bottom-right-radius:3px}
         .bubble.b{align-self:flex-start;background:#fff;color:#333;border:1px solid #e6e3ec;border-bottom-left-radius:3px}
+        .bubble.h{align-self:flex-start;background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;border-bottom-left-radius:3px}
         .bubble.sys{align-self:center;background:#fef3c7;color:#92400e;font-size:11px;border-radius:8px;max-width:90%;text-align:center}
         .btn-ver{background:none;border:none;color:#4f1964;font-weight:600;font-size:12px;cursor:pointer;text-decoration:underline;padding:4px}
         @media(min-width:640px){.container{padding:20px}.header h1{font-size:1.6em}.admin-nav a{font-size:13px;padding:13px 8px}}
@@ -317,7 +318,7 @@
         onSnapshot(collection(db,`${BASE}/wa_usage`),snap=>{ usoDocs=snap.docs.map(d=>d.data()); renderUso(); renderConvs(); });
 
         // ---- Conversas ----
-        function ultimaMsg(c){ try{ const m=JSON.parse(c.HistoricoJson||'[]'); const u=m[m.length-1]; return u?`${u.role==='user'?'👤':'🤖'} ${String(u.content).slice(0,90)}`:'—'; }catch(e){ return '—'; } }
+        function ultimaMsg(c){ try{ const m=JSON.parse(c.HistoricoJson||'[]'); const u=m[m.length-1]; if(!u) return '—'; let t=String(u.content||''); const hum=/^\[atendente\]\s*/i.test(t); t=t.replace(/^\[atendente\]\s*/i,''); const ic=u.role==='user'?'👤':(hum?'🧑‍💼':'🤖'); return `${ic} ${t.slice(0,90)}`; }catch(e){ return '—'; } }
         // ---- Ver histórico da conversa (modal) ----
         const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
         function abrirChat(c){
@@ -329,9 +330,12 @@
                 if(Array.isArray(m.content)) txt=m.content.filter(b=>b&&b.type==='text').map(b=>b.text).join('\n').trim();
                 else txt=String(m.content||'').trim();
                 if(!txt) continue; // pula turnos só de ferramenta (sem texto pro cliente)
+                const humano=/^\[atendente\]\s*/i.test(txt);
                 const resgate=/\[resgate autom[^\]]*\]/i.test(txt);
-                const clean=esc(txt.replace(/\s*\[resgate autom[^\]]*\]/i,''));
-                parts.push(`<div class="bubble ${m.role==='user'?'u':'b'}">${resgate?'<span style="opacity:.55;font-size:11px">↩︎ resgate automático</span><br>':''}${clean}</div>`);
+                let body=txt.replace(/^\[atendente\]\s*/i,'').replace(/\s*\[resgate autom[^\]]*\]/i,'');
+                const clean=esc(body);
+                const tag=humano?'<span style="color:#16a34a;font-weight:700;font-size:11px">🧑‍💼 Atendente (humano)</span><br>':(resgate?'<span style="opacity:.55;font-size:11px">↩︎ resgate automático</span><br>':'');
+                parts.push(`<div class="bubble ${m.role==='user'?'u':humano?'h':'b'}">${tag}${clean}</div>`);
             }
             $('chat-body').innerHTML=parts.length?parts.join(''):'<div class="muted" style="text-align:center;padding:24px">Sem mensagens registradas.</div>';
             $('chat-modal').classList.add('open');
