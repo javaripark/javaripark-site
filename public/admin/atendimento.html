@@ -119,9 +119,9 @@
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">7 dias</div><div style="font-size:1.3em;font-weight:700" id="u-7d">—</div><div class="muted" id="u-7d-t"></div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">30 dias</div><div style="font-size:1.3em;font-weight:700" id="u-30d">—</div><div class="muted" id="u-30d-t"></div></div>
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Custo médio/conversa</div><div style="font-size:1.3em;font-weight:700" id="u-medio">—</div><div class="muted" id="u-medio-t"></div></div>
-                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Crédito restante</div><div style="font-size:1.3em;font-weight:700;color:#16a34a" id="u-saldo">—</div><div class="muted">saldo atual: US$ <input id="u-credito" type="number" step="0.01" min="0" style="width:72px;border:1px solid #ddd;border-radius:6px;padding:2px 6px;font-size:12px"><br><span id="u-credito-em" style="font-size:10px;color:#9a9aa3"></span></div></div>
+                <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Crédito restante</div><div style="font-size:1.3em;font-weight:700;color:#16a34a" id="u-saldo">—</div><div class="muted" id="u-saldo-sub" style="font-size:10px"></div><div class="muted">saldo do console: US$ <input id="u-credito" type="number" step="0.01" min="0" style="width:72px;border:1px solid #ddd;border-radius:6px;padding:2px 6px;font-size:12px"><br><span id="u-credito-em" style="font-size:10px;color:#9a9aa3"></span></div></div>
             </div>
-            <p class="muted" style="margin-top:10px">Câmbio de exibição: US$ 1 = R$ <span id="u-cambio">5,50</span>. Tokens e custo vêm das respostas reais da API. <b>Crédito restante</b>: digite no campo "saldo atual" o valor que aparece em console.anthropic.com — o card mostra exatamente esse número (não calcula nada por cima, porque a cobrança real só o console sabe). Quando reabrir o console, atualize o número aqui.</p>
+            <p class="muted" style="margin-top:10px">Câmbio de exibição: US$ 1 = R$ <span id="u-cambio">5,50</span>. Tokens e custo vêm das respostas reais da API. <b>Crédito restante</b>: digite no campo "saldo do console" o valor de console.anthropic.com — o card mostra esse valor MENOS o gasto registrado a partir daí (cada interação/teste do bot reduz, com base nos tokens reais da API). Quando reabrir o console, atualize o número pra re-sincronizar (zera o drift acumulado).</p>
         </div>
 
         <div class="card">
@@ -276,14 +276,26 @@
             $('u-30d').innerHTML=dinheiro(s30); $('u-30d-t').textContent=t30.toLocaleString('pt-BR')+' tokens';
             $('u-medio').innerHTML=convs30.size?dinheiro(s30/convs30.size):'—'; $('u-medio-t').textContent=convs30.size+' conversa(s) em 30d';
             const cred=parseFloat($('u-credito').value)||0;
-            $('u-saldo').innerHTML=cred?dinheiro(cred):'—'; // mostra EXATAMENTE o saldo informado (fonte: console; sem subtração)
+            // saldo do console (âncora) − gasto registrado DESDE então; cada interação/teste do bot reduz.
+            let gastoApos=0, nApos=0; for(const u of usoDocs){ if(!creditoEm || (u.CriadoEm||'')>creditoEm){ gastoApos+=(u.USD||0); nApos++; } }
+            $('u-saldo').innerHTML=cred?dinheiro(Math.max(0,cred-gastoApos)):'—';
+            $('u-saldo-sub').textContent = cred ? `− US$ ${gastoApos.toFixed(3)} gastos desde o sync (${nApos} turno(s))` : '';
         }
         function renderPause(){ const b=$('pause-btn'); b.textContent=pausado?'▶ Retomar bot':'⏸ Pausar bot'; b.className=pausado?'btn btn-primary':'btn btn-warn'; renderBotStatus(); }
         $('pause-btn').onclick=async()=>{ $('pause-btn').disabled=true; try{ await setDoc(doc(db,`${BASE}/wa_config`,'main'),{BotPausado:!pausado},{merge:true}); }finally{ $('pause-btn').disabled=false; } };
         renderPause();
         let creditoEm='';
         onSnapshot(doc(db,`${BASE}/wa_config`,'main'),s=>{ const d=s.exists()?s.data():{}; if(d.CreditoUSD!=null&&document.activeElement!==$('u-credito')) $('u-credito').value=d.CreditoUSD; creditoEm=d.CreditoEm||''; $('u-credito-em').textContent=creditoEm?('atualizado em '+fmtDT(creditoEm)):'informe o saldo do console'; pausado=!!d.BotPausado; renderPause(); renderUso(); });
-        $('u-credito').addEventListener('change',async()=>{ const v=parseFloat($('u-credito').value)||0; const now=new Date().toISOString(); creditoEm=now; $('u-credito-em').textContent='atualizado agora'; await setDoc(doc(db,`${BASE}/wa_config`,'main'),{CreditoUSD:v,CreditoEm:now},{merge:true}); renderUso(); });
+        $('u-credito').addEventListener('change',async()=>{
+            const v=parseFloat($('u-credito').value)||0; const now=new Date().toISOString(); creditoEm=now;
+            $('u-credito-em').textContent='salvando…'; $('u-credito-em').style.color='#9a9aa3';
+            try{
+                await setDoc(doc(db,`${BASE}/wa_config`,'main'),{CreditoUSD:v,CreditoEm:now},{merge:true});
+                $('u-credito-em').textContent='✓ salvo agora'; $('u-credito-em').style.color='#16a34a';
+                setTimeout(()=>{ $('u-credito-em').textContent='atualizado em '+fmtDT(now); $('u-credito-em').style.color='#9a9aa3'; },3000);
+            }catch(e){ $('u-credito-em').textContent='erro ao salvar — tente de novo'; $('u-credito-em').style.color='#ef4444'; }
+            renderUso();
+        });
         onSnapshot(collection(db,`${BASE}/wa_usage`),snap=>{ usoDocs=snap.docs.map(d=>d.data()); renderUso(); renderConvs(); });
 
         // ---- Conversas ----
