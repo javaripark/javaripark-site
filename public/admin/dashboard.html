@@ -229,10 +229,10 @@
 
             <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
                 <div class="kpi-card"><div class="kpi-label">Faturamento</div><div class="kpi-value" id="kpi-revenue">—</div><div class="kpi-sub" id="kpi-revenue-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Clientes no Período</div><div class="kpi-value" id="kpi-clients">—</div><div class="kpi-sub" id="kpi-clients-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Público (entradas)</div><div class="kpi-value" id="kpi-clients">—</div><div class="kpi-sub" id="kpi-clients-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Vendas</div><div class="kpi-value" id="kpi-orders">—</div><div class="kpi-sub" id="kpi-orders-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kpi-ticket">—</div><div class="kpi-sub" id="kpi-ticket-sub"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Itens por Cliente</div><div class="kpi-value" id="kpi-items">—</div><div class="kpi-sub" id="kpi-items-sub"></div></div>
+                <div class="kpi-card"><div class="kpi-label">Itens/comanda</div><div class="kpi-value" id="kpi-items">—</div><div class="kpi-sub" id="kpi-items-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Melhor Dia</div><div class="kpi-value" id="kpi-best-day">—</div><div class="kpi-sub" id="kpi-best-day-sub"></div></div>
             </div>
 
@@ -439,6 +439,15 @@
                 <div class="kpi-card"><div class="kpi-label">Aniversariantes do Mês</div><div class="kpi-value" id="cli-aniv-mes" style="color:#f59e0b">—</div><div class="kpi-sub" id="cli-aniv-sub"></div></div>
                 <div class="kpi-card"><div class="kpi-label">Clientes VIP</div><div class="kpi-value" id="cli-vip" style="color:#10b981">—</div><div class="kpi-sub">10+ visitas</div></div>
                 <div class="kpi-card"><div class="kpi-label">Com Telefone</div><div class="kpi-value" id="cli-telefone">—</div><div class="kpi-sub" id="cli-tel-sub"></div></div>
+            </div>
+
+            <div class="card" style="margin-bottom:14px">
+                <h3>Público no período <span id="cli-publico-range" style="font-weight:400;color:#999;font-size:.8em"></span></h3>
+                <div class="kpi-grid">
+                    <div class="kpi-card"><div class="kpi-label">Entradas (portaria)</div><div class="kpi-value" id="cli-publico" style="color:#4f1964">—</div><div class="kpi-sub" id="cli-publico-sub"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Clientes c/ comanda</div><div class="kpi-value" id="cli-comanda">—</div><div class="kpi-sub" id="cli-comanda-sub"></div></div>
+                </div>
+                <p style="font-size:11px;color:#999;margin-top:8px;line-height:1.4">"Entradas" conta por pessoa na portaria (cover) — não é afetado por comandas juntadas no pagamento. "Clientes c/ comanda" pode sub-contar quando comandas são unificadas. Em dia/horário de entrada grátis a portaria não registra. Use o filtro de período lá em cima.</p>
             </div>
 
             <div class="chart-grid">
@@ -946,6 +955,8 @@
             const totalRev = data.reduce((s,d)=>s+(d.faturamento||0),0);
             const totalOrd = data.reduce((s,d)=>s+(d.qtdVendas||0),0);
             const totalCli = data.reduce((s,d)=>s+(d.clientesUnicos||0),0);
+            const portariaQtd = d => ((d.porCategoria||[]).find(c=>/PORTARIA/i.test(c.nome))||{}).qtd || 0;
+            const totalPublico = data.reduce((s,d)=>s+portariaQtd(d),0);
             const totalItens = data.reduce((s,d)=>s+(d.itensVendidos||0),0);
             const avgTick = totalOrd>0?totalRev/totalOrd:0;
             const itensPorCli = totalCli>0 ? totalItens/totalCli : 0;
@@ -956,18 +967,29 @@
             const pRev = prev ? prev.reduce((s,d)=>s+(d.faturamento||0),0) : 0;
             const pOrd = prev ? prev.reduce((s,d)=>s+(d.qtdVendas||0),0) : 0;
             const pCli = prev ? prev.reduce((s,d)=>s+(d.clientesUnicos||0),0) : 0;
+            const pPublico = prev ? prev.reduce((s,d)=>s+portariaQtd(d),0) : 0;
             const pItens = prev ? prev.reduce((s,d)=>s+(d.itensVendidos||0),0) : 0;
             const pTick = pOrd>0 ? pRev/pOrd : 0;
             const pItensPorCli = pCli>0 ? pItens/pCli : 0;
 
             $('kpi-revenue').textContent = fmtBRL(totalRev);
-            $('kpi-clients').textContent = totalCli > 0 ? totalCli.toLocaleString('pt-BR') : '—';
+            $('kpi-clients').textContent = totalPublico > 0 ? totalPublico.toLocaleString('pt-BR') : '—';
             $('kpi-orders').textContent = totalOrd.toLocaleString('pt-BR');
             $('kpi-ticket').textContent = fmtBRLFull(avgTick);
             $('kpi-items').textContent = (totalItens>0 && totalCli>0) ? itensPorCli.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—';
             $('kpi-best-day').textContent = fmtBRL(best.faturamento);
             $('kpi-revenue-sub').innerHTML = `${data.length} dia${data.length!==1?'s':''}${pctVar(totalRev,pRev)}`;
-            $('kpi-clients-sub').innerHTML = totalCli>0 ? `~${Math.round(totalCli/Math.max(data.length,1))}/dia${pctVar(totalCli,pCli)}` : 'sem dado de cliente';
+            $('kpi-clients-sub').innerHTML = totalPublico>0
+                ? `~${Math.round(totalPublico/Math.max(data.length,1))}/dia · ${totalCli.toLocaleString('pt-BR')} c/ comanda${pctVar(totalPublico,pPublico)}`
+                : (totalCli>0 ? `${totalCli.toLocaleString('pt-BR')} c/ comanda (sem cover no período)` : 'sem dado');
+            // espelha na aba Clientes (bloco "Público no período")
+            if ($('cli-publico')) {
+                $('cli-publico').textContent = totalPublico>0 ? totalPublico.toLocaleString('pt-BR') : '—';
+                $('cli-publico-sub').innerHTML = totalPublico>0 ? `~${Math.round(totalPublico/Math.max(data.length,1))}/dia${pctVar(totalPublico,pPublico)}` : 'sem cover no período';
+                $('cli-comanda').textContent = totalCli>0 ? totalCli.toLocaleString('pt-BR') : '—';
+                $('cli-comanda-sub').textContent = `${data.length} dia${data.length!==1?'s':''} no período`;
+                if ($('cli-publico-range')) $('cli-publico-range').textContent = (from&&to) ? `(${fmtDateBR(from)} – ${fmtDateBR(to)})` : '';
+            }
             $('kpi-orders-sub').innerHTML = `~${Math.round(totalOrd/Math.max(data.length,1))}/dia${pctVar(totalOrd,pOrd)}`;
             $('kpi-ticket-sub').innerHTML = `vs anterior${pctVar(avgTick,pTick)}`;
             $('kpi-items-sub').innerHTML = (totalItens>0 && totalCli>0) ? `${totalItens.toLocaleString('pt-BR')} itens${pctVar(itensPorCli,pItensPorCli)}` : 'sem dado';
