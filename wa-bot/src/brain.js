@@ -82,9 +82,18 @@ export async function atender(conv, textoCliente) {
 
     if (resp.stop_reason !== 'tool_use') {
       let reply = resp.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-      // Cliente só mandou fechamento/reconhecimento sem nada pendente → ficar quieto
-      // (humano não responde a todo "show"). Descarta o filler e não envia nada.
-      if (!acted && /^[_*\s]*sil[eê]ncio[_*\s]*$/i.test(reply)) {
+      // __SILENCIO__: token de "fica quieto". O modelo ora manda SÓ o token, ora vaza ele
+      // GRUDADO num texto normal (ex: "Te espero! \n\n__SILENCIO__") e em formas variadas
+      // (_SILENCIO_, **SILENCIO**). Remove o token de QUALQUER lugar — nunca pode chegar ao
+      // cliente. Exige wrapper (_/*) pra não mexer na palavra "silêncio" num texto de verdade.
+      reply = reply
+        .replace(/_{1,3}\s*sil[eê]ncio\s*_{1,3}/gi, '')
+        .replace(/\*{1,3}\s*sil[eê]ncio\s*\*{1,3}/gi, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+      // Sem nada pendente e não sobrou nada de útil → fica quieto (humano não responde a
+      // todo "show"). Cobre o token pelado também (ex: "SILENCIO" sem wrapper).
+      if (!acted && (reply === '' || /^sil[eê]ncio$/i.test(reply))) {
         conv.messages.pop();
         return { reply: '', usage, handoff: false, reservou: false, negociou: false };
       }
