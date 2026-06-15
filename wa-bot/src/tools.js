@@ -48,7 +48,10 @@ function phoneKey(v) {
 const samePhone = (a, b) => { const k = phoneKey(a); return !!k && k === phoneKey(b); };
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
 // Exceções por data (ex: jogo do Brasil na Copa) — manter alinhado com EXCECOES_DIA do prompt.js
-const TOLERANCIA_EXCECAO = { '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)' };
+const TOLERANCIA_EXCECAO = {
+  '2026-06-19': 'até 20h (dia de jogo do Brasil — entrada R$10 a noite toda)',
+  '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)',
+};
 const tolerancia = (data, dow) => TOLERANCIA_EXCECAO[data] || TOLERANCIA[dow] || 'a combinar com a equipe (dia de evento especial)';
 // seg/ter: sistema permite (eventos especiais/corporativo), mas o bot deve tratar como exceção
 const AVISO_SEG_TER = 'esta data cai em SEGUNDA ou TERÇA: casa FECHADA ao público. EXPLIQUE isso ao cliente em linguagem simples (ex: "o dia X cai numa terça e a casa fecha ao público seg/ter") e ofereça quarta a domingo; se for grupo grande/evento querendo um dia fechado, é evento especial → chamar_humano DEPOIS de explicar. NUNCA registre por conta própria';
