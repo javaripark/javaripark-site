@@ -14,6 +14,7 @@ import { sendText, sendToJid, resolvePhone, extractAdReferral } from './wa.js';
 import { getAdReferral, recordAdReferral } from './store.js';
 
 const DEBOUNCE_MS = 10000;     // agrupa mensagens picadas ao vivo (espera 10s após a última; gente escreve em 3 msgs)
+const MEDIA_COOLDOWN_MS = 90000; // 1 aviso "só leio texto" por rajada de mídia (cliente manda 5 fotos = 1 resposta, não 5)
 const LIVE_AGE_S = 90;         // mais novo que isso = ao vivo; mais velho = atrasado
 const STALE_MAX_H = 12;        // não responde nada mais velho que isso (janela já fechada)
 const RECOVERY_GAP_MS = 25000; // espaço entre respostas de recuperação (anti-rajada)
@@ -43,6 +44,7 @@ function dedup(id) {
 
 const pendentes = new Map();   // debounce ao vivo: telefone -> {texts, last, nome}
 const recoveryBuf = new Map(); // recuperação: telefone -> {texts, nome, ts}
+const midiaUltimoAviso = new Map(); // telefone -> ts do último aviso de mídia (cooldown anti-spam de rajada)
 let recoveryRunning = false;
 
 // Extrai texto e/ou tipo de mídia de uma mensagem do Baileys
@@ -79,6 +81,15 @@ async function gravarUso(telefone, usage) {
 }
 
 async function handleMedia(telefone, nome, mediaType, replyJid) {
+  // Anti-spam de rajada: cliente manda várias fotos seguidas → 1 aviso só, não 1 por foto
+  // (caso 0544: 3 imagens = 3 respostas idênticas). Check+set SÍNCRONO antes de qualquer
+  // await — eventos de mídia chegam concorrentes; assim só o 1º da rajada responde.
+  const agora = Date.now();
+  const ultimo = midiaUltimoAviso.get(telefone) || 0;
+  if (agora - ultimo < MEDIA_COOLDOWN_MS) return; // dentro da janela → ignora (já avisou)
+  midiaUltimoAviso.set(telefone, agora);
+  if (midiaUltimoAviso.size > 2000) { const it = midiaUltimoAviso.keys(); for (let i = 0; i < 500; i++) midiaUltimoAviso.delete(it.next().value); }
+
   const conv = await loadConv(telefone);
   if (conv.status === 'humano') return;
   conv.nomePerfil = nome || conv.nomePerfil;
