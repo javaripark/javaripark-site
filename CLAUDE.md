@@ -139,6 +139,20 @@ curl -s localhost:3100/health # {ok, connected, me:"551120811544"} = saudável
 - Bot responde 24/7; só envio ATIVO tem janela (fila 11-22h).
 - Painel (GitHub Pages) muda com `git push`; o bot local NÃO — são deploys independentes.
 
+### Sync do Consumer POS (dado do dashboard)
+
+- O dado vem do backup Firebird no Google Drive (`<dia-da-semana>.fbconsumer`, ex: `domingo.fbconsumer`),
+  extraído por `scripts/sync-consumer.py` no GitHub Actions (`sync-consumer.yml`) → commita `public/data/*.json`.
+- **O cron do GitHub Actions é best-effort e às vezes NÃO dispara** (dropou os 2 runs de 15/06/2026 →
+  domingo 14/06 não entrou). Por isso há um **gatilho local confiável** no Mac (sempre ligado):
+  - LaunchAgent `~/Library/LaunchAgents/com.javari.sync-consumer.plist` roda **08:00 BRT** todo dia.
+  - Chama `~/.javari/trigger-sync.sh` (cópia operacional — o launchd **não** executa script dentro de
+    `~/Downloads`, TCC bloqueia). A cópia **canônica/versionada** é `scripts/trigger-sync.sh`; ao editar,
+    `cp scripts/trigger-sync.sh ~/.javari/trigger-sync.sh`.
+  - Log: `~/Library/Logs/javari-sync-trigger.log`. Disparo manual: `gh workflow run sync-consumer.yml`.
+  - Recarregar agent: `launchctl bootout gui/$(id -u)/com.javari.sync-consumer; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.javari.sync-consumer.plist`.
+  - Os 2 crons do GitHub (04h/06h BRT) continuam como redundância secundária.
+
 ---
 
 ## 5. Testes — disciplina obrigatória
