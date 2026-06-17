@@ -114,6 +114,15 @@
         </div>
 
         <div class="card">
+            <h3><span>Impacto da automação — <span id="auto-periodo">últimos 30 dias</span></span></h3>
+            <div class="funil-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+                <div class="stat" style="--ac:#16a34a"><div class="f-label">Autonomia <span class="info-i" tabindex="0" role="button" aria-label="o que é" data-tip="% das conversas resolvidas 100% pelo bot, sem precisar de humano (handoff)">i</span></div><div class="val dash" id="a-autonomia">—</div></div>
+                <div class="stat" style="--ac:#4f1964"><div class="f-label">Reservas IA × Humano <span class="info-i" id="a-resv-sub" tabindex="0" role="button" aria-label="o que é" data-tip="reservas criadas pelo bot × criadas no painel/manual, no período">i</span></div><div class="val dash" id="a-resv">—</div></div>
+                <div class="stat" style="--ac:#b45309"><div class="f-label">Tempo economizado <span class="info-i" id="a-tempo-sub" tabindex="0" role="button" aria-label="o que é" data-tip="atendimentos 100% autônomos (com interação real) × ~10 min que um humano levaria — estimativa">i</span></div><div class="val dash" id="a-tempo">—</div></div>
+            </div>
+        </div>
+
+        <div class="card">
             <h3><span>Claude API — uso e custo REAIS <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(tokens contados pela própria API)</span></span></h3>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
                 <div><div class="muted" style="text-transform:uppercase;font-size:10px;font-weight:700">Hoje</div><div style="font-size:1.3em;font-weight:700" id="u-hoje">—</div><div class="muted" id="u-hoje-t"></div></div>
@@ -389,6 +398,24 @@
             const resgates=periodo.filter(c=>c.NudgeEm);
             set('f-resgates', resgates.length);
             set('f-resgconv', resgates.filter(c=>c.ReservouEm&&new Date(c.ReservouEm)>new Date(c.NudgeEm)).length);
+
+            // ---- Impacto da automação ----
+            $('auto-periodo').textContent=periodoLabel();
+            // "precisou de humano" = está em humano agora OU um atendente já respondeu no histórico
+            const precisouHumano=c=>c.status==='humano'||/\[atendente\]/i.test(c.HistoricoJson||'');
+            const autonomas=periodo.filter(c=>!precisouHumano(c));
+            set('a-autonomia', periodo.length?`${Math.round(autonomas.length/periodo.length*100)}<span class="u">% autônomo</span>`:'—');
+            $('a-autonomia').parentElement.querySelector('.info-i').dataset.tip=periodo.length?`${autonomas.length} de ${periodo.length} conversas resolvidas 100% pelo bot (sem handoff)`:'sem dado';
+            // reservas IA × humano no período (por CriadoEm)
+            const resvP=resvDocs.filter(r=>{ const t=new Date(r.CriadoEm||0).getTime(); return r.CriadoEm&&t>=rS&&t<=rE; });
+            const iaR=resvP.filter(r=>r.ViaBot).length, humR=resvP.length-resvP.filter(r=>r.ViaBot).length;
+            set('a-resv', resvP.length?`${iaR}<span class="u">×</span>${humR}`:'—');
+            $('a-resv-sub').dataset.tip=resvP.length?`${iaR} pelo bot · ${humR} no painel/manual · ${Math.round(iaR/resvP.length*100)}% automatizadas`:'reservas do bot × manuais, no período';
+            // tempo economizado: atendimentos autônomos COM interação real (>1 msg do cliente) × 10 min
+            const atendReais=autonomas.filter(c=>(c.MsgsCliente||0)>1).length;
+            const minutos=atendReais*10, horas=Math.floor(minutos/60), mins=minutos%60;
+            set('a-tempo', minutos?`≈ ${horas?horas+'h':''}${mins?(horas?' ':'')+mins+'min':(horas?'':'0min')}`.trim():'—');
+            $('a-tempo-sub').dataset.tip=minutos?`${atendReais} atendimentos 100% autônomos × ~10 min que um humano levaria (estimativa)`:'estimativa de tempo poupado';
         }
         onSnapshot(collection(db,`${BASE}/wa_atendimento`),snap=>{
             convsCache=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));

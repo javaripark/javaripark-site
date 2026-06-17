@@ -159,6 +159,20 @@ curl -s localhost:3100/health # {ok, connected, me:"551120811544"} = saudável
   - Recarregar agent: `launchctl bootout gui/$(id -u)/com.javari.sync-consumer; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.javari.sync-consumer.plist`.
   - Os 2 crons do GitHub (04h/06h BRT) continuam como redundância secundária.
 
+### Insights de atendimento (loop de melhoria do prompt — "ML via chat")
+
+- **Objetivo: independência total do bot.** O script CRUNCHA os dados; a ANÁLISE/decisão é do
+  Claude no chat (não por API). Gera um digest: autonomia%, reservas IA×humano, tempo economizado,
+  temas mais perguntados, handoffs por motivo, regressões na fala do bot (overflow/lotado/__SILENCIO__/
+  ** /desculpa-por-foto), frustração do cliente, e a lista de handoffs pra avaliar gap de independência.
+- **Sob demanda:** `cd wa-bot && npm run insights [dias]` (default 30) ou `node insights.mjs 14 --save`.
+  Fonte versionada: `wa-bot/insights.mjs`. Cole o resultado no chat e peça "analisa e proponha ajustes".
+- **Recorrente:** LaunchAgent `~/Library/LaunchAgents/com.javari.insights.plist` roda **seg 09:00 BRT**,
+  chama `~/.javari/insights-weekly.sh` (cópia operacional — TCC não deixa launchd rodar de `~/Downloads`),
+  salva em `~/Library/Logs/javari-insights/latest.md` (+ `insights-<data>.md`) e dispara uma notificação
+  no Mac pra você abrir o chat. Recarregar: `launchctl bootout gui/$(id -u)/com.javari.insights; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.javari.insights.plist`.
+- Métrica de tempo economizado usa **~10 min/atendimento autônomo** (decisão do René, 16/06) — se mudar, é em insights.mjs e em atendimento.html (card "Tempo economizado").
+
 ---
 
 ## 5. Testes — disciplina obrigatória

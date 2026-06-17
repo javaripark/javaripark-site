@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "chat": "node src/chat.js",
-    "audit": "node test/scenarios.mjs"
+    "audit": "node test/scenarios.mjs",
+    "insights": "node insights.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
