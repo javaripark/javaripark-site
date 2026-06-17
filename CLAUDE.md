@@ -177,7 +177,7 @@ curl -s localhost:3100/health # {ok, connected, me:"551120811544"} = saudável
   melhoria no chat (depois de commitar), REGISTRE-O:
   `cd wa-bot && node ml-log.mjs '{"titulo":"...","achados":"...","mudancas":["..."],"commit":"<hash>"}'`
   (o snapshot de métricas é capturado automático). Snapshots semanais entram sozinhos pelo job acima.
-- Métrica de tempo economizado usa **~10 min/atendimento autônomo** (decisão do René, 16/06) — se mudar, é em insights.mjs e em atendimento.html (card "Tempo economizado").
+- Métrica de tempo economizado usa o **tempo médio OBSERVADO de atendimento** = span (1º contato → última msg do cliente) **capado a 30min** pra excluir a ausência do cliente; calculado ao vivo (decisão do René, 16/06 — a média crua é inútil por outliers de cliente que some e volta). Lógica espelhada em `atendimento.html` (card), `insights.mjs` e `ml-log.mjs` — se mudar, mude nos três.
 
 ---
 

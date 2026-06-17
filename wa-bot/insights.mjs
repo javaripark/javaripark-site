@@ -38,7 +38,11 @@ const resvP = reservas.filter(r => r.CriadoEm && new Date(r.CriadoEm).getTime() 
 const iaR = resvP.filter(r => r.ViaBot).length, humR = resvP.length - iaR;
 const custoP = usage.filter(u => u.CriadoEm && new Date(u.CriadoEm).getTime() >= corte && u.Telefone !== 'AJUSTE-TESTES-CLAUDE')
   .reduce((s, u) => s + (u.USD || 0), 0);
-const minutos = atendReais.length * 10;
+// tempo médio OBSERVADO por atendimento = span (1º contato → última msg), capado a 30min
+const spansMin = atendReais.filter(c => c.PrimeiroContato && c.UltimaMsgCliente)
+  .map(c => Math.min(30, Math.max(0, (new Date(c.UltimaMsgCliente) - new Date(c.PrimeiroContato)) / 60000)));
+const avgMin = spansMin.length ? spansMin.reduce((s, d) => s + d, 0) / spansMin.length : 10;
+const minutos = Math.round(atendReais.length * avgMin);
 
 // --- Temas das perguntas do cliente (buckets por palavra-chave) ---
 const TEMAS = [
@@ -108,7 +112,7 @@ L.push(`## 1. Resumo`);
 L.push(`- Conversas: **${periodo.length}**`);
 L.push(`- Autonomia (sem humano): **${pct(autonomas.length, periodo.length)}%** (${autonomas.length}/${periodo.length})`);
 L.push(`- Reservas IA × Humano: **${iaR} × ${humR}** (${pct(iaR, resvP.length)}% automatizadas)`);
-L.push(`- Tempo economizado (estim.): **≈ ${Math.floor(minutos / 60)}h ${minutos % 60}min** (${atendReais.length} atend. autônomos × 10 min)`);
+L.push(`- Tempo economizado (estim.): **≈ ${Math.floor(minutos / 60)}h ${minutos % 60}min** (${atendReais.length} atend. autônomos × ~${avgMin.toFixed(0)} min observados, capado a 30min)`);
 L.push(`- Custo Claude API no período: **US$ ${custoP.toFixed(2)}**`);
 L.push(`- Handoffs (alertas): **${alP.length}**\n`);
 L.push(`## 2. O que o cliente mais pergunta (temas)`);

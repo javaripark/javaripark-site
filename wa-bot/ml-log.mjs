@@ -24,7 +24,10 @@ const [conv, alertas, reservas] = await Promise.all([
 ]);
 const periodo = conv.filter(noPeriodo);
 const autonomas = periodo.filter(c => !precisouHumano(c));
-const atendReais = autonomas.filter(c => (c.MsgsCliente || 0) > 1).length;
+const atendReais = autonomas.filter(c => (c.MsgsCliente || 0) > 1);
+const spansMin = atendReais.filter(c => c.PrimeiroContato && c.UltimaMsgCliente)
+  .map(c => Math.min(30, Math.max(0, (new Date(c.UltimaMsgCliente) - new Date(c.PrimeiroContato)) / 60000)));
+const avgMin = spansMin.length ? spansMin.reduce((s, d) => s + d, 0) / spansMin.length : 10;
 const resvP = reservas.filter(r => r.CriadoEm && new Date(r.CriadoEm).getTime() >= corte);
 const iaR = resvP.filter(r => r.ViaBot).length;
 const alP = alertas.filter(a => new Date(a.CriadoEm || a.criadoEm || 0).getTime() >= corte).length;
@@ -34,7 +37,7 @@ const Metricas = {
   handoffs: alP,
   reservasIA: iaR,
   reservasHum: resvP.length - iaR,
-  tempoEconMin: atendReais * 10,
+  tempoEconMin: Math.round(atendReais.length * avgMin),
 };
 
 const arg = process.argv[2] || '';
