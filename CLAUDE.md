@@ -169,8 +169,14 @@ curl -s localhost:3100/health # {ok, connected, me:"551120811544"} = saudável
   Fonte versionada: `wa-bot/insights.mjs`. Cole o resultado no chat e peça "analisa e proponha ajustes".
 - **Recorrente:** LaunchAgent `~/Library/LaunchAgents/com.javari.insights.plist` roda **seg 09:00 BRT**,
   chama `~/.javari/insights-weekly.sh` (cópia operacional — TCC não deixa launchd rodar de `~/Downloads`),
-  salva em `~/Library/Logs/javari-insights/latest.md` (+ `insights-<data>.md`) e dispara uma notificação
-  no Mac pra você abrir o chat. Recarregar: `launchctl bootout gui/$(id -u)/com.javari.insights; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.javari.insights.plist`.
+  salva em `~/Library/Logs/javari-insights/latest.md` (+ `insights-<data>.md`), registra um SNAPSHOT de
+  métrica no histórico (`node wa-bot/ml-log.mjs snapshot`) e dispara uma notificação no Mac. Recarregar:
+  `launchctl bootout gui/$(id -u)/com.javari.insights; launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.javari.insights.plist`.
+- **Histórico VISUAL** (aba Atendimento → card "Evolução do bot"): collection `wa_ml_log`, lida pelo
+  painel — linha do tempo dos ciclos + gráfico de autonomia ao longo do tempo. Ao FECHAR um ciclo de
+  melhoria no chat (depois de commitar), REGISTRE-O:
+  `cd wa-bot && node ml-log.mjs '{"titulo":"...","achados":"...","mudancas":["..."],"commit":"<hash>"}'`
+  (o snapshot de métricas é capturado automático). Snapshots semanais entram sozinhos pelo job acima.
 - Métrica de tempo economizado usa **~10 min/atendimento autônomo** (decisão do René, 16/06) — se mudar, é em insights.mjs e em atendimento.html (card "Tempo economizado").
 
 ---

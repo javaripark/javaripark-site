@@ -52,6 +52,15 @@
         .stat .val{margin-top:auto;font-size:1.5em;font-weight:800;color:var(--ac,#2b2b33);line-height:1.05}
         .stat .val .u{font-size:.5em;font-weight:600;color:#9a9aa3;margin-left:2px;letter-spacing:.2px}
         .stat .val.dash{color:#c9c9d0}
+        .ml-item{display:flex;gap:12px;padding:12px 0;border-top:1px solid #f0eef3}
+        .ml-item:first-child{border-top:none}
+        .ml-item.ml-snap{opacity:.72}
+        .ml-date{flex:none;width:54px;font-size:11px;font-weight:700;color:#8a6aa6;line-height:1.3;padding-top:1px}
+        .ml-title{font-weight:700;color:#2b2b33;font-size:13px;margin-bottom:3px}
+        .ml-title a{font-weight:600;font-size:11px}
+        .ml-ach{font-size:12px;line-height:1.4;margin-bottom:5px}
+        .ml-mud{margin:0 0 6px 16px;padding:0;font-size:12px;color:#444;line-height:1.45}
+        .ml-chip{display:inline-block;background:#dcfce7;color:#16a34a;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
         .btn-warn{background:#fff8e6;color:#b45309;border:1px solid #f3d98a}
         .modal{position:fixed;inset:0;background:rgba(25,12,38,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:14px}
         .modal.open{display:flex}
@@ -120,6 +129,12 @@
                 <div class="stat" style="--ac:#4f1964"><div class="f-label">Reservas IA × Humano <span class="info-i" id="a-resv-sub" tabindex="0" role="button" aria-label="o que é" data-tip="reservas criadas pelo bot × criadas no painel/manual, no período">i</span></div><div class="val dash" id="a-resv">—</div></div>
                 <div class="stat" style="--ac:#b45309"><div class="f-label">Tempo economizado <span class="info-i" id="a-tempo-sub" tabindex="0" role="button" aria-label="o que é" data-tip="atendimentos 100% autônomos (com interação real) × ~10 min que um humano levaria — estimativa">i</span></div><div class="val dash" id="a-tempo">—</div></div>
             </div>
+        </div>
+
+        <div class="card">
+            <h3><span>Evolução do bot — melhorias por análise (ML via chat) <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(cada ciclo = análise do atendimento + ajuste no comportamento)</span></span></h3>
+            <div id="ml-trend"></div>
+            <div id="ml-timeline" class="muted">carregando…</div>
         </div>
 
         <div class="card">
@@ -425,6 +440,32 @@
         });
         onSnapshot(collection(db,`${BASE}/wa_cancelamentos`),snap=>{ cancDocs=snap.docs.map(d=>d.data()); renderFunil(); });
         onSnapshot(collection(db,`${BASE}/reservas`),snap=>{ resvDocs=snap.docs.map(d=>d.data()); renderFunil(); });
+
+        // ---- Histórico de ML (melhorias por análise) ----
+        let mlDocs=[];
+        const fmtMLdata=s=>{ const p=String(s||'').split('-'); return p.length===3?`${p[2]}/${p[1]}`:'—'; };
+        function mlSpark(pts){
+            const W=Math.max(240,pts.length*64), H=64, pad=10;
+            const x=i=>pad+(pts.length>1?i*((W-2*pad)/(pts.length-1)):0);
+            const y=v=>H-pad-(v/100)*(H-2*pad);
+            const d=pts.map((p,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(p.Metricas.autonomia).toFixed(1)}`).join(' ');
+            const dots=pts.map((p,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(p.Metricas.autonomia).toFixed(1)}" r="3" fill="#16a34a"/><text x="${x(i).toFixed(1)}" y="${(y(p.Metricas.autonomia)-7).toFixed(1)}" font-size="9" fill="#16a34a" text-anchor="middle" font-weight="700">${p.Metricas.autonomia}%</text>`).join('');
+            return `<div style="margin-bottom:14px"><div class="muted" style="font-size:10px;text-transform:uppercase;font-weight:700;margin-bottom:4px">Autonomia ao longo do tempo</div><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;overflow:visible"><path d="${d}" fill="none" stroke="#16a34a" stroke-width="2"/>${dots}</svg></div>`;
+        }
+        function renderML(){
+            const docs=[...mlDocs].sort((a,b)=>(b.Data||'').localeCompare(a.Data||'')||(b.CriadoEm||'').localeCompare(a.CriadoEm||''));
+            const pts=[...mlDocs].filter(d=>d.Metricas&&typeof d.Metricas.autonomia==='number').sort((a,b)=>(a.Data||'').localeCompare(b.Data||'')||(a.CriadoEm||'').localeCompare(b.CriadoEm||''));
+            $('ml-trend').innerHTML = pts.length>=2 ? mlSpark(pts)
+                : (pts.length===1?`<div class="muted" style="margin-bottom:12px">Autonomia atual: <b style="color:#16a34a">${pts[0].Metricas.autonomia}%</b> — o gráfico de evolução aparece a partir do 2º ponto (o snapshot semanal registra um novo).</div>`:'');
+            $('ml-timeline').innerHTML = docs.length ? docs.map(d=>{
+                const m=d.Metricas;
+                const chip=m?`<span class="ml-chip">autonomia ${m.autonomia}% · ${m.reservasIA}×${m.reservasHum} reservas · ${m.handoffs} handoffs</span>`:'';
+                const mud=(d.Mudancas||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+                const commit=d.Commit?` <a class="tel" href="https://github.com/reneacastro/javaripark-site/commit/${esc(d.Commit)}" target="_blank">${esc(d.Commit)}</a>`:'';
+                return `<div class="ml-item ${d.Tipo==='snapshot'?'ml-snap':''}"><div class="ml-date">${fmtMLdata(d.Data)}</div><div style="flex:1;min-width:0"><div class="ml-title">${esc(d.Titulo||'')}${commit}</div>${d.Achados?`<div class="muted ml-ach">${esc(d.Achados)}</div>`:''}${mud?`<ul class="ml-mud">${mud}</ul>`:''}${chip}</div></div>`;
+            }).join('') : '<div class="empty" style="padding:14px;text-align:center;color:#9a9aa3">Nenhum ciclo registrado ainda.</div>';
+        }
+        onSnapshot(collection(db,`${BASE}/wa_ml_log`),snap=>{ mlDocs=snap.docs.map(d=>d.data()); renderML(); });
     </script>
     <script type="module" src="/js/change-password.js"></script>
     <script type="module" src="/js/realtime-resilience.js"></script>
