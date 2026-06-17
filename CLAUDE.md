@@ -87,8 +87,14 @@ ativa cairia em template de marketing (~US$0,50/msg).
 
 ### Princípios de produto (decisões do René — não "melhorar" sem ele)
 
-- **Nunca negar cliente.** Casa lotada → convida a vir sem reserva ("a equipe SEMPRE dá um jeito").
-  Lotação NUNCA vira humano.
+- **Nunca negar cliente** e **nunca expor ocupação** (René, 16/06). O bot NUNCA diz "principais
+  reservados", "cheio/lotado", "só sobra o X", contagem, nem explica logística/capacidade
+  ("há lugar além das reservas", "a equipe encaixa") — isso gera insegurança e não interessa ao
+  cliente. Disponibilidade só POR DENTRO pra escolher o lugar; pro cliente, só acolhimento.
+  **Mudança 16/06:** quando NÃO há mais nenhum setor livre (setores + overflow + Bus todos
+  reservados — poucos casos), o bot **passa pra humano** com carinho e o René resolve a acomodação
+  na mão. (Antes era "convida a vir sem reserva"; René trocou por handoff: mais simples.)
+  Não existe "setor principal" — todos os setores têm qualidade e servem a algum perfil.
 - Reserva garante **até 20 sentados**, sempre. Grupo maior: registra o número real (pra equipe
   dimensionar), promete 20 sentados, resto em pé — é a vibe da casa. **Não existe teto de negócio**
   pro tamanho do grupo (o 500 em tools.js é só guarda técnica anti-typo). Confirmado pelo René 11/06.
