@@ -61,6 +61,14 @@
         .ml-ach{font-size:12px;line-height:1.4;margin-bottom:5px}
         .ml-mud{margin:0 0 6px 16px;padding:0;font-size:12px;color:#444;line-height:1.45}
         .ml-chip{display:inline-block;background:#dcfce7;color:#16a34a;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+        .ml-acc{padding:0}
+        .ml-acc>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:20px;font-size:.8em;font-weight:700;color:#4f1964;text-transform:uppercase;letter-spacing:.5px}
+        .ml-acc>summary::-webkit-details-marker{display:none}
+        .ml-acc[open]>summary{border-bottom:1px solid #f0eef3}
+        .ml-acc>summary:hover{background:#faf8fc}
+        .ml-acc-chevron{flex:none;transition:transform .15s;font-size:1.1em;color:#8a6aa6}
+        .ml-acc[open] .ml-acc-chevron{transform:rotate(90deg)}
+        .ml-acc>div{padding:0 20px 20px}
         .btn-warn{background:#fff8e6;color:#b45309;border:1px solid #f3d98a}
         .modal{position:fixed;inset:0;background:rgba(25,12,38,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:14px}
         .modal.open{display:flex}
@@ -131,11 +139,13 @@
             </div>
         </div>
 
-        <div class="card">
-            <h3><span>Evolução do bot — melhorias por análise (ML via chat) <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(cada ciclo = análise do atendimento + ajuste no comportamento)</span></span></h3>
-            <div id="ml-trend"></div>
-            <div id="ml-timeline" class="muted">carregando…</div>
-        </div>
+        <details class="card ml-acc">
+            <summary><span class="ml-acc-title">Evolução do bot — melhorias por análise (ML via chat) <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(cada ciclo = análise do atendimento + ajuste no comportamento)</span></span><span class="ml-acc-chevron" aria-hidden="true">▸</span></summary>
+            <div style="margin-top:14px">
+                <div id="ml-trend"></div>
+                <div id="ml-timeline" class="muted">carregando…</div>
+            </div>
+        </details>
 
         <div class="card">
             <h3><span>Claude API — uso e custo REAIS <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">(tokens contados pela própria API)</span></span></h3>
