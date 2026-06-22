@@ -49,7 +49,6 @@ const samePhone = (a, b) => { const k = phoneKey(a); return !!k && k === phoneKe
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
 // Exceções por data (ex: jogo do Brasil na Copa) — manter alinhado com EXCECOES_DIA do prompt.js
 const TOLERANCIA_EXCECAO = {
-  '2026-06-19': 'até 20h (dia de jogo do Brasil — entrada R$10 a noite toda)',
   '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)',
 };
 const tolerancia = (data, dow) => TOLERANCIA_EXCECAO[data] || TOLERANCIA[dow] || 'a combinar com a equipe (dia de evento especial)';

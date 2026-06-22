@@ -74,9 +74,9 @@ temaCount.sort((a, b) => b[1] - a[1]);
 const PROBLEMAS = [
   ['vazou termo interno (overflow/filho/pai)', /\boverflow|setor filho|setor pai\b/i],
   ['expôs ocupação (lotado/cheio/principais/só sobra)', /\blotad|tá cheio|está cheio|principais (já )?reservad|s[óo] sobra|j[áa] fecharam/i],
-  ['vazou token __SILENCIO__', /sil[eê]ncio_{0,2}|_{2}sil/i],
+  ['vazou token __SILENCIO__', /_{1,3}\s*sil[eê]ncio\s*_{1,3}|\*{1,3}\s*sil[eê]ncio\s*\*{1,3}/i],
   ['negrito markdown (**)', /\*\*/],
-  ['pediu desculpa por não ver foto', /n[aã]o consigo ver|s[óo] (consigo )?ler texto|n[aã]o enxergo/i],
+  ['cliente mandou mídia → bot deu o aviso (esperado)', /n[aã]o consigo ver|s[óo] (consigo )?ler texto|s[óo] leio texto|n[aã]o enxergo/i],
   ['prometeu sem executar (contradição)', /reserva (confirmada|feita).{0,30}(mas|por[ée]m).{0,30}(ocupad|cheio)/i],
 ];
 const probHits = PROBLEMAS.map(([nome]) => [nome, []]);

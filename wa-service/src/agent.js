@@ -93,7 +93,11 @@ async function handleMedia(telefone, nome, mediaType, replyJid) {
   const conv = await loadConv(telefone);
   if (conv.status === 'humano') return;
   conv.nomePerfil = nome || conv.nomePerfil;
-  const aviso = 'Opa! Por aqui eu só consigo ler texto 🙈 (não enxergo áudio, foto, figurinha nem localização). Me conta por escrito que eu te ajudo rapidinho!';
+  // Imagem/vídeo: cliente quase sempre quer MOSTRAR ou VER o espaço → já aponta as fontes visuais.
+  const querVer = mediaType === 'imagem' || mediaType === 'vídeo';
+  const aviso = querVer
+    ? 'Opa! Por aqui eu só leio texto, então não consigo abrir o que você mandou 🙈 — mas se a ideia é ver o espaço, dá uma olhada nos vídeos do nosso Instagram @javaripark e no mapa da casa com fotos em javaripark.com.br/regras. Qualquer coisa, me conta por escrito que eu ajudo! 😊'
+    : 'Opa! Por aqui eu só consigo ler texto 🙈 (não enxergo áudio, foto, figurinha nem localização). Me conta por escrito que eu te ajudo rapidinho!';
   conv.messages.push({ role: 'user', content: `[cliente enviou ${mediaType}]` });
   conv.messages.push({ role: 'assistant', content: aviso });
   await saveConv(conv);
