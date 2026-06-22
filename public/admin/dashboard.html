@@ -2103,7 +2103,7 @@
     </script>
 
     <script type="module">
-        // ===== Conciliação bancária: upload no navegador → parse → Firestore =====
+        // ===== Conciliação bancária: upload no navegador → mensal → Firestore =====
         import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -2113,106 +2113,119 @@
         const CC_BASE = 'artifacts/central-de-reservas-jsp/public/data';
         const $$ = id => document.getElementById(id);
         const ccFmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-        const ccDate = s => { const p=String(s||'').split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
+        const ccMesNome = m => { const [y,mm]=String(m).split('-'); const n=['','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+mm]||mm; return `${n}/${y}`; };
+        const ccD = s => { const p=String(s||'').split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
         // ---- parsers (validados em node contra os arquivos reais) ----
         const brNum = s => { const n=parseFloat(String(s||'').replace(/\s/g,'').replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; };
         const numI = v => { if(typeof v==='number')return v; const s=String(v).trim(); return s.includes(',')?brNum(s):(parseFloat(s.replace(/[^\d.\-]/g,''))||0); };
         const isoBR = d => { const p=String(d).slice(0,10).split('/'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:String(d).slice(0,10); };
         function ccParseCSV(t,delim){ const out=[]; let row=[],f='',q=false; for(let i=0;i<t.length;i++){const c=t[i]; if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;} else if(c==='"')q=true; else if(c===delim){row.push(f);f='';} else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++; if(f!==''||row.length){row.push(f);out.push(row);row=[];f='';}} else f+=c;} if(f!==''||row.length){row.push(f);out.push(row);} return out; }
-        function ccDetectDelim(t){ const l=t.split(/\r?\n/)[0]||''; return (l.split(';').length>l.split(',').length)?';':','; }
-        function parseRedeVendas(text){ const rows=ccParseCSV(text,';'); const h=rows[0].map(x=>x.trim()); const ix=n=>h.indexOf(n); const c={data:ix('data da venda'),orig:ix('valor da venda original'),mod:ix('modalidade'),mdr:ix('valor MDR'),liq:ix('valor líquido'),st:ix('status da venda')}; const r={cartaoBruto:0,mdr:0,liquido:0,pixBruto:0,porDia:{}}; for(const v of rows.slice(1)){ if(!v[c.data])continue; const mod=(v[c.mod]||'').toLowerCase(),st=(v[c.st]||'').toLowerCase(),orig=brNum(v[c.orig]); if((mod==='débito'||mod==='crédito')&&st==='aprovada'){ r.cartaoBruto+=orig; r.mdr+=brNum(v[c.mdr]); r.liquido+=brNum(v[c.liq]); const d=isoBR(v[c.data]); r.porDia[d]=(r.porDia[d]||0)+orig; } else if(mod==='pix'&&st==='pago') r.pixBruto+=orig; } r.taxaEfetiva=r.cartaoBruto?r.mdr/r.cartaoBruto*100:0; return r; }
-        function parseRedeReceb(text){ const rows=ccParseCSV(text,';'); const h=rows[0].map(x=>x.trim()); const ix=n=>h.indexOf(n); const c={data:ix('data'),val:ix('valor depositado'),st:ix('status'),neg:ix('negociadas')}; const out={rows:[],pago:0,pendente:0,livre:0,gravame:0}; for(const v of rows.slice(1)){ if(!v[c.data])continue; const val=brNum(v[c.val]),iso=isoBR(v[c.data]),grav=(v[c.neg]||'').includes('Gravame'),pago=(v[c.st]||'').toUpperCase()==='PAGO'; out.rows.push({iso,val,grav,pago}); if(pago)out.pago+=val; else out.pendente+=val; if(grav)out.gravame+=val; else out.livre+=val; } return out; }
-        function parseItauAoA(aoa){ let hi=aoa.findIndex(r=>r.some(c=>String(c).trim()==='Data')); if(hi<0)hi=0; const head=aoa[hi].map(x=>String(x).trim()); const di=head.indexOf('Data'),li=head.findIndex(x=>x.toLowerCase().startsWith('lan')),vi=head.findIndex(x=>String(x).includes('Valor')); const out={recebimentoRede:0,transfAutom:0,pixIn:0,credRede:[],credTransf:[]}; for(const row of aoa.slice(hi+1)){ if(di<0||!row[di])continue; const desc=String(row[li]||'').toUpperCase(),val=numI(row[vi]),iso=isoBR(row[di]); if(!val)continue; if(desc.includes('RECEBIMENTO REDE')){out.recebimentoRede+=val; out.credRede.push({iso,val});} else if(desc.includes('TRANSFER')&&desc.includes('AUTOM')&&val>0){out.transfAutom+=val; out.credTransf.push({iso,val});} else if(val>0&&(desc.includes('PIX QRS')||desc.includes('PIX RECEB'))) out.pixIn+=val; } return out; }
-        // ---- conciliação (janela comum + casamento data+valor) ----
-        function ccReconcile(consumerByDay, vendas, receb, itau){
-          const minmax=arr=>{const s=arr.filter(Boolean).sort();return [s[0],s[s.length-1]];};
-          // perna depósito: janela comum entre Rede recebimentos e créditos de cartão no Itaú
-          const itauCred=[...itau.credRede,...itau.credTransf];
-          const [rMin,rMax]=minmax(receb.rows.map(r=>r.iso)), [iMin,iMax]=minmax(itauCred.map(r=>r.iso));
-          const depFrom=[rMin,iMin].sort().pop(), depTo=[rMax,iMax].sort()[0];
-          const inDep=d=>d>=depFrom&&d<=depTo;
-          const redeDepWin=receb.rows.filter(r=>inDep(r.iso));
-          const itauCredWin=itauCred.filter(r=>inDep(r.iso));
-          const redeLiqWin=redeDepWin.reduce((s,r)=>s+r.val,0), itauCartaoWin=itauCredWin.reduce((s,r)=>s+r.val,0);
-          // casamento por data(±4d)+valor(±0,02)
-          const used=new Array(itauCredWin.length).fill(false); const naoCasados=[]; const dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/86400000);
-          for(const d of redeDepWin){ let bi=-1; for(let i=0;i<itauCredWin.length;i++){ if(used[i])continue; if(Math.abs(itauCredWin[i].val-d.val)<=0.02&&dd(itauCredWin[i].iso,d.iso)<=4){bi=i;break;} } if(bi>=0)used[bi]=true; else naoCasados.push(d); }
-          // perna venda: Consumer cartão vs Rede vendas (mesma base = data da venda)
-          const vDays=Object.keys(vendas.porDia); const [vMin,vMax]=minmax(vDays);
-          const inSale=d=>d>=vMin&&d<=vMax;
-          const consumerCartaoWin=Object.entries(consumerByDay).filter(([d])=>inSale(d)).reduce((s,[,o])=>s+(o.cartao||0),0);
-          const consumerPixWin=Object.entries(consumerByDay).filter(([d])=>inSale(d)).reduce((s,[,o])=>s+(o.pix||0),0);
-          const consumerDinWin=Object.entries(consumerByDay).filter(([d])=>inSale(d)).reduce((s,[,o])=>s+(o.dinheiro||0),0);
-          return {
-            geradoEm:new Date().toISOString(),
-            saleFrom:vMin, saleTo:vMax, depFrom, depTo,
-            consumer:{cartao:consumerCartaoWin, pix:consumerPixWin, dinheiro:consumerDinWin},
-            rede:{cartaoBruto:vendas.cartaoBruto, mdr:vendas.mdr, taxaEfetiva:vendas.taxaEfetiva, liquido:vendas.liquido, pix:vendas.pixBruto, recebPago:receb.pago, recebPendente:receb.pendente, livre:receb.livre, gravame:receb.gravame, liqJanela:redeLiqWin},
-            itau:{recebimentoRede:itau.recebimentoRede, transfAutom:itau.transfAutom, pixIn:itau.pixIn, cartaoJanela:itauCartaoWin},
-            reconc:{ vendaDif: consumerCartaoWin-vendas.cartaoBruto, caiuDif: redeLiqWin-itauCartaoWin, naoCasados: naoCasados.map(d=>({iso:d.iso,val:d.val,grav:d.grav})), naoCasadosTotal: naoCasados.reduce((s,d)=>s+d.val,0) },
-          };
+        function vendasRows(text){ const rows=ccParseCSV(text,';'); const h=rows[0].map(x=>x.trim()); const ix=n=>h.indexOf(n); const c={data:ix('data da venda'),orig:ix('valor da venda original'),mod:ix('modalidade'),mdr:ix('valor MDR'),liq:ix('valor líquido'),st:ix('status da venda')}; return rows.slice(1).filter(v=>v[c.data]).map(v=>({iso:isoBR(v[c.data]),mod:(v[c.mod]||'').toLowerCase(),orig:brNum(v[c.orig]),mdr:brNum(v[c.mdr]),liq:brNum(v[c.liq]),st:(v[c.st]||'').toLowerCase()})); }
+        function recebRows(text){ const rows=ccParseCSV(text,';'); const h=rows[0].map(x=>x.trim()); const ix=n=>h.indexOf(n); const c={data:ix('data'),val:ix('valor depositado'),st:ix('status'),neg:ix('negociadas')}; return rows.slice(1).filter(v=>v[c.data]).map(v=>({iso:isoBR(v[c.data]),val:brNum(v[c.val]),grav:(v[c.neg]||'').includes('Gravame'),pago:(v[c.st]||'').toUpperCase()==='PAGO'})); }
+        function itauRows(aoa){ let hi=aoa.findIndex(r=>r.some(c=>String(c).trim()==='Data')); if(hi<0)hi=0; const head=aoa[hi].map(x=>String(x).trim()); const di=head.indexOf('Data'),li=head.findIndex(x=>x.toLowerCase().startsWith('lan')),ri=head.indexOf('Razão Social'),vi=head.findIndex(x=>String(x).includes('Valor')); const out=[]; for(const row of aoa.slice(hi+1)){ if(di<0||!row[di])continue; const val=numI(row[vi]); if(!val&&val!==0)continue; out.push({iso:isoBR(row[di]),desc:String(row[li]||''),razao:String(ri>=0?row[ri]||'':''),val}); } return out; }
+        // ---- computa por MÊS (mesma lógica do seed) ----
+        function ccComputeMensal(consumerByDay, vRows, rRows, iRows){
+          const M={}; const mo=s=>String(s).slice(0,7);
+          const g=m=>(M[m]||={mes:m,cCartao:0,cPix:0,cDin:0,rBruto:0,mdr:0,rLiq:0,rPix:0,dep:0,pend:0,grav:0,livre:0,iCartao:0,iPix:0,depRows:[],credRows:[],extrato:[]});
+          for(const[d,o]of Object.entries(consumerByDay)){const m=g(mo(d));m.cCartao+=o.cartao||0;m.cPix+=o.pix||0;m.cDin+=o.dinheiro||0;}
+          for(const v of vRows){const m=g(mo(v.iso));if((v.mod==='débito'||v.mod==='crédito')&&v.st==='aprovada'){m.rBruto+=v.orig;m.mdr+=v.mdr;m.rLiq+=v.liq;}else if(v.mod==='pix'&&v.st==='pago')m.rPix+=v.orig;}
+          for(const r of rRows){const m=g(mo(r.iso));m.dep+=r.val;if(!r.pago)m.pend+=r.val;if(r.grav)m.grav+=r.val;else m.livre+=r.val;m.depRows.push(r);}
+          for(const r of iRows){const m=g(mo(r.iso));m.extrato.push({data:r.iso,desc:r.desc,razao:r.razao,valor:+r.val.toFixed(2)});const U=r.desc.toUpperCase();if(U.includes('RECEBIMENTO REDE')){m.iCartao+=r.val;m.credRows.push(r);}else if(U.includes('TRANSFER')&&U.includes('AUTOM')&&r.val>0){m.iCartao+=r.val;m.credRows.push(r);}else if(r.val>0&&(U.includes('PIX QRS')||U.includes('PIX RECEB')))m.iPix+=r.val;}
+          const dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/86400000);
+          return Object.values(M).filter(x=>x.rBruto>0||x.dep>0||x.iCartao>0).map(x=>{
+            const used=new Array(x.credRows.length).fill(false),nc=[];
+            for(const d of x.depRows){let bi=-1;for(let i=0;i<x.credRows.length;i++){if(used[i])continue;if(Math.abs(x.credRows[i].val-d.val)<=0.02&&dd(x.credRows[i].iso,d.iso)<=4){bi=i;break;}}if(bi>=0)used[bi]=true;else nc.push(d);}
+            return {mes:x.mes,geradoEm:new Date().toISOString(),
+              vendeu:{consumerCartao:+x.cCartao.toFixed(2),redeBruto:+x.rBruto.toFixed(2),mdr:+x.mdr.toFixed(2),taxaEfetiva:x.rBruto?+(x.mdr/x.rBruto*100).toFixed(2):0,redeLiq:+x.rLiq.toFixed(2),dif:+(x.cCartao-x.rBruto).toFixed(2)},
+              caiu:{deposito:+x.dep.toFixed(2),itauCartao:+x.iCartao.toFixed(2),dif:+(x.dep-x.iCartao).toFixed(2),pendente:+x.pend.toFixed(2),gravame:+x.grav.toFixed(2),livre:+x.livre.toFixed(2),naoCasados:nc.map(d=>({data:d.iso,valor:+d.val.toFixed(2),grav:d.grav})),naoCasadosTotal:+nc.reduce((s,d)=>s+d.val,0).toFixed(2)},
+              pix:{consumer:+x.cPix.toFixed(2),itau:+x.iPix.toFixed(2)},dinheiro:{consumer:+x.cDin.toFixed(2)},
+              extrato:x.extrato};
+          });
         }
         // ---- leitura de arquivos ----
         const readText = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(f,'utf-8'); });
-        const readItau = f => new Promise((res,rej)=>{ if(/\.csv$/i.test(f.name)){ readText(f).then(t=>res(ccParseCSV(t,ccDetectDelim(t)))).catch(rej); return; } const r=new FileReader(); r.onload=()=>{ try{ const wb=XLSX.read(new Uint8Array(r.result),{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; res(XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''})); }catch(e){rej(e);} }; r.onerror=rej; r.readAsArrayBuffer(f); });
-        async function ccConsumerByDay(){ const r=await fetch('/data/faturamento.json?v='+Date.now()); const f=await r.json(); const a=Array.isArray(f)?f:Object.values(f); const o={}; for(const d of a){ const fp=d.formasPagamento||{}; o[d.date]={cartao:(fp.credito||0)+(fp.debito||0), pix:fp.pix||0, dinheiro:fp.dinheiro||0}; } return o; }
-        // ---- processar (upload) ----
+        const readItau = f => new Promise((res,rej)=>{ if(/\.csv$/i.test(f.name)){ readText(f).then(t=>res(ccParseCSV(t,(t.split(/\r?\n/)[0]||'').split(';').length>1?';':','))).catch(rej); return; } const r=new FileReader(); r.onload=()=>{ try{ const wb=XLSX.read(new Uint8Array(r.result),{type:'array'}); res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''})); }catch(e){rej(e);} }; r.onerror=rej; r.readAsArrayBuffer(f); });
+        async function ccConsumerByDay(){ const r=await fetch('/data/faturamento.json?v='+Date.now()); const f=await r.json(); const a=Array.isArray(f)?f:Object.values(f); const o={}; for(const d of a){ const fp=d.formasPagamento||{}; o[d.date]={cartao:(fp.credito||0)+(fp.debito||0),pix:fp.pix||0,dinheiro:fp.dinheiro||0}; } return o; }
+        // ---- upload ----
         $$('cc-processar')?.addEventListener('click', async () => {
           const fv=$$('cc-vendas').files[0], fr=$$('cc-receb').files[0], fi=$$('cc-itau').files[0];
-          const st=$$('cc-status'); const ok=(m)=>{st.style.color='#16a34a';st.textContent=m;}; const err=(m)=>{st.style.color='#ef4444';st.textContent=m;};
-          if(!fv||!fr||!fi){ err('Selecione os 3 arquivos (Vendas, Recebimentos e Extrato).'); return; }
-          try{
-            st.style.color='#888'; st.textContent='Lendo arquivos…';
+          const st=$$('cc-status'); const ok=m=>{st.style.color='#16a34a';st.textContent=m;}; const er=m=>{st.style.color='#ef4444';st.textContent=m;};
+          if(!fv||!fr||!fi){ er('Selecione os 3 arquivos.'); return; }
+          try{ st.style.color='#888'; st.textContent='Lendo e calculando…';
             const [tv,tr,aoa,cons]=await Promise.all([readText(fv),readText(fr),readItau(fi),ccConsumerByDay()]);
-            const vendas=parseRedeVendas(tv), receb=parseRedeReceb(tr), itau=parseItauAoA(aoa);
-            if(!vendas.cartaoBruto){ err('CSV de Vendas não reconhecido (confira se é o relatório de Vendas da Rede).'); return; }
-            if(!itau.credRede.length && !itau.credTransf.length){ err('Extrato do Itaú sem linhas de "RECEBIMENTO REDE"/"TRANSFERÊNCIA AUTOM" — confira o arquivo.'); return; }
-            const c=ccReconcile(cons,vendas,receb,itau);
-            const id=`${c.depFrom||c.saleFrom}_a_${c.depTo||c.saleTo}`.replace(/[^\d_a-]/g,'');
-            await setDoc(doc(ccDb,`${CC_BASE}/financeiro_conciliacao`,id), c);
-            ok('Conciliação salva ✓ ('+ccDate(c.depFrom)+' → '+ccDate(c.depTo)+')');
-            renderConciliacao(c);
-          }catch(e){ err('Falha ao processar: '+(e?.message||e)); console.error(e); }
+            const meses=ccComputeMensal(cons, vendasRows(tv), recebRows(tr), itauRows(aoa));
+            if(!meses.length){ er('Não consegui extrair dados — confira se são os relatórios certos.'); return; }
+            for(const m of meses) await setDoc(doc(ccDb,`${CC_BASE}/financeiro_conciliacao`,m.mes), m);
+            ok(`Salvo ✓ — ${meses.length} mês(es): ${meses.map(m=>ccMesNome(m.mes)).join(', ')}`);
+            await loadConciliacao();
+          }catch(e){ er('Falha: '+(e?.message||e)); console.error(e); }
         });
-        // ---- render ----
-        function renderConciliacao(c){
-          const box=$$('cc-resultado'); if(!box) return;
-          const dif=v=>Math.abs(v)<1?'<span style="color:#16a34a;font-weight:700">bate ✓</span>':`<span style="color:#ef4444;font-weight:700">dif ${ccFmt(v)}</span>`;
-          const card=(t,b)=>`<div class="card"><h3>${t}</h3>${b}</div>`;
-          const kpi=(l,v,sub,color)=>`<div class="kpi-card"><div class="kpi-label">${l}</div><div class="kpi-value" style="font-size:1.15em${color?';color:'+color:''}">${v}</div><div class="kpi-sub">${sub||''}</div></div>`;
-          const grid=inner=>`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${inner}</div>`;
+        // ---- estado + render ----
+        let ccData=[], ccSel=null, ccChart=null;
+        async function loadConciliacao(){ try{ const snap=await getDocs(collection(ccDb,`${CC_BASE}/financeiro_conciliacao`)); ccData=snap.docs.map(d=>d.data()).filter(c=>c.mes).sort((a,b)=>a.mes<b.mes?-1:1); if(ccData.length){ ccSel=ccData[ccData.length-1].mes; ccRender(); } }catch(e){ console.warn('conciliação:',e?.message); } }
+        function ccCard(t,b){ return `<div class="card"><h3>${t}</h3>${b}</div>`; }
+        function ccKpi(l,v,sub,color){ return `<div class="kpi-card"><div class="kpi-label">${l}</div><div class="kpi-value" style="font-size:1.1em${color?';color:'+color:''}">${v}</div><div class="kpi-sub">${sub||''}</div></div>`; }
+        const ccGrid=i=>`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${i}</div>`;
+        const ccDif=v=>Math.abs(v)<1?'<span style="color:#16a34a;font-weight:700">bate ✓</span>':`<span style="color:#ef4444;font-weight:700">dif ${ccFmt(v)}</span>`;
+        function ccRender(){
+          const box=$$('cc-resultado'); if(!box||!ccData.length){ if(box)box.innerHTML=''; return; }
           let h='';
-          h+=card(`Vendeu → recebeu → caiu <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(venda ${ccDate(c.saleFrom)}–${ccDate(c.saleTo)} · depósito ${ccDate(c.depFrom)}–${ccDate(c.depTo)})</span>`,
-            grid(
-              kpi('Consumer cartão (bruto)', ccFmt(c.consumer.cartao), 'o que foi vendido no cartão')+
-              kpi('Rede cartão (bruto)', ccFmt(c.rede.cartaoBruto), 'capturado pela maquininha · '+dif(c.reconc.vendaDif))+
-              kpi('Taxa MDR', ccFmt(c.rede.mdr)+' ('+c.rede.taxaEfetiva.toFixed(2)+'%)', 'desconto da Rede')+
-              kpi('Rede líquido', ccFmt(c.rede.liquido), 'depois da taxa')
+          // dashboard (evolução mensal)
+          h+=ccCard('Evolução mensal', '<div style="height:230px"><canvas id="cc-chart"></canvas></div>');
+          // seletor de mês
+          h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px">${ccData.map(c=>`<button class="cc-mes" data-mes="${c.mes}" style="border:1px solid ${c.mes===ccSel?'#4f1964':'#ddd'};background:${c.mes===ccSel?'#4f1964':'#fff'};color:${c.mes===ccSel?'#fff':'#555'};border-radius:20px;padding:6px 14px;font-weight:700;font-size:12px;cursor:pointer">${ccMesNome(c.mes)}</button>`).join('')}</div>`;
+          const c=ccData.find(x=>x.mes===ccSel)||ccData[ccData.length-1];
+          const parcial=(c.vendeu.redeBruto||0)===0;
+          h+=ccCard(`Vendeu → recebeu → caiu — ${ccMesNome(c.mes)}${parcial?' <span class="muted" style="font-weight:400;text-transform:none">(cobertura parcial — sem relatório Rede neste mês)</span>':''}`,
+            ccGrid(
+              ccKpi('Consumer cartão', ccFmt(c.vendeu.consumerCartao),'vendido no cartão')+
+              ccKpi('Rede bruto', ccFmt(c.vendeu.redeBruto), parcial?'—':'capturado · '+ccDif(c.vendeu.dif))+
+              ccKpi('Taxa MDR', ccFmt(c.vendeu.mdr)+' ('+c.vendeu.taxaEfetiva.toFixed(2)+'%)','desconto Rede')+
+              ccKpi('Rede líquido', ccFmt(c.vendeu.redeLiq),'depois da taxa')
             ));
-          h+=card('Caiu no banco (Itaú)',
-            grid(
-              kpi('Rede depositou (janela)', ccFmt(c.rede.liqJanela), 'líquido no período de depósito')+
-              kpi('Caiu no Itaú', ccFmt(c.itau.cartaoJanela), 'RECEBIMENTO REDE + transf. autom. · '+dif(c.reconc.caiuDif))+
-              kpi('Pendente na Rede', ccFmt(c.rede.recebPendente), 'ainda vai cair')+
-              kpi('Gravame (garantia)', ccFmt(c.rede.gravame), 'cai como transf. automática — é seu dinheiro')
+          h+=ccCard('Caiu no banco (Itaú)',
+            ccGrid(
+              ccKpi('Rede depositou', ccFmt(c.caiu.deposito),'líquido no mês')+
+              ccKpi('Caiu no Itaú', ccFmt(c.caiu.itauCartao), c.caiu.deposito?('RECEB. REDE + transf. autom. · '+ccDif(c.caiu.dif)):'—')+
+              ccKpi('Pendente', ccFmt(c.caiu.pendente),'ainda vai cair')+
+              ccKpi('Gravame', ccFmt(c.caiu.gravame),'garantia — cai como transf. autom., é seu')
             ));
-          h+=card('Pix & dinheiro',
-            grid(
-              kpi('Pix (Consumer)', ccFmt(c.consumer.pix), 'registrado')+
-              kpi('Pix caiu no Itaú', ccFmt(c.itau.pixIn), 'PIX QRS/recebido')+
-              kpi('Dinheiro (Consumer)', ccFmt(c.consumer.dinheiro), 'fica no caixa físico — conferir depósito')
+          h+=ccCard('Pix & dinheiro — '+ccMesNome(c.mes),
+            ccGrid(
+              ccKpi('Pix (Consumer)', ccFmt(c.pix.consumer),'registrado')+
+              ccKpi('Pix caiu no Itaú', ccFmt(c.pix.itau),'PIX QRS/recebido')+
+              ccKpi('Dinheiro (Consumer)', ccFmt(c.dinheiro.consumer),'fica no caixa físico')
             ));
-          if(c.reconc.naoCasados.length){
-            h+=card('⚠ Depósitos da Rede sem crédito casado no Itaú',
-              `<p style="font-size:12px;color:#888;margin:0 0 8px">Provavelmente o banco agrupou (gravame vira uma transferência única). O total ainda bate; estes são pra conferência fina:</p>`+
-              `<div class="table-wrap"><table class="fin-table"><thead><tr><th>Data depósito</th><th class="amount">Valor</th><th>Tipo</th></tr></thead><tbody>`+
-              c.reconc.naoCasados.map(d=>`<tr><td>${ccDate(d.iso)}</td><td class="amount">${ccFmt(d.val)}</td><td>${d.grav?'gravame':'livre'}</td></tr>`).join('')+
-              `</tbody></table></div><p style="font-size:11px;color:#aaa;margin-top:6px">Soma não casada: ${ccFmt(c.reconc.naoCasadosTotal)}</p>`);
-          }
-          h+=`<p style="font-size:11px;color:#aaa">Gerado ${new Date(c.geradoEm).toLocaleString('pt-BR')}. Conciliação por período; reprocessa a cada novo upload.</p>`;
+          // extrato pesquisável
+          h+=ccCard(`Extrato do Itaú — ${ccMesNome(c.mes)} <span class="muted" style="font-weight:400;text-transform:none">(${c.extrato.length} lançamentos)</span>`,
+            `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+               <input id="cc-busca" placeholder="Buscar (descrição, nome, valor…)" style="flex:1;min-width:180px;border:1px solid #d9cfe0;border-radius:8px;padding:7px 10px;font-size:13px">
+               <select id="cc-filtro" style="border:1px solid #d9cfe0;border-radius:8px;padding:7px 10px;font-size:13px"><option value="todos">Tudo</option><option value="in">Só entradas</option><option value="out">Só saídas</option></select>
+             </div><div id="cc-extrato-tot" class="muted" style="font-size:12px;margin-bottom:6px"></div><div class="table-wrap" id="cc-extrato-tbl"></div>`);
+          if(c.caiu.naoCasados&&c.caiu.naoCasados.length) h+=ccCard('⚠ Depósitos Rede sem crédito casado',`<p style="font-size:12px;color:#888;margin:0 0 8px">Geralmente o banco agrupa (gravame). Total ainda bate; conferência fina:</p><div class="table-wrap"><table class="fin-table"><thead><tr><th>Data</th><th class="amount">Valor</th><th>Tipo</th></tr></thead><tbody>${c.caiu.naoCasados.map(d=>`<tr><td>${ccD(d.data)}</td><td class="amount">${ccFmt(d.valor)}</td><td>${d.grav?'gravame':'livre'}</td></tr>`).join('')}</tbody></table></div><p style="font-size:11px;color:#aaa;margin-top:6px">Soma: ${ccFmt(c.caiu.naoCasadosTotal)}</p>`);
           box.innerHTML=h;
+          // wire seletor
+          box.querySelectorAll('.cc-mes').forEach(b=>b.onclick=()=>{ ccSel=b.dataset.mes; ccRender(); });
+          ccDrawChart(); ccRenderExtrato(c);
+          const bu=$$('cc-busca'), fi=$$('cc-filtro');
+          if(bu){ bu.oninput=()=>ccRenderExtrato(c); fi.onchange=()=>ccRenderExtrato(c); }
         }
-        async function loadConciliacao(){ try{ const snap=await getDocs(collection(ccDb,`${CC_BASE}/financeiro_conciliacao`)); const docs=snap.docs.map(d=>d.data()).filter(c=>c.geradoEm).sort((a,b)=>a.geradoEm<b.geradoEm?1:-1); if(docs[0]) renderConciliacao(docs[0]); }catch(e){ console.warn('conciliação load:',e?.message); } }
+        function ccRenderExtrato(c){
+          const q=($$('cc-busca')?.value||'').toLowerCase().trim(), f=$$('cc-filtro')?.value||'todos';
+          let rows=c.extrato.filter(e=>{ if(f==='in'&&e.valor<=0)return false; if(f==='out'&&e.valor>=0)return false; if(!q)return true; return (e.desc+' '+e.razao+' '+e.valor+' '+ccD(e.data)).toLowerCase().includes(q); });
+          const ent=rows.filter(e=>e.valor>0).reduce((s,e)=>s+e.valor,0), sai=rows.filter(e=>e.valor<0).reduce((s,e)=>s+e.valor,0);
+          $$('cc-extrato-tot').innerHTML=`${rows.length} lançamentos · entradas <b style="color:#16a34a">${ccFmt(ent)}</b> · saídas <b style="color:#ef4444">${ccFmt(sai)}</b> · líquido <b>${ccFmt(ent+sai)}</b>`;
+          $$('cc-extrato-tbl').innerHTML=`<table class="fin-table"><thead><tr><th>Data</th><th>Lançamento</th><th>Razão social</th><th class="amount">Valor</th></tr></thead><tbody>${rows.slice(0,400).map(e=>`<tr><td style="white-space:nowrap">${ccD(e.data)}</td><td>${e.desc}</td><td class="muted">${e.razao||''}</td><td class="amount" style="color:${e.valor<0?'#ef4444':'#16a34a'};font-weight:600;white-space:nowrap">${ccFmt(e.valor)}</td></tr>`).join('')}</tbody></table>${rows.length>400?`<p class="muted" style="font-size:11px;margin-top:6px">mostrando 400 de ${rows.length}</p>`:''}`;
+        }
+        function ccDrawChart(){
+          const el=$$('cc-chart'); if(!el||!window.Chart) return; if(ccChart){try{ccChart.destroy()}catch(e){}}
+          const labels=ccData.map(c=>ccMesNome(c.mes));
+          ccChart=new Chart(el,{type:'bar',data:{labels,datasets:[
+            {label:'Consumer cartão',data:ccData.map(c=>c.vendeu.consumerCartao),backgroundColor:'#9a9aa3'},
+            {label:'Rede líquido',data:ccData.map(c=>c.vendeu.redeLiq),backgroundColor:'#f59e0b'},
+            {label:'Caiu no Itaú',data:ccData.map(c=>c.caiu.itauCartao),backgroundColor:'#16a34a'},
+          ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11}}}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:9}}}}}});
+        }
         onAuthStateChanged(ccAuth, u=>{ if(u) loadConciliacao(); });
     </script>
 
