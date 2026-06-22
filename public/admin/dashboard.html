@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Painel Administrativo — Javari StrEat Park</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *{box-sizing:border-box;margin:0;padding:0}
@@ -201,6 +202,7 @@
             <div class="section-tab" data-section="financeiro">Financeiro</div>
             <div class="section-tab" data-section="clientes">Clientes</div>
             <div class="section-tab" data-section="anuncios">Anúncios</div>
+            <div class="section-tab" data-section="conciliacao">Conciliação</div>
         </div>
 
         <!-- ==================== VENDAS ==================== -->
@@ -599,6 +601,23 @@
                 </div>
                 <p id="conv-note" style="font-size:11px;color:#aaa;margin-top:10px;line-height:1.5"></p>
             </div>
+        </div>
+
+        <div class="section-panel" id="panel-conciliacao">
+            <div class="card" style="border-left:3px solid #4f1964">
+                <h3>Conciliação bancária — upload dos arquivos</h3>
+                <p style="font-size:12px;color:#888;margin:0 0 14px;line-height:1.5">Suba os 3 relatórios do período. O sistema lê tudo no seu navegador, calcula e salva — não precisa passar por ninguém. Consumer (faturamento) já é automático.</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                    <div><div class="kpi-label" style="margin-bottom:5px">Rede — Vendas (CSV)</div><input type="file" id="cc-vendas" accept=".csv" style="font-size:12px;width:100%"></div>
+                    <div><div class="kpi-label" style="margin-bottom:5px">Rede — Recebimentos (CSV)</div><input type="file" id="cc-receb" accept=".csv" style="font-size:12px;width:100%"></div>
+                    <div><div class="kpi-label" style="margin-bottom:5px">Itaú — Extrato (XLSX/CSV)</div><input type="file" id="cc-itau" accept=".xlsx,.xls,.csv" style="font-size:12px;width:100%"></div>
+                </div>
+                <div style="margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                    <button id="cc-processar" style="background:#4f1964;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer">Processar e salvar</button>
+                    <span id="cc-status" style="font-size:12px;color:#888"></span>
+                </div>
+            </div>
+            <div id="cc-resultado"></div>
         </div>
       </div><!-- /dash-content -->
 
@@ -2081,6 +2100,120 @@
             mk('evo-resv', '#16a34a', weeks.map(w => wkResv[w] || 0));
         }
         loadConversao();
+    </script>
+
+    <script type="module">
+        // ===== Conciliação bancária: upload no navegador → parse → Firestore =====
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        const CC_CFG = { apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18", authDomain:"central-de-reservas-jsp.firebaseapp.com", projectId:"central-de-reservas-jsp", storageBucket:"central-de-reservas-jsp.firebasestorage.app", appId:"1:574859111927:web:83df67ed1865a59c0392f2" };
+        const ccApp = getApps().find(a=>a.name==='dash-recon') || initializeApp(CC_CFG,'dash-recon');
+        const ccDb = getFirestore(ccApp), ccAuth = getAuth(ccApp);
+        const CC_BASE = 'artifacts/central-de-reservas-jsp/public/data';
+        const $$ = id => document.getElementById(id);
+        const ccFmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const ccDate = s => { const p=String(s||'').split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:s; };
+        // ---- parsers (validados em node contra os arquivos reais) ----
+        const brNum = s => { const n=parseFloat(String(s||'').replace(/\s/g,'').replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; };
+        const numI = v => { if(typeof v==='number')return v; const s=String(v).trim(); return s.includes(',')?brNum(s):(parseFloat(s.replace(/[^\d.\-]/g,''))||0); };
+        const isoBR = d => { const p=String(d).slice(0,10).split('/'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:String(d).slice(0,10); };
+        function ccParseCSV(t,delim){ const out=[]; let row=[],f='',q=false; for(let i=0;i<t.length;i++){const c=t[i]; if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;} else if(c==='"')q=true; else if(c===delim){row.push(f);f='';} else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++; if(f!==''||row.length){row.push(f);out.push(row);row=[];f='';}} else f+=c;} if(f!==''||row.length){row.push(f);out.push(row);} return out; }
+        function ccDetectDelim(t){ const l=t.split(/\r?\n/)[0]||''; return (l.split(';').length>l.split(',').length)?';':','; }
+        function parseRedeVendas(text){ const rows=ccParseCSV(text,';'); const h=rows[0].map(x=>x.trim()); const ix=n=>h.indexOf(n); const c={data:ix('data da venda'),orig:ix('valor da venda original'),mod:ix('modalidade'),mdr:ix('valor MDR'),liq:ix('valor líquido'),st:ix('status da venda')}; const r={cartaoBruto:0,mdr:0,liquido:0,pixBruto:0,porDia:{}}; for(const v of rows.slice(1)){ if(!v[c.data])continue; const mod=(v[c.mod]||'').toLowerCase(),st=(v[c.st]||'').toLowerCase(),orig=brNum(v[c.orig]); if((mod==='débito'||mod==='crédito')&&st==='aprovada'){ r.cartaoBruto+=orig; r.mdr+=brNum(v[c.mdr]); r.liquido+=brNum(v[c.liq]); const d=isoBR(v[c.data]); r.porDia[d]=(r.porDia[d]||0)+orig; } else if(mod==='pix'&&st==='pago') r.pixBruto+=orig; } r.taxaEfetiva=r.cartaoBruto?r.mdr/r.cartaoBruto*100:0; return r; }
+        function parseRedeReceb(text){ const rows=ccParseCSV(text,';'); const h=rows[0].map(x=>x.trim()); const ix=n=>h.indexOf(n); const c={data:ix('data'),val:ix('valor depositado'),st:ix('status'),neg:ix('negociadas')}; const out={rows:[],pago:0,pendente:0,livre:0,gravame:0}; for(const v of rows.slice(1)){ if(!v[c.data])continue; const val=brNum(v[c.val]),iso=isoBR(v[c.data]),grav=(v[c.neg]||'').includes('Gravame'),pago=(v[c.st]||'').toUpperCase()==='PAGO'; out.rows.push({iso,val,grav,pago}); if(pago)out.pago+=val; else out.pendente+=val; if(grav)out.gravame+=val; else out.livre+=val; } return out; }
+        function parseItauAoA(aoa){ let hi=aoa.findIndex(r=>r.some(c=>String(c).trim()==='Data')); if(hi<0)hi=0; const head=aoa[hi].map(x=>String(x).trim()); const di=head.indexOf('Data'),li=head.findIndex(x=>x.toLowerCase().startsWith('lan')),vi=head.findIndex(x=>String(x).includes('Valor')); const out={recebimentoRede:0,transfAutom:0,pixIn:0,credRede:[],credTransf:[]}; for(const row of aoa.slice(hi+1)){ if(di<0||!row[di])continue; const desc=String(row[li]||'').toUpperCase(),val=numI(row[vi]),iso=isoBR(row[di]); if(!val)continue; if(desc.includes('RECEBIMENTO REDE')){out.recebimentoRede+=val; out.credRede.push({iso,val});} else if(desc.includes('TRANSFER')&&desc.includes('AUTOM')&&val>0){out.transfAutom+=val; out.credTransf.push({iso,val});} else if(val>0&&(desc.includes('PIX QRS')||desc.includes('PIX RECEB'))) out.pixIn+=val; } return out; }
+        // ---- conciliação (janela comum + casamento data+valor) ----
+        function ccReconcile(consumerByDay, vendas, receb, itau){
+          const minmax=arr=>{const s=arr.filter(Boolean).sort();return [s[0],s[s.length-1]];};
+          // perna depósito: janela comum entre Rede recebimentos e créditos de cartão no Itaú
+          const itauCred=[...itau.credRede,...itau.credTransf];
+          const [rMin,rMax]=minmax(receb.rows.map(r=>r.iso)), [iMin,iMax]=minmax(itauCred.map(r=>r.iso));
+          const depFrom=[rMin,iMin].sort().pop(), depTo=[rMax,iMax].sort()[0];
+          const inDep=d=>d>=depFrom&&d<=depTo;
+          const redeDepWin=receb.rows.filter(r=>inDep(r.iso));
+          const itauCredWin=itauCred.filter(r=>inDep(r.iso));
+          const redeLiqWin=redeDepWin.reduce((s,r)=>s+r.val,0), itauCartaoWin=itauCredWin.reduce((s,r)=>s+r.val,0);
+          // casamento por data(±4d)+valor(±0,02)
+          const used=new Array(itauCredWin.length).fill(false); const naoCasados=[]; const dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/86400000);
+          for(const d of redeDepWin){ let bi=-1; for(let i=0;i<itauCredWin.length;i++){ if(used[i])continue; if(Math.abs(itauCredWin[i].val-d.val)<=0.02&&dd(itauCredWin[i].iso,d.iso)<=4){bi=i;break;} } if(bi>=0)used[bi]=true; else naoCasados.push(d); }
+          // perna venda: Consumer cartão vs Rede vendas (mesma base = data da venda)
+          const vDays=Object.keys(vendas.porDia); const [vMin,vMax]=minmax(vDays);
+          const inSale=d=>d>=vMin&&d<=vMax;
+          const consumerCartaoWin=Object.entries(consumerByDay).filter(([d])=>inSale(d)).reduce((s,[,o])=>s+(o.cartao||0),0);
+          const consumerPixWin=Object.entries(consumerByDay).filter(([d])=>inSale(d)).reduce((s,[,o])=>s+(o.pix||0),0);
+          const consumerDinWin=Object.entries(consumerByDay).filter(([d])=>inSale(d)).reduce((s,[,o])=>s+(o.dinheiro||0),0);
+          return {
+            geradoEm:new Date().toISOString(),
+            saleFrom:vMin, saleTo:vMax, depFrom, depTo,
+            consumer:{cartao:consumerCartaoWin, pix:consumerPixWin, dinheiro:consumerDinWin},
+            rede:{cartaoBruto:vendas.cartaoBruto, mdr:vendas.mdr, taxaEfetiva:vendas.taxaEfetiva, liquido:vendas.liquido, pix:vendas.pixBruto, recebPago:receb.pago, recebPendente:receb.pendente, livre:receb.livre, gravame:receb.gravame, liqJanela:redeLiqWin},
+            itau:{recebimentoRede:itau.recebimentoRede, transfAutom:itau.transfAutom, pixIn:itau.pixIn, cartaoJanela:itauCartaoWin},
+            reconc:{ vendaDif: consumerCartaoWin-vendas.cartaoBruto, caiuDif: redeLiqWin-itauCartaoWin, naoCasados: naoCasados.map(d=>({iso:d.iso,val:d.val,grav:d.grav})), naoCasadosTotal: naoCasados.reduce((s,d)=>s+d.val,0) },
+          };
+        }
+        // ---- leitura de arquivos ----
+        const readText = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(f,'utf-8'); });
+        const readItau = f => new Promise((res,rej)=>{ if(/\.csv$/i.test(f.name)){ readText(f).then(t=>res(ccParseCSV(t,ccDetectDelim(t)))).catch(rej); return; } const r=new FileReader(); r.onload=()=>{ try{ const wb=XLSX.read(new Uint8Array(r.result),{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; res(XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''})); }catch(e){rej(e);} }; r.onerror=rej; r.readAsArrayBuffer(f); });
+        async function ccConsumerByDay(){ const r=await fetch('/data/faturamento.json?v='+Date.now()); const f=await r.json(); const a=Array.isArray(f)?f:Object.values(f); const o={}; for(const d of a){ const fp=d.formasPagamento||{}; o[d.date]={cartao:(fp.credito||0)+(fp.debito||0), pix:fp.pix||0, dinheiro:fp.dinheiro||0}; } return o; }
+        // ---- processar (upload) ----
+        $$('cc-processar')?.addEventListener('click', async () => {
+          const fv=$$('cc-vendas').files[0], fr=$$('cc-receb').files[0], fi=$$('cc-itau').files[0];
+          const st=$$('cc-status'); const ok=(m)=>{st.style.color='#16a34a';st.textContent=m;}; const err=(m)=>{st.style.color='#ef4444';st.textContent=m;};
+          if(!fv||!fr||!fi){ err('Selecione os 3 arquivos (Vendas, Recebimentos e Extrato).'); return; }
+          try{
+            st.style.color='#888'; st.textContent='Lendo arquivos…';
+            const [tv,tr,aoa,cons]=await Promise.all([readText(fv),readText(fr),readItau(fi),ccConsumerByDay()]);
+            const vendas=parseRedeVendas(tv), receb=parseRedeReceb(tr), itau=parseItauAoA(aoa);
+            if(!vendas.cartaoBruto){ err('CSV de Vendas não reconhecido (confira se é o relatório de Vendas da Rede).'); return; }
+            if(!itau.credRede.length && !itau.credTransf.length){ err('Extrato do Itaú sem linhas de "RECEBIMENTO REDE"/"TRANSFERÊNCIA AUTOM" — confira o arquivo.'); return; }
+            const c=ccReconcile(cons,vendas,receb,itau);
+            const id=`${c.depFrom||c.saleFrom}_a_${c.depTo||c.saleTo}`.replace(/[^\d_a-]/g,'');
+            await setDoc(doc(ccDb,`${CC_BASE}/financeiro_conciliacao`,id), c);
+            ok('Conciliação salva ✓ ('+ccDate(c.depFrom)+' → '+ccDate(c.depTo)+')');
+            renderConciliacao(c);
+          }catch(e){ err('Falha ao processar: '+(e?.message||e)); console.error(e); }
+        });
+        // ---- render ----
+        function renderConciliacao(c){
+          const box=$$('cc-resultado'); if(!box) return;
+          const dif=v=>Math.abs(v)<1?'<span style="color:#16a34a;font-weight:700">bate ✓</span>':`<span style="color:#ef4444;font-weight:700">dif ${ccFmt(v)}</span>`;
+          const card=(t,b)=>`<div class="card"><h3>${t}</h3>${b}</div>`;
+          const kpi=(l,v,sub,color)=>`<div class="kpi-card"><div class="kpi-label">${l}</div><div class="kpi-value" style="font-size:1.15em${color?';color:'+color:''}">${v}</div><div class="kpi-sub">${sub||''}</div></div>`;
+          const grid=inner=>`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${inner}</div>`;
+          let h='';
+          h+=card(`Vendeu → recebeu → caiu <span class="muted" style="font-weight:400;text-transform:none;letter-spacing:0">(venda ${ccDate(c.saleFrom)}–${ccDate(c.saleTo)} · depósito ${ccDate(c.depFrom)}–${ccDate(c.depTo)})</span>`,
+            grid(
+              kpi('Consumer cartão (bruto)', ccFmt(c.consumer.cartao), 'o que foi vendido no cartão')+
+              kpi('Rede cartão (bruto)', ccFmt(c.rede.cartaoBruto), 'capturado pela maquininha · '+dif(c.reconc.vendaDif))+
+              kpi('Taxa MDR', ccFmt(c.rede.mdr)+' ('+c.rede.taxaEfetiva.toFixed(2)+'%)', 'desconto da Rede')+
+              kpi('Rede líquido', ccFmt(c.rede.liquido), 'depois da taxa')
+            ));
+          h+=card('Caiu no banco (Itaú)',
+            grid(
+              kpi('Rede depositou (janela)', ccFmt(c.rede.liqJanela), 'líquido no período de depósito')+
+              kpi('Caiu no Itaú', ccFmt(c.itau.cartaoJanela), 'RECEBIMENTO REDE + transf. autom. · '+dif(c.reconc.caiuDif))+
+              kpi('Pendente na Rede', ccFmt(c.rede.recebPendente), 'ainda vai cair')+
+              kpi('Gravame (garantia)', ccFmt(c.rede.gravame), 'cai como transf. automática — é seu dinheiro')
+            ));
+          h+=card('Pix & dinheiro',
+            grid(
+              kpi('Pix (Consumer)', ccFmt(c.consumer.pix), 'registrado')+
+              kpi('Pix caiu no Itaú', ccFmt(c.itau.pixIn), 'PIX QRS/recebido')+
+              kpi('Dinheiro (Consumer)', ccFmt(c.consumer.dinheiro), 'fica no caixa físico — conferir depósito')
+            ));
+          if(c.reconc.naoCasados.length){
+            h+=card('⚠ Depósitos da Rede sem crédito casado no Itaú',
+              `<p style="font-size:12px;color:#888;margin:0 0 8px">Provavelmente o banco agrupou (gravame vira uma transferência única). O total ainda bate; estes são pra conferência fina:</p>`+
+              `<div class="table-wrap"><table class="fin-table"><thead><tr><th>Data depósito</th><th class="amount">Valor</th><th>Tipo</th></tr></thead><tbody>`+
+              c.reconc.naoCasados.map(d=>`<tr><td>${ccDate(d.iso)}</td><td class="amount">${ccFmt(d.val)}</td><td>${d.grav?'gravame':'livre'}</td></tr>`).join('')+
+              `</tbody></table></div><p style="font-size:11px;color:#aaa;margin-top:6px">Soma não casada: ${ccFmt(c.reconc.naoCasadosTotal)}</p>`);
+          }
+          h+=`<p style="font-size:11px;color:#aaa">Gerado ${new Date(c.geradoEm).toLocaleString('pt-BR')}. Conciliação por período; reprocessa a cada novo upload.</p>`;
+          box.innerHTML=h;
+        }
+        async function loadConciliacao(){ try{ const snap=await getDocs(collection(ccDb,`${CC_BASE}/financeiro_conciliacao`)); const docs=snap.docs.map(d=>d.data()).filter(c=>c.geradoEm).sort((a,b)=>a.geradoEm<b.geradoEm?1:-1); if(docs[0]) renderConciliacao(docs[0]); }catch(e){ console.warn('conciliação load:',e?.message); } }
+        onAuthStateChanged(ccAuth, u=>{ if(u) loadConciliacao(); });
     </script>
 
     <script src="/js/version-badge.js" defer></script>
