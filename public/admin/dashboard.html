@@ -553,6 +553,28 @@
             </div>
 
             <div class="card">
+                <h3>📈 Evolução no tempo</h3>
+                <div id="ads-evo-empty" style="font-size:12px;color:#888;line-height:1.5;display:none">Pra ver a evolução semana a semana, exporte o CSV no Ads Manager com <strong>Detalhamento → Por semana</strong> e me mande. O snapshot atual é um agregado do período (sem recorte no tempo).</div>
+                <div id="ads-evo-charts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+                    <div><div class="kpi-label" style="margin-bottom:6px">Custo por conversa</div><div style="height:170px"><canvas id="evo-cpc"></canvas></div></div>
+                    <div><div class="kpi-label" style="margin-bottom:6px">Gasto × Conversas</div><div style="height:170px"><canvas id="evo-spend"></canvas></div></div>
+                    <div><div class="kpi-label" style="margin-bottom:6px">Alcance</div><div style="height:170px"><canvas id="evo-reach"></canvas></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>⭐ Destaques & Insights</h3>
+                <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+                    <div class="kpi-card" style="border-left:3px solid #16a34a"><div class="kpi-label">Mais eficiente</div><div class="kpi-value" id="ins-best" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-best-sub"></div></div>
+                    <div class="kpi-card" style="border-left:3px solid #ef4444"><div class="kpi-label">Mais cara (revisar)</div><div class="kpi-value" id="ins-worst" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-worst-sub"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Maior alcance</div><div class="kpi-value" id="ins-reach" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-reach-sub"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Melhor CTR</div><div class="kpi-value" id="ins-ctr" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-ctr-sub"></div></div>
+                </div>
+                <div id="ins-temas" style="margin-top:16px"></div>
+                <ul id="ins-bullets" style="margin:12px 0 0 16px;font-size:12.5px;color:#444;line-height:1.6"></ul>
+            </div>
+
+            <div class="card">
                 <h3>⏰ Encerramentos próximos</h3>
                 <div id="ads-ends"></div>
             </div>
@@ -853,6 +875,47 @@
                 }).join('')
             }</tbody></table>${a.inactiveCount ? `<p style="font-size:11px;color:#aaa;margin-top:8px">+ ${a.inactiveCount} campanha sem entrega (R$ 0) omitida.</p>` : ''}`;
             makeSortable($('tbl-ads'));
+            renderAdsInsights(a);
+            renderAdsEvolution(a);
+        }
+        let _evoCharts = [];
+        function renderAdsEvolution(a) {
+            const evo = a.evolution || [];
+            const empty = $('ads-evo-empty'), charts = $('ads-evo-charts');
+            _evoCharts.forEach(c => { try { c.destroy(); } catch (e) {} }); _evoCharts = [];
+            if (!evo.length || !window.Chart) { if (empty) empty.style.display = 'block'; if (charts) charts.style.display = 'none'; return; }
+            if (empty) empty.style.display = 'none'; if (charts) charts.style.display = 'grid';
+            const labels = evo.map(p => fmtDateBR(p.periodEnd || p.label));
+            const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } };
+            const mk = (id, cfg) => { const el = $(id); if (el) _evoCharts.push(new Chart(el, cfg)); };
+            mk('evo-cpc', { type: 'line', data: { labels, datasets: [{ data: evo.map(p => p.costPerConv), borderColor: '#4f1964', backgroundColor: 'rgba(79,25,100,.08)', fill: true, tension: .3 }] }, options: base });
+            mk('evo-spend', { type: 'bar', data: { labels, datasets: [{ label: 'Gasto', data: evo.map(p => p.spent), backgroundColor: '#f59e0b' }, { label: 'Conversas', type: 'line', data: evo.map(p => p.conversations), borderColor: '#25D366', yAxisID: 'y1', tension: .3 }] }, options: { ...base, plugins: { legend: { display: true, labels: { font: { size: 10 } } } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { position: 'left', ticks: { font: { size: 9 } } }, y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 9 } } } } } });
+            mk('evo-reach', { type: 'line', data: { labels, datasets: [{ data: evo.map(p => p.reach), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.08)', fill: true, tension: .3 }] }, options: base });
+        }
+        function renderAdsInsights(a) {
+            const cs = (a.campaigns || []).filter(c => c.conversations > 0);
+            const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+            if (!cs.length) return;
+            const short = n => n.replace(/^Instagram post:\s*/i, '').replace(/^Post do Instagram:\s*/i, '').slice(0, 34);
+            const byBest = [...cs].sort((x, y) => x.costPerConv - y.costPerConv);
+            const r = [...cs].sort((x, y) => y.reach - x.reach)[0], ct = [...cs].sort((x, y) => y.ctr - x.ctr)[0];
+            const b = byBest[0], w = byBest[byBest.length - 1];
+            set('ins-best', short(b.name)); set('ins-best-sub', fmtBRLFull(b.costPerConv) + '/conversa · ' + b.conversations + ' conv');
+            set('ins-worst', short(w.name)); set('ins-worst-sub', fmtBRLFull(w.costPerConv) + '/conversa · ' + w.conversations + ' conv');
+            set('ins-reach', short(r.name)); set('ins-reach-sub', (r.reach || 0).toLocaleString('pt-BR') + ' pessoas');
+            set('ins-ctr', short(ct.name)); set('ins-ctr-sub', (ct.ctr || 0).toFixed(2) + '% de cliques');
+            const temas = [['Aniversário', /anivers|convite|cabe em um|planejando/i], ['Copa / Jogo', /copa|jogo|quintal mais charmoso/i], ['Indique a amiga', /amiga|manda p/i]];
+            const acc = {}; for (const c of cs) for (const [nome, re] of temas) if (re.test(c.name)) { (acc[nome] ||= { spent: 0, conv: 0 }); acc[nome].spent += c.spent; acc[nome].conv += c.conversations; break; }
+            const temaRows = Object.entries(acc).sort((x, y) => (x[1].spent / Math.max(x[1].conv, 1)) - (y[1].spent / Math.max(y[1].conv, 1)));
+            const tdiv = $('ins-temas');
+            if (tdiv) tdiv.innerHTML = temaRows.length ? '<div class="kpi-label" style="margin-bottom:6px">Por tema (mais barato → mais caro por conversa)</div>' + temaRows.map(([nome, v]) => { const cpc = v.spent / Math.max(v.conv, 1); return `<div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f4f4f4"><span>${nome}</span><span style="white-space:nowrap"><b>${fmtBRLFull(cpc)}</b>/conv · ${fmtBRLFull(v.spent)} · ${v.conv} conv</span></div>`; }).join('') : '';
+            const media = a.totals?.costPerConversation || 0, bl = [];
+            bl.push(`Mais eficiente: <b>${short(b.name)}</b> a ${fmtBRLFull(b.costPerConv)}/conversa — ${(w.costPerConv / Math.max(b.costPerConv, .01)).toFixed(1)}× mais barata que a pior.`);
+            if (w.costPerConv > media * 1.5) bl.push(`<b>${short(w.name)}</b> a ${fmtBRLFull(w.costPerConv)}/conversa (${(w.costPerConv / Math.max(media, .01)).toFixed(1)}× a média) — vale pausar ou trocar criativo/público.`);
+            if (temaRows.length > 1) bl.push(`Tema que converte mais barato: <b>${temaRows[0][0]}</b> — priorize verba nele.`);
+            const ativas = cs.filter(c => c.status === 'ativa');
+            if (ativas.length) bl.push(`${ativas.length} campanha(s) ativa(s), somando ${fmtBRLFull(ativas.reduce((s, c) => s + c.spent, 0))} no período.`);
+            const ul = $('ins-bullets'); if (ul) ul.innerHTML = bl.map(t => `<li>${t}</li>`).join('');
         }
         loadAdsSnapshot();
 
