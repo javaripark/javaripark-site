@@ -554,7 +554,14 @@
 
             <div class="card">
                 <h3>📈 Evolução no tempo</h3>
-                <div id="ads-evo-empty" style="font-size:12px;color:#888;line-height:1.5;display:none">Pra ver a evolução semana a semana, exporte o CSV no Ads Manager com <strong>Detalhamento → Por semana</strong> e me mande. O snapshot atual é um agregado do período (sem recorte no tempo).</div>
+                <div class="kpi-label" style="margin-bottom:8px">Resultados do anúncio por semana (chat ao vivo)</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+                    <div><div class="kpi-label" style="margin-bottom:6px;color:#25D366">Conversas de anúncio / semana</div><div style="height:170px"><canvas id="evo-conv"></canvas></div></div>
+                    <div><div class="kpi-label" style="margin-bottom:6px;color:#16a34a">Reservas de anúncio / semana</div><div style="height:170px"><canvas id="evo-resv"></canvas></div></div>
+                </div>
+                <div id="evo-live-empty" style="font-size:12px;color:#888;display:none">Ainda sem conversas de anúncio registradas — conforme os leads de anúncio chegam pelo chat, a curva preenche.</div>
+                <div class="kpi-label" style="margin:20px 0 8px">Gasto & custo por conversa (do Ads Manager)</div>
+                <div id="ads-evo-empty" style="font-size:12px;color:#888;line-height:1.5;display:none">Pra esta parte, exporte o CSV no Ads Manager com <strong>Detalhamento → Por semana</strong> e me mande — aí o gasto e o custo por conversa aparecem semana a semana. (O snapshot atual é um agregado do período.)</div>
                 <div id="ads-evo-charts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
                     <div><div class="kpi-label" style="margin-bottom:6px">Custo por conversa</div><div style="height:170px"><canvas id="evo-cpc"></canvas></div></div>
                     <div><div class="kpi-label" style="margin-bottom:6px">Gasto × Conversas</div><div style="height:170px"><canvas id="evo-spend"></canvas></div></div>
@@ -2054,7 +2061,26 @@
                 if (note) note.textContent = convAnuncio === 0
                     ? 'Conversão = reservas de anúncio ÷ conversas de anúncio (estas vêm do chat ao vivo, quando o lead chega clicando no anúncio). Marque "Veio de anúncio?" nas reservas do painel pra contar as manuais também. O custo por reserva usa o gasto do snapshot do Ads (' + brl(spent) + ').'
                     : 'Conversão liga o chat ao vivo (' + convAnuncio + ' conversas de anúncio) às reservas de anúncio. O custo por reserva usa o gasto do snapshot do Ads (' + brl(spent) + ', 09/05–07/06) — fica 100% preciso quando o gasto sincronizar por período (a conta do Instagram não libera por API).';
+                // ── Evolução dos resultados de anúncio por semana (chat ao vivo, com timestamp) ──
+                const wkMon = s => { const x = new Date(s); if (isNaN(x)) return null; const day = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - day); return x.toISOString().slice(0, 10); };
+                const wkConv = {}, wkResv = {};
+                chat.forEach(d => { const o = d.data(); if ((o.Origem || '') === 'anuncio') { const w = wkMon(o.PrimeiroContato || o.updatedAt); if (w) wkConv[w] = (wkConv[w] || 0) + 1; } });
+                snap.forEach(d => { const o = d.data(); if ((o.Origem || '') === 'anuncio') { const w = wkMon(o.CriadoEm); if (w) wkResv[w] = (wkResv[w] || 0) + 1; } });
+                renderEvoLive(wkConv, wkResv);
             } catch (e) { console.warn('Conversão anúncio→reserva: falha ao carregar', e?.message); }
+        }
+        let _evoLiveCharts = [];
+        function renderEvoLive(wkConv, wkResv) {
+            const weeks = [...new Set([...Object.keys(wkConv), ...Object.keys(wkResv)])].sort();
+            const empty = document.getElementById('evo-live-empty');
+            _evoLiveCharts.forEach(c => { try { c.destroy(); } catch (e) {} }); _evoLiveCharts = [];
+            if (!weeks.length || !window.Chart) { if (empty) empty.style.display = 'block'; return; }
+            if (empty) empty.style.display = 'none';
+            const labels = weeks.map(s => { const p = s.split('-'); return `${p[2]}/${p[1]}`; });
+            const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { font: { size: 9 }, precision: 0 } } } };
+            const mk = (id, color, data) => { const el = document.getElementById(id); if (el) _evoLiveCharts.push(new Chart(el, { type: 'bar', data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] }, options: base })); };
+            mk('evo-conv', '#25D366', weeks.map(w => wkConv[w] || 0));
+            mk('evo-resv', '#16a34a', weeks.map(w => wkResv[w] || 0));
         }
         loadConversao();
     </script>
