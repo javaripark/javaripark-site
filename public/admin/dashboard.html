@@ -606,7 +606,7 @@
         <div class="section-panel" id="panel-conciliacao">
             <div class="card" style="border-left:3px solid #4f1964">
                 <h3>Conciliação bancária — upload dos arquivos</h3>
-                <p style="font-size:12px;color:#888;margin:0 0 14px;line-height:1.5">Suba os 3 relatórios do período. O sistema lê tudo no seu navegador, calcula e salva — não precisa passar por ninguém. Consumer (faturamento) já é automático.</p>
+                <p style="font-size:12px;color:#888;margin:0 0 14px;line-height:1.5">Suba <b>1, 2 ou os 3</b> arquivos — pode ir completando aos poucos (Rede e Itaú às vezes saem em partes). O sistema atualiza só a parte enviada e <b>preserva o resto</b> de cada mês. Consumer (faturamento) já é automático. Lê tudo no seu navegador e salva — sem passar por ninguém.</p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
                     <div><div class="kpi-label" style="margin-bottom:5px">Rede — Vendas (CSV)</div><input type="file" id="cc-vendas" accept=".csv" style="font-size:12px;width:100%"></div>
                     <div><div class="kpi-label" style="margin-bottom:5px">Rede — Recebimentos (CSV)</div><input type="file" id="cc-receb" accept=".csv" style="font-size:12px;width:100%"></div>
@@ -2116,23 +2116,42 @@
         function recebRows(text){ const rows=ccParseCSV(text,';'); const h=rows[0].map(x=>x.trim()); const ix=n=>h.indexOf(n); const c={data:ix('data'),val:ix('valor depositado'),st:ix('status'),neg:ix('negociadas')}; return rows.slice(1).filter(v=>v[c.data]).map(v=>({iso:isoBR(v[c.data]),val:brNum(v[c.val]),grav:(v[c.neg]||'').includes('Gravame'),pago:(v[c.st]||'').toUpperCase()==='PAGO'})); }
         function itauRows(aoa){ let hi=aoa.findIndex(r=>r.some(c=>String(c).trim()==='Data')); if(hi<0)hi=0; const head=aoa[hi].map(x=>String(x).trim()); const di=head.indexOf('Data'),li=head.findIndex(x=>x.toLowerCase().startsWith('lan')),ri=head.indexOf('Razão Social'),vi=head.findIndex(x=>String(x).includes('Valor')); const out=[]; for(const row of aoa.slice(hi+1)){ if(di<0||!row[di])continue; const val=numI(row[vi]); if(!val&&val!==0)continue; out.push({iso:isoBR(row[di]),desc:String(row[li]||''),razao:String(ri>=0?row[ri]||'':''),val}); } return out; }
         // ---- computa por MÊS (mesma lógica do seed) ----
-        function ccComputeMensal(consumerByDay, vRows, rRows, iRows){
-          const M={}; const mo=s=>String(s).slice(0,7);
-          const g=m=>(M[m]||={mes:m,cCartao:0,cPix:0,cDin:0,rBruto:0,mdr:0,rLiq:0,rPix:0,dep:0,pend:0,grav:0,livre:0,iCartao:0,iPix:0,depRows:[],credRows:[],extrato:[]});
-          for(const[d,o]of Object.entries(consumerByDay)){const m=g(mo(d));m.cCartao+=o.cartao||0;m.cPix+=o.pix||0;m.cDin+=o.dinheiro||0;}
-          for(const v of vRows){const m=g(mo(v.iso));if((v.mod==='débito'||v.mod==='crédito')&&v.st==='aprovada'){m.rBruto+=v.orig;m.mdr+=v.mdr;m.rLiq+=v.liq;}else if(v.mod==='pix'&&v.st==='pago')m.rPix+=v.orig;}
-          for(const r of rRows){const m=g(mo(r.iso));m.dep+=r.val;if(!r.pago)m.pend+=r.val;if(r.grav)m.grav+=r.val;else m.livre+=r.val;m.depRows.push(r);}
-          for(const r of iRows){const m=g(mo(r.iso));m.extrato.push({data:r.iso,desc:r.desc,razao:r.razao,valor:+r.val.toFixed(2)});const U=r.desc.toUpperCase();if(U.includes('RECEBIMENTO REDE')){m.iCartao+=r.val;m.credRows.push(r);}else if(U.includes('TRANSFER')&&U.includes('AUTOM')&&r.val>0){m.iCartao+=r.val;m.credRows.push(r);}else if(r.val>0&&(U.includes('PIX QRS')||U.includes('PIX RECEB')))m.iPix+=r.val;}
+        // MERGE: cada arquivo é opcional. Atualiza só a perna enviada; preserva o resto do mês.
+        function ccMerge(existing, consumerByDay, vRows, rRows, iRows){
+          const mo=s=>String(s).slice(0,7);
+          const months=new Set();
+          (vRows||[]).forEach(r=>months.add(mo(r.iso)));
+          (rRows||[]).forEach(r=>months.add(mo(r.iso)));
+          (iRows||[]).forEach(r=>months.add(mo(r.iso)));
+          const consM={}; for(const[d,o]of Object.entries(consumerByDay)){const m=mo(d);(consM[m]||={cartao:0,pix:0,din:0});consM[m].cartao+=o.cartao||0;consM[m].pix+=o.pix||0;consM[m].din+=o.dinheiro||0;}
+          const grp=(rows)=>{const g={};(rows||[]).forEach(r=>{(g[mo(r.iso)]||=[]).push(r);});return g;};
+          const vG=grp(vRows),rG=grp(rRows),iG=grp(iRows);
           const dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/86400000);
-          return Object.values(M).filter(x=>x.rBruto>0||x.dep>0||x.iCartao>0).map(x=>{
-            const used=new Array(x.credRows.length).fill(false),nc=[];
-            for(const d of x.depRows){let bi=-1;for(let i=0;i<x.credRows.length;i++){if(used[i])continue;if(Math.abs(x.credRows[i].val-d.val)<=0.02&&dd(x.credRows[i].iso,d.iso)<=4){bi=i;break;}}if(bi>=0)used[bi]=true;else nc.push(d);}
-            return {mes:x.mes,geradoEm:new Date().toISOString(),
-              vendeu:{consumerCartao:+x.cCartao.toFixed(2),redeBruto:+x.rBruto.toFixed(2),mdr:+x.mdr.toFixed(2),taxaEfetiva:x.rBruto?+(x.mdr/x.rBruto*100).toFixed(2):0,redeLiq:+x.rLiq.toFixed(2),dif:+(x.cCartao-x.rBruto).toFixed(2)},
-              caiu:{deposito:+x.dep.toFixed(2),itauCartao:+x.iCartao.toFixed(2),dif:+(x.dep-x.iCartao).toFixed(2),pendente:+x.pend.toFixed(2),gravame:+x.grav.toFixed(2),livre:+x.livre.toFixed(2),naoCasados:nc.map(d=>({data:d.iso,valor:+d.val.toFixed(2),grav:d.grav})),naoCasadosTotal:+nc.reduce((s,d)=>s+d.val,0).toFixed(2)},
-              pix:{consumer:+x.cPix.toFixed(2),itau:+x.iPix.toFixed(2)},dinheiro:{consumer:+x.cDin.toFixed(2)},
-              extrato:x.extrato};
-          });
+          const out=[];
+          for(const m of months){
+            const old=existing[m]||{}, cons=consM[m]||{cartao:0,pix:0,din:0};
+            // vendeu (Rede vendas + Consumer). Consumer sempre do faturamento.
+            let vendeu;
+            if(vRows){ let rB=0,mdr=0,liq=0,rPix=0; for(const v of (vG[m]||[])){ if((v.mod==='débito'||v.mod==='crédito')&&v.st==='aprovada'){rB+=v.orig;mdr+=v.mdr;liq+=v.liq;}else if(v.mod==='pix'&&v.st==='pago')rPix+=v.orig; } vendeu={consumerCartao:+cons.cartao.toFixed(2),redeBruto:+rB.toFixed(2),mdr:+mdr.toFixed(2),taxaEfetiva:rB?+(mdr/rB*100).toFixed(2):0,redeLiq:+liq.toFixed(2),dif:+(cons.cartao-rB).toFixed(2)}; }
+            else { vendeu=Object.assign({consumerCartao:0,redeBruto:0,mdr:0,taxaEfetiva:0,redeLiq:0,dif:0}, old.vendeu||{}); vendeu.consumerCartao=+cons.cartao.toFixed(2); vendeu.dif=+(cons.cartao-(vendeu.redeBruto||0)).toFixed(2); }
+            // caiu — lado Rede (depósitos) + _depRows
+            let depRows,dep,pend,grav,livre;
+            if(rRows){ depRows=(rG[m]||[]).map(r=>({iso:r.iso,val:r.val,grav:!!r.grav})); dep=depRows.reduce((s,r)=>s+r.val,0); pend=(rG[m]||[]).filter(r=>!r.pago).reduce((s,r)=>s+r.val,0); grav=depRows.filter(r=>r.grav).reduce((s,r)=>s+r.val,0); livre=dep-grav; }
+            else { depRows=old._depRows||[]; dep=old.caiu?.deposito||0; pend=old.caiu?.pendente||0; grav=old.caiu?.gravame||0; livre=old.caiu?.livre||0; }
+            // caiu — lado Itaú (extrato + créditos) + pix.itau
+            let extrato,iCartao,iPix;
+            if(iRows){ extrato=(iG[m]||[]).map(r=>({data:r.iso,desc:r.desc,razao:r.razao,valor:+r.val.toFixed(2)})); iCartao=0;iPix=0; for(const r of (iG[m]||[])){const U=r.desc.toUpperCase(); if(U.includes('RECEBIMENTO REDE'))iCartao+=r.val; else if(U.includes('TRANSFER')&&U.includes('AUTOM')&&r.val>0)iCartao+=r.val; else if(r.val>0&&(U.includes('PIX QRS')||U.includes('PIX RECEB')))iPix+=r.val;} }
+            else { extrato=old.extrato||[]; iCartao=old.caiu?.itauCartao||0; iPix=old.pix?.itau||0; }
+            // casamento depósito↔crédito (deriva créditos do extrato)
+            const credRows=extrato.filter(e=>{const U=(e.desc||'').toUpperCase();return U.includes('RECEBIMENTO REDE')||(U.includes('TRANSFER')&&U.includes('AUTOM')&&e.valor>0);}).map(e=>({iso:e.data,val:e.valor}));
+            const used=new Array(credRows.length).fill(false),nc=[];
+            for(const d of depRows){let bi=-1;for(let i=0;i<credRows.length;i++){if(used[i])continue;if(Math.abs(credRows[i].val-d.val)<=0.02&&dd(credRows[i].iso,d.iso)<=4){bi=i;break;}}if(bi>=0)used[bi]=true;else nc.push(d);}
+            out.push({mes:m,geradoEm:new Date().toISOString(), vendeu,
+              caiu:{deposito:+dep.toFixed(2),itauCartao:+iCartao.toFixed(2),dif:+(dep-iCartao).toFixed(2),pendente:+pend.toFixed(2),gravame:+grav.toFixed(2),livre:+livre.toFixed(2),naoCasados:nc.map(d=>({data:d.iso,valor:+d.val.toFixed(2),grav:!!d.grav})),naoCasadosTotal:+nc.reduce((s,d)=>s+d.val,0).toFixed(2)},
+              pix:{consumer:+cons.pix.toFixed(2),itau:+iPix.toFixed(2)}, dinheiro:{consumer:+cons.din.toFixed(2)},
+              extrato, _depRows:depRows});
+          }
+          return out;
         }
         // ---- leitura de arquivos ----
         const readText = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(f,'utf-8'); });
@@ -2142,27 +2161,18 @@
         $$('cc-processar')?.addEventListener('click', async () => {
           const fv=$$('cc-vendas').files[0], fr=$$('cc-receb').files[0], fi=$$('cc-itau').files[0];
           const st=$$('cc-status'); const ok=m=>{st.style.color='#16a34a';st.textContent=m;}; const er=m=>{st.style.color='#ef4444';st.textContent=m;};
-          if(!fv||!fr||!fi){ er('Selecione os 3 arquivos.'); return; }
-          try{ st.style.color='#888'; st.textContent='Lendo e calculando…';
-            const [tv,tr,aoa,cons]=await Promise.all([readText(fv),readText(fr),readItau(fi),ccConsumerByDay()]);
-            const meses=ccComputeMensal(cons, vendasRows(tv), recebRows(tr), itauRows(aoa));
-            if(!meses.length){ er('Não consegui extrair dados — confira se são os relatórios certos.'); return; }
-            // TRAVA: se o upload não traz extrato do Itaú de um mês que JÁ tinha, não apaga o lado banco — faz merge.
-            const protegidos=[];
-            for(const m of meses){
-              if((m.extrato||[]).length===0){
-                const old=ccData.find(x=>x.mes===m.mes);
-                if(old && (old.extrato||[]).length>0){
-                  m.extrato=old.extrato;
-                  m.caiu.itauCartao=old.caiu.itauCartao; m.caiu.naoCasados=old.caiu.naoCasados||[]; m.caiu.naoCasadosTotal=old.caiu.naoCasadosTotal||0;
-                  m.caiu.dif=+( (m.caiu.deposito||0)-(m.caiu.itauCartao||0) ).toFixed(2);
-                  m.pix.itau=old.pix.itau||0; m.itauPreservado=true;
-                  protegidos.push(ccMesNome(m.mes));
-                }
-              }
-              await setDoc(doc(ccDb,`${CC_BASE}/financeiro_conciliacao`,m.mes), m);
-            }
-            ok(`Salvo ✓ — ${meses.length} mês(es): ${meses.map(m=>ccMesNome(m.mes)).join(', ')}${protegidos.length?` · Itaú preservado em ${protegidos.join(', ')} (upload sem extrato desses meses)`:''}`);
+          if(!fv&&!fr&&!fi){ er('Selecione pelo menos 1 arquivo (pode subir um por vez — o sistema complementa).'); return; }
+          try{ st.style.color='#888'; st.textContent='Lendo e mesclando…';
+            const cons=await ccConsumerByDay();
+            const vRows = fv ? vendasRows(await readText(fv)) : null;
+            const rRows = fr ? recebRows(await readText(fr)) : null;
+            const iRows = fi ? itauRows(await readItau(fi)) : null;
+            const existing={}; ccData.forEach(d=>existing[d.mes]=d);
+            const meses=ccMerge(existing, cons, vRows, rRows, iRows);
+            if(!meses.length){ er('Os arquivos não têm período reconhecível — confira se são os relatórios certos.'); return; }
+            for(const m of meses) await setDoc(doc(ccDb,`${CC_BASE}/financeiro_conciliacao`,m.mes), m);
+            const legs=[fv&&'Vendas',fr&&'Recebimentos',fi&&'Itaú'].filter(Boolean).join(' + ');
+            ok(`Salvo ✓ — ${legs} · atualizou ${meses.length} mês(es): ${meses.map(m=>ccMesNome(m.mes)).join(', ')} (o resto de cada mês foi preservado)`);
             await loadConciliacao();
           }catch(e){ er('Falha: '+(e?.message||e)); console.error(e); }
         });
