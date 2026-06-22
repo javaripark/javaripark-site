@@ -1,24 +1,103 @@
 {
-  "snapshotDate": "2026-06-07",
-  "periodStart": "2026-05-09",
-  "periodEnd": "2026-06-07",
-  "source": "Meta Ads Manager — conta de boosts do Instagram (714723790830060) — export manual",
+  "snapshotDate": "2026-06-21",
+  "periodStart": "2026-04-23",
+  "periodEnd": "2026-06-21",
+  "source": "Meta Ads Manager — boosts do Instagram (conta fora do Business)",
   "currency": "BRL",
   "manual": true,
   "totals": {
-    "spent": 2703.64,
-    "conversations": 137,
-    "costPerConversation": 19.73,
-    "reach": 41064,
-    "impressions": 96791,
-    "linkClicks": 398
+    "spent": 4200.3,
+    "conversations": 229,
+    "costPerConversation": 18.34,
+    "reach": 62156,
+    "impressions": 148586,
+    "linkClicks": 658
   },
   "inactiveCount": 1,
   "campaigns": [
-    { "name": "Manda para a sua amiga que está…", "status": "ativa", "spent": 389.85, "conversations": 28, "costPerConv": 13.92, "reach": 6252, "impressions": 15020, "linkClicks": 58, "ctr": 0.386, "ends": "2026-06-23" },
-    { "name": "Copa é no quintal mais charmoso…", "status": "ativa", "spent": 823.64, "conversations": 50, "costPerConv": 16.47, "reach": 10952, "impressions": 30328, "linkClicks": 135, "ctr": 0.445, "ends": "2026-06-17" },
-    { "name": "Tem aniversário que cabe em um…", "status": "pausada", "spent": 784.34, "conversations": 23, "costPerConv": 34.10, "reach": 15603, "impressions": 36904, "linkClicks": 95, "ctr": 0.257, "ends": "2026-06-19" },
-    { "name": "Tá planejando aniversário? Vem… (1)", "status": "encerrada", "spent": 614.60, "conversations": 30, "costPerConv": 20.49, "reach": 5976, "impressions": 11416, "linkClicks": 90, "ctr": 0.788, "ends": "2026-06-05" },
-    { "name": "Tá planejando aniversário? Vem… (2)", "status": "ativa", "spent": 91.21, "conversations": 6, "costPerConv": 15.20, "reach": 2281, "impressions": 3123, "linkClicks": 20, "ctr": 0.641, "ends": "2026-07-06" }
+    {
+      "name": "Instagram post: Manda para a sua amiga que está…",
+      "status": "encerrada",
+      "spent": 389.85,
+      "conversations": 28,
+      "costPerConv": 13.92,
+      "reach": 6252,
+      "impressions": 15020,
+      "linkClicks": 58,
+      "ctr": 0.386,
+      "ends": "2026-06-01"
+    },
+    {
+      "name": "Instagram post: Copa é no quintal mais charmoso…",
+      "status": "encerrada",
+      "spent": 1169.78,
+      "conversations": 72,
+      "costPerConv": 16.25,
+      "reach": 14978,
+      "impressions": 43121,
+      "linkClicks": 192,
+      "ctr": 0.445,
+      "ends": "2026-06-17"
+    },
+    {
+      "name": "Instagram post: Tem aniversário que cabe em um…",
+      "status": "encerrada",
+      "spent": 809.69,
+      "conversations": 23,
+      "costPerConv": 35.2,
+      "reach": 15876,
+      "impressions": 37801,
+      "linkClicks": 95,
+      "ctr": 0.251,
+      "ends": "2026-06-19"
+    },
+    {
+      "name": "Instagram post: Tá planejando aniversário? Vem…",
+      "status": "encerrada",
+      "spent": 614.6,
+      "conversations": 30,
+      "costPerConv": 20.49,
+      "reach": 5976,
+      "impressions": 11416,
+      "linkClicks": 90,
+      "ctr": 0.788,
+      "ends": "2026-06-05"
+    },
+    {
+      "name": "Instagram post: Tá planejando aniversário? Vem…",
+      "status": "ativa",
+      "spent": 711.35,
+      "conversations": 37,
+      "costPerConv": 19.23,
+      "reach": 7915,
+      "impressions": 18054,
+      "linkClicks": 127,
+      "ctr": 0.703,
+      "ends": "2026-07-06"
+    },
+    {
+      "name": "Instagram post: Manda para a sua amiga que está…",
+      "status": "ativa",
+      "spent": 356.04,
+      "conversations": 30,
+      "costPerConv": 11.87,
+      "reach": 7764,
+      "impressions": 17063,
+      "linkClicks": 65,
+      "ctr": 0.381,
+      "ends": "2026-06-23"
+    },
+    {
+      "name": "Instagram post: Copa é no quintal mais charmoso…",
+      "status": "ativa",
+      "spent": 148.99,
+      "conversations": 9,
+      "costPerConv": 16.55,
+      "reach": 3395,
+      "impressions": 6111,
+      "linkClicks": 31,
+      "ctr": 0.507,
+      "ends": "2026-06-27"
+    }
   ]
 }
