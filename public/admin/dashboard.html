@@ -2147,8 +2147,22 @@
             const [tv,tr,aoa,cons]=await Promise.all([readText(fv),readText(fr),readItau(fi),ccConsumerByDay()]);
             const meses=ccComputeMensal(cons, vendasRows(tv), recebRows(tr), itauRows(aoa));
             if(!meses.length){ er('Não consegui extrair dados — confira se são os relatórios certos.'); return; }
-            for(const m of meses) await setDoc(doc(ccDb,`${CC_BASE}/financeiro_conciliacao`,m.mes), m);
-            ok(`Salvo ✓ — ${meses.length} mês(es): ${meses.map(m=>ccMesNome(m.mes)).join(', ')}`);
+            // TRAVA: se o upload não traz extrato do Itaú de um mês que JÁ tinha, não apaga o lado banco — faz merge.
+            const protegidos=[];
+            for(const m of meses){
+              if((m.extrato||[]).length===0){
+                const old=ccData.find(x=>x.mes===m.mes);
+                if(old && (old.extrato||[]).length>0){
+                  m.extrato=old.extrato;
+                  m.caiu.itauCartao=old.caiu.itauCartao; m.caiu.naoCasados=old.caiu.naoCasados||[]; m.caiu.naoCasadosTotal=old.caiu.naoCasadosTotal||0;
+                  m.caiu.dif=+( (m.caiu.deposito||0)-(m.caiu.itauCartao||0) ).toFixed(2);
+                  m.pix.itau=old.pix.itau||0; m.itauPreservado=true;
+                  protegidos.push(ccMesNome(m.mes));
+                }
+              }
+              await setDoc(doc(ccDb,`${CC_BASE}/financeiro_conciliacao`,m.mes), m);
+            }
+            ok(`Salvo ✓ — ${meses.length} mês(es): ${meses.map(m=>ccMesNome(m.mes)).join(', ')}${protegidos.length?` · Itaú preservado em ${protegidos.join(', ')} (upload sem extrato desses meses)`:''}`);
             await loadConciliacao();
           }catch(e){ er('Falha: '+(e?.message||e)); console.error(e); }
         });
@@ -2159,6 +2173,8 @@
         function ccKpi(l,v,sub,color){ return `<div class="kpi-card"><div class="kpi-label">${l}</div><div class="kpi-value" style="font-size:1.1em${color?';color:'+color:''}">${v}</div><div class="kpi-sub">${sub||''}</div></div>`; }
         const ccGrid=i=>`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${i}</div>`;
         const ccDif=v=>Math.abs(v)<1?'<span style="color:#16a34a;font-weight:700">bate ✓</span>':`<span style="color:#ef4444;font-weight:700">dif ${ccFmt(v)}</span>`;
+        const ccPctCol=p=>p>=99?'#16a34a':(p>=50?'#f59e0b':'#ef4444');
+        function ccPctBox(label,num,den,sub){ const p=den>0?Math.min(100,num/den*100):null; const col=p===null?'#9a9aa3':ccPctCol(p); const bar=p===null?'':`<div style="height:6px;background:#eee;border-radius:4px;margin-top:7px;overflow:hidden"><div style="height:100%;width:${p.toFixed(0)}%;background:${col}"></div></div>`; return `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value" style="font-size:1.4em;color:${col}">${p===null?'—':p.toFixed(0)+'%'}</div>${bar}<div class="kpi-sub">${sub||(den>0?ccFmt(num)+' de '+ccFmt(den):'sem dado')}</div></div>`; }
         function ccRender(){
           const box=$$('cc-resultado'); if(!box||!ccData.length){ if(box)box.innerHTML=''; return; }
           let h='';
@@ -2168,6 +2184,16 @@
           h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px">${ccData.map(c=>`<button class="cc-mes" data-mes="${c.mes}" style="border:1px solid ${c.mes===ccSel?'#4f1964':'#ddd'};background:${c.mes===ccSel?'#4f1964':'#fff'};color:${c.mes===ccSel?'#fff':'#555'};border-radius:20px;padding:6px 14px;font-weight:700;font-size:12px;cursor:pointer">${ccMesNome(c.mes)}</button>`).join('')}</div>`;
           const c=ccData.find(x=>x.mes===ccSel)||ccData[ccData.length-1];
           const parcial=(c.vendeu.redeBruto||0)===0;
+          // conciliação (total + por meio de pagamento)
+          const _cd=c.caiu.deposito||0,_ci=c.caiu.itauCartao||0,_pd=c.pix.consumer||0,_pi=c.pix.itau||0;
+          const semItau=(c.extrato||[]).length===0;
+          h+=ccCard(`Conciliação — ${ccMesNome(c.mes)} <span class="muted" style="font-weight:400;text-transform:none">(quanto do registrado caiu no banco)${semItau?' · ⚠ sem extrato do Itaú neste mês':''}</span>`,
+            ccGrid(
+              ccPctBox('Total das operações', _ci+_pi, _cd+_pd)+
+              ccPctBox('Cartão', _ci, _cd)+
+              ccPctBox('Pix', _pi, _pd)+
+              `<div class="kpi-card"><div class="kpi-label">Dinheiro</div><div class="kpi-value" style="font-size:1.4em;color:#9a9aa3">—</div><div class="kpi-sub">${ccFmt(c.dinheiro.consumer)} no caixa físico (não bancarizado)</div></div>`
+            ));
           h+=ccCard(`Vendeu → recebeu → caiu — ${ccMesNome(c.mes)}${parcial?' <span class="muted" style="font-weight:400;text-transform:none">(cobertura parcial — sem relatório Rede neste mês)</span>':''}`,
             ccGrid(
               ccKpi('Consumer cartão', ccFmt(c.vendeu.consumerCartao),'vendido no cartão')+
