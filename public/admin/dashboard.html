@@ -24,7 +24,7 @@
 
         /* Nav */
         .admin-nav{display:flex;background:#fff;overflow-x:auto;box-shadow:0 4px 8px rgba(0,0,0,.06);border-radius:0 0 12px 12px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
-        .admin-nav a{flex:1;min-width:0;text-align:center;padding:12px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+        .admin-nav a{flex:1 0 auto;min-width:0;text-align:center;padding:12px 6px;text-decoration:none;color:#666;font-weight:600;font-size:12px;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
         .admin-nav a:hover{background:#f8f9fa}
         .admin-nav a.active{color:#4f1964;border-bottom-color:#4f1964;background:#f5f0f8}
 
@@ -1962,8 +1962,9 @@
                 const user = await new Promise(res => { const un = onAuthStateChanged(getAuth(appConv), u => { un(); res(u); }); });
                 if (!user) return;
                 const db = getFirestore(appConv);
-                const [snap, ads] = await Promise.all([
+                const [snap, chat, ads] = await Promise.all([
                     getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/reservas')),
+                    getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/wa_atendimento')),
                     fetch('/data/ads-snapshot.json?v=' + Date.now()).then(r => r.json()).catch(() => null)
                 ]);
                 let total = 0, ad = 0, none = 0;
@@ -1973,20 +1974,23 @@
                     if (o === 'anuncio') ad++;
                     else if (!o) none++;
                 });
-                const conversas = ads?.totals?.conversations || 0;
+                // conversas REAIS do chat vindas de anúncio (vincula com a atividade do bot, não com o snapshot estático)
+                let convAnuncio = 0, convTotal = 0;
+                chat.forEach(d => { convTotal++; if ((d.data().Origem || '') === 'anuncio') convAnuncio++; });
                 const spent = ads?.totals?.spent || 0;
                 const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
                 set('conv-ads', ad);
                 set('conv-ads-sub', total ? `${(ad / total * 100).toFixed(0)}% das ${total} reservas` : 'sem reservas ainda');
                 set('conv-cpr', ad > 0 ? brl(spent / ad) : '—');
-                set('conv-rate', (ad > 0 && conversas) ? `${(ad / conversas * 100).toFixed(1)}%` : '—');
-                set('conv-rate-sub', `de ${conversas} conversas (snapshot)`);
+                // taxa = reservas de anúncio ÷ conversas de anúncio REAIS (chat ao vivo)
+                set('conv-rate', (ad > 0 && convAnuncio) ? `${(ad / convAnuncio * 100).toFixed(1)}%` : '—');
+                set('conv-rate-sub', convAnuncio ? `de ${convAnuncio} conversas de anúncio (chat ao vivo)` : 'sem conversas de anúncio ainda');
                 set('conv-marked', total - none);
                 set('conv-marked-sub', `${none} sem marcar de ${total}`);
                 const note = document.getElementById('conv-note');
-                if (note) note.textContent = ad === 0
-                    ? 'Marque "Veio de anúncio?" ao cadastrar reservas. Conforme as reservas de anúncio entram, custo por reserva e taxa de conversão aparecem aqui. Custo/conversão usam o gasto e as conversas do snapshot (09/05–07/06) como referência.'
-                    : 'Custo por reserva e conversão usam o gasto (' + brl(spent) + ') e as ' + conversas + ' conversas do snapshot 09/05–07/06. Fica preciso quando o gasto sincronizar por período junto das reservas marcadas.';
+                if (note) note.textContent = convAnuncio === 0
+                    ? 'Conversão = reservas de anúncio ÷ conversas de anúncio (estas vêm do chat ao vivo, quando o lead chega clicando no anúncio). Marque "Veio de anúncio?" nas reservas do painel pra contar as manuais também. O custo por reserva usa o gasto do snapshot do Ads (' + brl(spent) + ').'
+                    : 'Conversão liga o chat ao vivo (' + convAnuncio + ' conversas de anúncio) às reservas de anúncio. O custo por reserva usa o gasto do snapshot do Ads (' + brl(spent) + ', 09/05–07/06) — fica 100% preciso quando o gasto sincronizar por período (a conta do Instagram não libera por API).';
             } catch (e) { console.warn('Conversão anúncio→reserva: falha ao carregar', e?.message); }
         }
         loadConversao();
