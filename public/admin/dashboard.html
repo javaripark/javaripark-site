@@ -2031,20 +2031,13 @@
 
     <!-- Conversão Anúncio → Reserva: lê as reservas do Firestore e cruza com o snapshot de anúncios -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        const fbCfg = {
-            apiKey: "AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",
-            authDomain: "central-de-reservas-jsp.firebaseapp.com",
-            projectId: "central-de-reservas-jsp",
-            storageBucket: "central-de-reservas-jsp.firebasestorage.app",
-            appId: "1:574859111927:web:83df67ed1865a59c0392f2"
-        };
         const brl = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         async function loadConversao() {
             try {
-                const appConv = initializeApp(fbCfg, 'dash-conv');
+                const appConv = getApp(); // app padrão — mesma sessão do login (app nomeado não herda auth)
                 // rules fechadas: precisa do usuário logado (persistido pelo login real)
                 const user = await new Promise(res => { const un = onAuthStateChanged(getAuth(appConv), u => { un(); res(u); }); });
                 if (!user) return;
@@ -2104,11 +2097,10 @@
 
     <script type="module">
         // ===== Conciliação bancária: upload no navegador → mensal → Firestore =====
-        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        const CC_CFG = { apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18", authDomain:"central-de-reservas-jsp.firebaseapp.com", projectId:"central-de-reservas-jsp", storageBucket:"central-de-reservas-jsp.firebasestorage.app", appId:"1:574859111927:web:83df67ed1865a59c0392f2" };
-        const ccApp = getApps().find(a=>a.name==='dash-recon') || initializeApp(CC_CFG,'dash-recon');
+        const ccApp = getApp(); // app padrão (mesma sessão do login — apps com nome próprio NÃO herdam o login)
         const ccDb = getFirestore(ccApp), ccAuth = getAuth(ccApp);
         const CC_BASE = 'artifacts/central-de-reservas-jsp/public/data';
         const $$ = id => document.getElementById(id);
