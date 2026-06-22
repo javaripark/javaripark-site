@@ -2183,8 +2183,9 @@
         function ccKpi(l,v,sub,color){ return `<div class="kpi-card"><div class="kpi-label">${l}</div><div class="kpi-value" style="font-size:1.1em${color?';color:'+color:''}">${v}</div><div class="kpi-sub">${sub||''}</div></div>`; }
         const ccGrid=i=>`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${i}</div>`;
         const ccDif=v=>Math.abs(v)<1?'<span style="color:#16a34a;font-weight:700">bate ✓</span>':`<span style="color:#ef4444;font-weight:700">dif ${ccFmt(v)}</span>`;
-        const ccPctCol=p=>p>=99?'#16a34a':(p>=50?'#f59e0b':'#ef4444');
-        function ccPctBox(label,num,den,sub){ const p=den>0?Math.min(100,num/den*100):null; const col=p===null?'#9a9aa3':ccPctCol(p); const bar=p===null?'':`<div style="height:6px;background:#eee;border-radius:4px;margin-top:7px;overflow:hidden"><div style="height:100%;width:${p.toFixed(0)}%;background:${col}"></div></div>`; return `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value" style="font-size:1.4em;color:${col}">${p===null?'—':p.toFixed(0)+'%'}</div>${bar}<div class="kpi-sub">${sub||(den>0?ccFmt(num)+' de '+ccFmt(den):'sem dado')}</div></div>`; }
+        const ccPctCol=p=>p>=99?'#16a34a':(p>=85?'#f59e0b':'#ef4444');
+        // conciliação = quão alinhados estão os 2 lados. 100% só quando batem; diferença pra MAIS ou pra MENOS derruba o %.
+        function ccPctBox(label,num,den,sub){ const mx=Math.max(num,den); const p=mx>0?Math.min(num,den)/mx*100:null; const col=p===null?'#9a9aa3':ccPctCol(p); const bar=p===null?'':`<div style="height:6px;background:#eee;border-radius:4px;margin-top:7px;overflow:hidden"><div style="height:100%;width:${p.toFixed(0)}%;background:${col}"></div></div>`; const gap=num-den; const defSub=mx>0?`${ccFmt(num)} no banco · ${ccFmt(den)} registrado${Math.abs(gap)>=1?` · <b style="color:${gap>0?'#2563eb':'#ef4444'}">${gap>0?'+':'−'}${ccFmt(Math.abs(gap))}</b>`:''}`:'sem dado'; return `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value" style="font-size:1.4em;color:${col}">${p===null?'—':p.toFixed(0)+'%'}</div>${bar}<div class="kpi-sub">${sub||defSub}</div></div>`; }
         function ccRender(){
           const box=$$('cc-resultado'); if(!box||!ccData.length){ if(box)box.innerHTML=''; return; }
           let h='';
@@ -2197,7 +2198,7 @@
           // conciliação (total + por meio de pagamento)
           const _cd=c.caiu.deposito||0,_ci=c.caiu.itauCartao||0,_pd=c.pix.consumer||0,_pi=c.pix.itau||0;
           const semItau=(c.extrato||[]).length===0;
-          h+=ccCard(`Conciliação — ${ccMesNome(c.mes)} <span class="muted" style="font-weight:400;text-transform:none">(quanto do registrado caiu no banco)${semItau?' · ⚠ sem extrato do Itaú neste mês':''}</span>`,
+          h+=ccCard(`Conciliação — ${ccMesNome(c.mes)} <span class="muted" style="font-weight:400;text-transform:none">(100% = banco bate com o registrado)${semItau?' · ⚠ sem extrato do Itaú neste mês':''}</span>`,
             ccGrid(
               ccPctBox('Total das operações', _ci+_pi, _cd+_pd)+
               ccPctBox('Cartão', _ci, _cd)+
