@@ -560,12 +560,10 @@
                     <div><div class="kpi-label" style="margin-bottom:6px;color:#16a34a">Reservas de anúncio / semana</div><div style="height:170px"><canvas id="evo-resv"></canvas></div></div>
                 </div>
                 <div id="evo-live-empty" style="font-size:12px;color:#888;display:none">Ainda sem conversas de anúncio registradas — conforme os leads de anúncio chegam pelo chat, a curva preenche.</div>
-                <div class="kpi-label" style="margin:20px 0 8px">Gasto & custo por conversa (do Ads Manager)</div>
-                <div id="ads-evo-empty" style="font-size:12px;color:#888;line-height:1.5;display:none">Pra esta parte, exporte o CSV no Ads Manager com <strong>Detalhamento → Por semana</strong> e me mande — aí o gasto e o custo por conversa aparecem semana a semana. (O snapshot atual é um agregado do período.)</div>
-                <div id="ads-evo-charts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
-                    <div><div class="kpi-label" style="margin-bottom:6px">Custo por conversa</div><div style="height:170px"><canvas id="evo-cpc"></canvas></div></div>
-                    <div><div class="kpi-label" style="margin-bottom:6px">Gasto × Conversas</div><div style="height:170px"><canvas id="evo-spend"></canvas></div></div>
-                    <div><div class="kpi-label" style="margin-bottom:6px">Alcance</div><div style="height:170px"><canvas id="evo-reach"></canvas></div></div>
+                <div class="kpi-label" style="margin:20px 0 8px">Eficiência por campanha (período todo)</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px">
+                    <div><div class="kpi-label" style="margin-bottom:6px">Custo por conversa (verde = melhor)</div><div style="height:230px"><canvas id="cmp-cpc"></canvas></div></div>
+                    <div><div class="kpi-label" style="margin-bottom:6px">Investido por campanha</div><div style="height:230px"><canvas id="cmp-spend"></canvas></div></div>
                 </div>
             </div>
 
@@ -883,21 +881,21 @@
             }</tbody></table>${a.inactiveCount ? `<p style="font-size:11px;color:#aaa;margin-top:8px">+ ${a.inactiveCount} campanha sem entrega (R$ 0) omitida.</p>` : ''}`;
             makeSortable($('tbl-ads'));
             renderAdsInsights(a);
-            renderAdsEvolution(a);
+            renderAdsCampaignCharts(a);
         }
         let _evoCharts = [];
-        function renderAdsEvolution(a) {
-            const evo = a.evolution || [];
-            const empty = $('ads-evo-empty'), charts = $('ads-evo-charts');
+        function renderAdsCampaignCharts(a) {
+            const cs = (a.campaigns || []).filter(c => c.conversations > 0).sort((x, y) => x.costPerConv - y.costPerConv);
             _evoCharts.forEach(c => { try { c.destroy(); } catch (e) {} }); _evoCharts = [];
-            if (!evo.length || !window.Chart) { if (empty) empty.style.display = 'block'; if (charts) charts.style.display = 'none'; return; }
-            if (empty) empty.style.display = 'none'; if (charts) charts.style.display = 'grid';
-            const labels = evo.map(p => fmtDateBR(p.periodEnd || p.label));
-            const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } };
-            const mk = (id, cfg) => { const el = $(id); if (el) _evoCharts.push(new Chart(el, cfg)); };
-            mk('evo-cpc', { type: 'line', data: { labels, datasets: [{ data: evo.map(p => p.costPerConv), borderColor: '#4f1964', backgroundColor: 'rgba(79,25,100,.08)', fill: true, tension: .3 }] }, options: base });
-            mk('evo-spend', { type: 'bar', data: { labels, datasets: [{ label: 'Gasto', data: evo.map(p => p.spent), backgroundColor: '#f59e0b' }, { label: 'Conversas', type: 'line', data: evo.map(p => p.conversations), borderColor: '#25D366', yAxisID: 'y1', tension: .3 }] }, options: { ...base, plugins: { legend: { display: true, labels: { font: { size: 10 } } } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { position: 'left', ticks: { font: { size: 9 } } }, y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 9 } } } } } });
-            mk('evo-reach', { type: 'line', data: { labels, datasets: [{ data: evo.map(p => p.reach), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.08)', fill: true, tension: .3 }] }, options: base });
+            if (!cs.length || !window.Chart) return;
+            const short = n => n.replace(/^Instagram post:\s*/i, '').replace(/^Post do Instagram:\s*/i, '').slice(0, 24);
+            const labels = cs.map(c => short(c.name));
+            const cpcs = cs.map(c => c.costPerConv), best = Math.min(...cpcs), worst = Math.max(...cpcs);
+            const colorFor = v => v === best ? '#16a34a' : (v === worst ? '#ef4444' : '#f59e0b');
+            const base = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } };
+            const mk = (id, data, colors) => { const el = $(id); if (el) _evoCharts.push(new Chart(el, { type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors }] }, options: base })); };
+            mk('cmp-cpc', cpcs, cpcs.map(colorFor));
+            mk('cmp-spend', cs.map(c => c.spent), '#4f1964');
         }
         function renderAdsInsights(a) {
             const cs = (a.campaigns || []).filter(c => c.conversations > 0);
