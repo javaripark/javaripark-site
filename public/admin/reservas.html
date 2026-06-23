@@ -63,7 +63,7 @@
         .sector.child-slot.free .sector-name { font-size: 1.5em !important; }
         .sector.child-slot.reserved { background-color: rgba(234,88,12,.7); }
         .sector.child-hidden { display: none !important; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,.6); justify-content: center; align-items: center; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background-color: rgba(0,0,0,.6); justify-content: center; align-items: flex-start; padding: 16px 0; }
         .modal-content { background-color: #fefefe; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,.2); width: 90%; max-width: 500px; position: relative; transform: scale(.95); opacity: 0; animation: fadeInScale .3s forwards; }
         @keyframes fadeInScale { to { transform: scale(1); opacity: 1; } }
         .close-button { color: #aaa; position: absolute; top: 15px; right: 25px; font-size: 28px; font-weight: bold; cursor: pointer; transition: color .2s; }
