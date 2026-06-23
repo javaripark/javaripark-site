@@ -540,11 +540,17 @@
         <!-- ==================== ANÚNCIOS (Meta) ==================== -->
         <div class="section-panel" id="panel-anuncios">
             <div class="card" style="border-left:3px solid #f59e0b">
-                <p style="font-size:12px;color:#888;margin:0;line-height:1.5">
-                    <strong style="color:#555">Snapshot manual</strong> — exportado do Meta Ads Manager (conta de boosts do Instagram).
-                    <span id="ads-snapshot-label"></span>
-                    Não atualiza sozinho: a conta de promoções do Instagram não libera dados por API. Mande um CSV novo do Ads Manager que eu atualizo.
+                <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:6px">Atualizar com CSV do Meta Ads Manager</div>
+                <p style="font-size:12px;color:#888;margin:0 0 12px;line-height:1.5">
+                    A conta de boosts do Instagram não libera dados por API — então você atualiza aqui. No Ads Manager: relatório de <b>Campanhas</b> → Exportar → CSV.
+                    Dica: exporte com <b>detalhamento por semana</b> (Breakdown → By Time → Week) pra preencher os gráficos de evolução. O sistema lê tudo no seu navegador e salva — sem passar por ninguém.
+                    <span id="ads-snapshot-label" style="display:block;margin-top:6px;color:#aaa"></span>
                 </p>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                    <input type="file" id="ads-file" accept=".csv" style="font-size:12px">
+                    <button id="ads-processar" style="background:#f59e0b;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:700;font-size:13px;cursor:pointer">Processar e salvar</button>
+                    <span id="ads-status" style="font-size:12px;color:#888"></span>
+                </div>
             </div>
 
             <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
@@ -655,8 +661,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc as fsDoc, getDoc as fsGetDoc, setDoc as fsSetDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // Portão REAL (Firebase Auth) — sessão persiste por IndexedDB, sem TTL artificial
         const AUTH_KEY = 'javari_admin_auth';
         const __auth = getAuth(initializeApp({apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18",authDomain:"central-de-reservas-jsp.firebaseapp.com",projectId:"central-de-reservas-jsp",storageBucket:"central-de-reservas-jsp.firebasestorage.app",appId:"1:574859111927:web:83df67ed1865a59c0392f2"}));
@@ -665,6 +672,8 @@
         localStorage.setItem(AUTH_KEY, JSON.stringify({ email: __user.email, ts: Date.now() }));
         const session = { email: __user.email };
         window.__signOutAdmin = () => signOut(__auth);
+        const adsDb = getFirestore(getApp());
+        const ADS_DOC = 'artifacts/central-de-reservas-jsp/public/data/financeiro/ads_snapshot';
 
         const $ = id => document.getElementById(id);
 
@@ -854,12 +863,124 @@
 
         // ── Anúncios (Meta) — snapshot manual ──
         async function loadAdsSnapshot() {
+            // Firestore (uploads self-service) tem prioridade; JSON estático é fallback/seed.
+            try {
+                const snap = await fsGetDoc(fsDoc(adsDb, ADS_DOC));
+                if (snap.exists()) { renderAdsSnapshot(snap.data()); return; }
+            } catch (e) { console.warn('Firestore ads snapshot:', e); }
             try {
                 const res = await fetch('/data/ads-snapshot.json?v=' + Date.now());
                 if (!res.ok) return;
                 renderAdsSnapshot(await res.json());
             } catch (e) { console.warn('Erro ao carregar snapshot de anúncios:', e); }
         }
+
+        // Converte o CSV do Meta Ads Manager → snapshot (mesma lógica do scripts/ads-csv-to-snapshot.mjs).
+        // Robusto a: idioma do export (aliases PT/EN), reordenação de colunas, número BR/US.
+        function adsCsvToSnapshot(text) {
+            const parseCSV = (t) => { const rows=[]; let row=[],field='',q=false;
+                for (let i=0;i<t.length;i++){ const c=t[i];
+                    if(q){ if(c==='"'){ if(t[i+1]==='"'){field+='"';i++;} else q=false; } else field+=c; }
+                    else if(c==='"') q=true;
+                    else if(c===',') { row.push(field); field=''; }
+                    else if(c==='\n'||c==='\r'){ if(c==='\r'&&t[i+1]==='\n')i++; if(field!==''||row.length){row.push(field);rows.push(row);row=[];field='';} }
+                    else field+=c; }
+                if(field!==''||row.length){row.push(field);rows.push(row);} return rows; };
+            const rows = parseCSV(text).filter(r => r.some(c => c.trim() !== ''));
+            if (rows.length < 2) return null;
+            const head = rows[0].map(h => h.trim());
+            const idx = (...names) => { for (const n of names){ const i = head.findIndex(h => h.toLowerCase() === n.toLowerCase()); if(i>=0) return i; } return -1; };
+            const C = {
+                start: idx('Reporting starts','Início dos relatórios','Início do período'),
+                end: idx('Reporting ends','Término dos relatórios','Fim do período'),
+                name: idx('Campaign name','Nome da campanha','Ad name','Nome do anúncio','Ad set name','Nome do conjunto de anúncios'),
+                delivery: idx('Campaign delivery','Veiculação da campanha','Ad delivery','Veiculação do anúncio','Ad set delivery','Delivery','Status'),
+                results: idx('Results','Resultados'),
+                reach: idx('Reach','Alcance'),
+                spent: idx('Amount spent (BRL)','Amount spent','Valor usado (BRL)','Valor gasto (BRL)','Valor usado'),
+                impressions: idx('Impressions','Impressões'),
+                clicks: idx('Link clicks','Cliques no link','Cliques (todos)','Clicks'),
+                ends: idx('Ends','Termina em','Data de término','Término'),
+                week: idx('Week','Day','Date','Semana','Dia','Data'),
+            };
+            // número locale-aware: 1.234,56 (BR) e 1,234.56 / 1234.56 (US) → float correto
+            const num = v => { let s=String(v??'').trim().replace(/[^\d.,\-]/g,''); if(!s) return 0;
+                const hasC=s.includes(','), hasD=s.includes('.');
+                if(hasC&&hasD){ if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.'); else s=s.replace(/,/g,''); }
+                else if(hasC){ s=s.replace(',','.'); }
+                const n=parseFloat(s); return isNaN(n)?0:n; };
+            const STATUS = { active:'ativa', paused:'pausada', completed:'encerrada', recently_completed:'encerrada', inactive:'inativa',
+                ativa:'ativa', pausada:'pausada', encerrada:'encerrada', concluída:'encerrada', concluida:'encerrada', inativa:'inativa' };
+            const data = rows.slice(1).map(r => ({
+                name: (r[C.name]||'').trim().replace(/\.\.\.$/,'…'),
+                delivery: (r[C.delivery]||'').trim().toLowerCase(),
+                results: num(r[C.results]), reach: Math.round(num(r[C.reach])), spent: num(r[C.spent]),
+                impressions: Math.round(num(r[C.impressions])), clicks: Math.round(num(r[C.clicks])),
+                ends: (r[C.ends]||'').trim().match(/^\d{4}-\d{2}-\d{2}$/) ? r[C.ends].trim() : '',
+                pStart: (r[C.start]||'').trim(), pEnd: (r[C.end]||'').trim(),
+                bucket: C.week>=0 ? (r[C.week]||'').trim() : '',
+            }));
+            const keyOf = d => d.bucket || (d.pStart && d.pEnd ? `${d.pStart}→${d.pEnd}` : '');
+            const buckets = [...new Set(data.map(keyOf).filter(Boolean))];
+            let evolution = [];
+            if (buckets.length > 1) {
+                const byB = {};
+                for (const d of data){ const k=keyOf(d); if(!k) continue; (byB[k]||={spent:0,conversations:0,reach:0,impressions:0,linkClicks:0}); const b=byB[k]; b.spent+=d.spent; b.conversations+=d.results; b.reach+=d.reach; b.impressions+=d.impressions; b.linkClicks+=d.clicks; }
+                evolution = Object.entries(byB).map(([k,b]) => ({
+                    label: k.includes('→')?k.split('→')[0]:k, periodEnd: k.includes('→')?k.split('→')[1]:k,
+                    spent:+b.spent.toFixed(2), conversations:Math.round(b.conversations),
+                    costPerConv: b.conversations>0?+(b.spent/b.conversations).toFixed(2):0,
+                    reach:b.reach, impressions:b.impressions, linkClicks:b.linkClicks,
+                    ctr: b.impressions>0?+(b.linkClicks/b.impressions*100).toFixed(3):0,
+                })).sort((a,b)=>(a.periodEnd||a.label).localeCompare(b.periodEnd||b.label));
+            }
+            const isTimeSeries = buckets.length > 1;
+            let inactiveCount = 0; const groups = {};
+            data.forEach((d,i) => {
+                const status = STATUS[d.delivery] || 'encerrada';
+                if (status==='inativa' || (d.spent===0 && d.results===0)) { inactiveCount++; return; }
+                const key = isTimeSeries ? d.name : `${d.name}@@${i}`;
+                const c = (groups[key] ||= {name:d.name,status,spent:0,conversations:0,reach:0,impressions:0,linkClicks:0,ends:''});
+                c.spent+=d.spent; c.conversations+=d.results; c.reach=Math.max(c.reach,d.reach);
+                c.impressions+=d.impressions; c.linkClicks+=d.clicks;
+                if (d.ends>c.ends) c.ends=d.ends;
+                if (status==='ativa') c.status='ativa';
+            });
+            const campaigns = Object.values(groups).map(c => ({
+                name:c.name, status:c.status, spent:+c.spent.toFixed(2), conversations:Math.round(c.conversations),
+                costPerConv: c.conversations>0?+(c.spent/c.conversations).toFixed(2):0,
+                reach:c.reach, impressions:c.impressions, linkClicks:c.linkClicks,
+                ctr: c.impressions>0?+(c.linkClicks/c.impressions*100).toFixed(3):0, ends:c.ends,
+            }));
+            const sum = (arr,k) => arr.reduce((s,x)=>s+(x[k]||0),0);
+            const spent=+sum(campaigns,'spent').toFixed(2), conversations=sum(campaigns,'conversations');
+            const allStarts=data.map(d=>d.pStart).filter(Boolean).sort();
+            const allEnds=data.map(d=>d.pEnd).filter(Boolean).sort();
+            return {
+                snapshotDate: allEnds[allEnds.length-1] || new Date().toISOString().slice(0,10),
+                periodStart: allStarts[0]||'', periodEnd: allEnds[allEnds.length-1]||'',
+                source: 'Meta Ads Manager — boosts do Instagram (conta fora do Business)',
+                currency:'BRL', manual:true,
+                totals: { spent, conversations, costPerConversation: conversations?+(spent/conversations).toFixed(2):0,
+                    reach:sum(campaigns,'reach'), impressions:sum(campaigns,'impressions'), linkClicks:sum(campaigns,'linkClicks') },
+                evolution, inactiveCount, campaigns,
+            };
+        }
+
+        $('ads-processar')?.addEventListener('click', async () => {
+            const f = $('ads-file').files[0];
+            const st = $('ads-status'); const ok=m=>{st.style.color='#16a34a';st.textContent=m;}; const er=m=>{st.style.color='#ef4444';st.textContent=m;};
+            if (!f) { er('Selecione o CSV exportado do Meta Ads Manager.'); return; }
+            try { st.style.color='#888'; st.textContent='Lendo e processando…';
+                const snap = adsCsvToSnapshot(await f.text());
+                if (!snap || !snap.campaigns.length) { er('Não encontrei campanhas no CSV. Confira se é o export de "Campaigns" do Ads Manager.'); return; }
+                snap.uploadedAt = new Date().toISOString(); snap.uploadedBy = session.email;
+                await fsSetDoc(fsDoc(adsDb, ADS_DOC), snap);
+                const evoTxt = snap.evolution.length ? `${snap.evolution.length} pontos no tempo ✓` : 'sem evolução (exporte com breakdown semanal pra preencher os gráficos)';
+                ok(`Salvo ✓ — ${fmtDateBR(snap.periodStart)} → ${fmtDateBR(snap.periodEnd)} · ${snap.campaigns.length} campanhas · ${evoTxt}`);
+                await loadAdsSnapshot();
+            } catch (e) { er('Falha: ' + (e?.message || e)); console.error(e); }
+        });
         function renderAdsSnapshot(a) {
             const t = a.totals || {};
             $('ads-spent').textContent = fmtBRLFull(t.spent);
@@ -2033,7 +2154,7 @@
     <script type="module">
         import { getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         const brl = v => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         async function loadConversao() {
             try {
@@ -2045,7 +2166,10 @@
                 const [snap, chat, ads] = await Promise.all([
                     getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/reservas')),
                     getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/wa_atendimento')),
-                    fetch('/data/ads-snapshot.json?v=' + Date.now()).then(r => r.json()).catch(() => null)
+                    (async () => { // Firestore (upload self-service) tem prioridade; JSON estático é fallback
+                        try { const s = await getDoc(doc(db, 'artifacts/central-de-reservas-jsp/public/data/financeiro/ads_snapshot')); if (s.exists()) return s.data(); } catch (e) {}
+                        return fetch('/data/ads-snapshot.json?v=' + Date.now()).then(r => r.json()).catch(() => null);
+                    })()
                 ]);
                 let total = 0, ad = 0, none = 0;
                 snap.forEach(d => {
