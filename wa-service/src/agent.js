@@ -162,7 +162,20 @@ async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid })
     if (conv.messages.length < 4 && (ad.title || ad.body)) conv.adInfo = `${ad.title || ''}${ad.body ? ' — ' + ad.body : ''}`.slice(0, 300);
   }
 
-  const { reply, usage, handoff, reservou, negociou } = await atender(conv, textoFinal);
+  let reply, usage, handoff, reservou, negociou;
+  try {
+    ({ reply, usage, handoff, reservou, negociou } = await atender(conv, textoFinal));
+  } catch (e) {
+    // IA instável (ex: 529 Overloaded da Anthropic, mesmo após retries) — NUNCA deixar o
+    // cliente no silêncio sem ninguém saber. Persiste a msg, marca cooldown e AVISA o admin.
+    // Não vira 'humano': a próxima mensagem do cliente tenta o bot de novo (quando a IA voltar).
+    console.error(`[atender] FALHOU ${telefone} ${e?.status || ''} ${e?.message || e}`);
+    conv.adminPingEm = agora;
+    await saveConv(conv);
+    if (cfg.adminPhone) await sendText(cfg.adminPhone,
+      `🚨 *Bot não conseguiu responder agora* (instabilidade na IA${e?.status ? ' · ' + e.status : ''})\n👤 ${conv.nomePerfil || 'Cliente'} · wa.me/${telefone}\n💬 "${textoFinal.slice(0, 120)}"\n\nResponda pelo app — o bot tenta de novo na próxima mensagem do cliente.`);
+    return;
+  }
   if (handoff) conv.adminPingEm = agora; // alerta inicial conta pro cooldown do re-ping
   if (reservou) { conv.etapa = 'ganho'; conv.reservouEm = agora; }
   else if (negociou && conv.etapa !== 'ganho') conv.etapa = 'negociacao';

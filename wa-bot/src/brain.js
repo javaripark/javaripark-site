@@ -7,7 +7,9 @@ import { cfg, PRICING } from './config.js';
 import { SYSTEM_KB, posReserva, dynamicContext } from './prompt.js';
 import { toolDefs, runTool } from './tools.js';
 
-const client = new Anthropic({ apiKey: cfg.anthropicKey });
+// maxRetries: a API às vezes devolve 529 (Overloaded) por alguns segundos.
+// O SDK faz backoff exponencial em 429/5xx/529 — subir pra 4 cobre o pico sem deixar o cliente no silêncio.
+const client = new Anthropic({ apiKey: cfg.anthropicKey, maxRetries: 4 });
 const MAX_TOOL_ROUNDS = 6;
 
 // Anúncio de ação de estado (criar/alterar/cancelar) na resposta final
