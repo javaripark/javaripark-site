@@ -553,59 +553,72 @@
                 </div>
             </div>
 
-            <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
-                <div class="kpi-card"><div class="kpi-label">Investido</div><div class="kpi-value" id="ads-spent">—</div><div class="kpi-sub" id="ads-period"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Conversas WhatsApp</div><div class="kpi-value" id="ads-conv" style="color:#25D366">—</div><div class="kpi-sub">mensagens iniciadas</div></div>
-                <div class="kpi-card"><div class="kpi-label">Custo / Conversa</div><div class="kpi-value" id="ads-cpc">—</div><div class="kpi-sub">média do período</div></div>
-                <div class="kpi-card"><div class="kpi-label">Alcance</div><div class="kpi-value" id="ads-reach">—</div><div class="kpi-sub" id="ads-impr"></div></div>
+            <!-- ════ A. RESULTADO EM DINHEIRO (a pergunta de quem paga: dá retorno?) ════ -->
+            <div class="card" style="border-left:3px solid #16a34a">
+                <h3>💰 Resultado em dinheiro</h3>
+                <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(135px,1fr))">
+                    <div class="kpi-card"><div class="kpi-label">Investido</div><div class="kpi-value" id="ads-spent">—</div><div class="kpi-sub" id="ads-period"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Receita atribuída</div><div class="kpi-value" id="ads-receita" style="color:#16a34a">—</div><div class="kpi-sub" id="ads-receita-sub">estimada</div></div>
+                    <div class="kpi-card" style="border-left:3px solid #16a34a"><div class="kpi-label">ROAS</div><div class="kpi-value" id="ads-roas">—</div><div class="kpi-sub" id="ads-roas-sub">retorno por R$1</div></div>
+                    <div class="kpi-card"><div class="kpi-label">CAC · custo/reserva</div><div class="kpi-value" id="ads-cac">—</div><div class="kpi-sub" id="ads-cac-sub"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Custo / conversa</div><div class="kpi-value" id="ads-cpc">—</div><div class="kpi-sub" id="ads-cpc-bm">—</div></div>
+                </div>
+                <p id="ads-money-note" style="font-size:11px;color:#aaa;margin-top:10px;line-height:1.5"></p>
             </div>
 
+            <!-- ════ B. FUNIL — do anúncio à mesa ════ -->
             <div class="card">
-                <h3>📈 Evolução no tempo</h3>
-                <div class="kpi-label" style="margin-bottom:8px">Resultados do anúncio por semana (chat ao vivo)</div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
-                    <div><div class="kpi-label" style="margin-bottom:6px;color:#25D366">Conversas de anúncio / semana</div><div style="height:170px"><canvas id="evo-conv"></canvas></div></div>
-                    <div><div class="kpi-label" style="margin-bottom:6px;color:#16a34a">Reservas de anúncio / semana</div><div style="height:170px"><canvas id="evo-resv"></canvas></div></div>
-                </div>
-                <div id="evo-live-empty" style="font-size:12px;color:#888;display:none">Ainda sem conversas de anúncio registradas — conforme os leads de anúncio chegam pelo chat, a curva preenche.</div>
-                <div class="kpi-label" style="margin:20px 0 8px">Eficiência por campanha (período todo)</div>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px">
-                    <div><div class="kpi-label" style="margin-bottom:6px">Custo por conversa (verde = melhor)</div><div style="height:230px"><canvas id="cmp-cpc"></canvas></div></div>
-                    <div><div class="kpi-label" style="margin-bottom:6px">Investido por campanha</div><div style="height:230px"><canvas id="cmp-spend"></canvas></div></div>
-                </div>
+                <h3>🔻 Funil — do anúncio à mesa</h3>
+                <div id="ads-funnel" style="display:flex;flex-direction:column;gap:7px"></div>
+                <p style="font-size:11px;color:#aaa;margin-top:10px;line-height:1.5">Cada etapa: volume · % de conversão da etapa anterior · custo unitário. Onde a % despenca está o gargalo (criativo, oferta, bot ou sala).</p>
             </div>
 
+            <!-- ════ C. TENDÊNCIA NO TEMPO (saúde da conta) ════ -->
             <div class="card">
-                <h3>⭐ Destaques & Insights</h3>
-                <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
-                    <div class="kpi-card" style="border-left:3px solid #16a34a"><div class="kpi-label">Mais eficiente</div><div class="kpi-value" id="ins-best" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-best-sub"></div></div>
-                    <div class="kpi-card" style="border-left:3px solid #ef4444"><div class="kpi-label">Mais cara (revisar)</div><div class="kpi-value" id="ins-worst" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-worst-sub"></div></div>
-                    <div class="kpi-card"><div class="kpi-label">Maior alcance</div><div class="kpi-value" id="ins-reach" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-reach-sub"></div></div>
-                    <div class="kpi-card"><div class="kpi-label">Melhor CTR</div><div class="kpi-value" id="ins-ctr" style="font-size:1.0em">—</div><div class="kpi-sub" id="ins-ctr-sub"></div></div>
+                <h3>📈 Tendência no tempo</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px">
+                    <div><div class="kpi-label" style="margin-bottom:6px">Custo/conversa por semana <span style="color:#16a34a">(cair = melhora)</span></div><div style="height:170px"><canvas id="trend-cpc"></canvas></div></div>
+                    <div><div class="kpi-label" style="margin-bottom:6px">Investido × conversas por semana</div><div style="height:170px"><canvas id="trend-spend"></canvas></div></div>
+                    <div><div class="kpi-label" style="margin-bottom:6px">Frequência por semana <span style="color:#ef4444">(subir = fadiga)</span></div><div style="height:170px"><canvas id="trend-freq"></canvas></div></div>
                 </div>
-                <div id="ins-temas" style="margin-top:16px"></div>
-                <ul id="ins-bullets" style="margin:12px 0 0 16px;font-size:12.5px;color:#444;line-height:1.6"></ul>
+                <div id="ads-trend-empty" style="font-size:12px;color:#888;display:none;margin-top:6px">Exporte o CSV com <b>detalhamento por semana</b> (Breakdown → By Time → Week) pra preencher estes gráficos.</div>
+                <div class="kpi-label" style="margin:20px 0 8px">Resultados reais do chat ao vivo (por semana)</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">
+                    <div><div class="kpi-label" style="margin-bottom:6px;color:#25D366">Conversas de anúncio</div><div style="height:160px"><canvas id="evo-conv"></canvas></div></div>
+                    <div><div class="kpi-label" style="margin-bottom:6px;color:#16a34a">Reservas de anúncio</div><div style="height:160px"><canvas id="evo-resv"></canvas></div></div>
+                </div>
+                <div id="evo-live-empty" style="font-size:12px;color:#888;display:none">Ainda sem conversas de anúncio registradas — conforme os leads de anúncio chegam pelo chat marcados como "anúncio", a curva preenche.</div>
             </div>
 
+            <!-- ════ D. MESA DE CRIATIVOS — escalar / revisar / matar ════ -->
+            <div class="card">
+                <h3>🎯 Criativos — o que escalar, revisar ou matar</h3>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;font-size:12px;color:#666">
+                    <span style="font-weight:600;color:#555">Metas (ajuste e a tabela recolore):</span>
+                    <label>CTR mín. <input type="number" id="bm-ctr" step="0.1" style="width:62px;padding:4px 6px;border:1px solid #ddd;border-radius:6px">%</label>
+                    <label>Custo/conversa máx. R$<input type="number" id="bm-cpc" step="1" style="width:68px;padding:4px 6px;border:1px solid #ddd;border-radius:6px"></label>
+                    <label>Frequência alerta &gt;<input type="number" id="bm-freq" step="0.5" style="width:56px;padding:4px 6px;border:1px solid #ddd;border-radius:6px"></label>
+                </div>
+                <div id="ads-table" class="table-wrap"></div>
+                <p id="ads-table-legend" style="font-size:11px;color:#aaa;margin-top:10px;line-height:1.6"></p>
+            </div>
+
+            <!-- ════ E. META × SISTEMA — honestidade de atribuição ════ -->
+            <div class="card">
+                <h3>🔎 Meta × Sistema · atribuição</h3>
+                <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+                    <div class="kpi-card"><div class="kpi-label">Conversas (Meta)</div><div class="kpi-value" id="recon-meta" style="color:#25D366">—</div><div class="kpi-sub">reportadas no CSV (7d clique)</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Conversas de anúncio no chat</div><div class="kpi-value" id="recon-bot">—</div><div class="kpi-sub" id="recon-bot-sub">marcadas pelo bot</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Reservas de anúncio</div><div class="kpi-value" id="recon-resv" style="color:#16a34a">—</div><div class="kpi-sub" id="recon-resv-sub"></div></div>
+                    <div class="kpi-card"><div class="kpi-label">Reservas sem marcar origem</div><div class="kpi-value" id="recon-unmarked">—</div><div class="kpi-sub" id="recon-unmarked-sub"></div></div>
+                </div>
+                <p id="recon-note" style="font-size:11px;color:#aaa;margin-top:10px;line-height:1.5"></p>
+            </div>
+
+            <!-- ════ F. ENCERRAMENTOS ════ -->
             <div class="card">
                 <h3>⏰ Encerramentos próximos</h3>
                 <div id="ads-ends"></div>
-            </div>
-
-            <div class="card">
-                <h3>Campanhas — snapshot</h3>
-                <div id="ads-table" class="table-wrap"></div>
-            </div>
-
-            <div class="card">
-                <h3>Conversão Anúncio → Reserva</h3>
-                <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
-                    <div class="kpi-card"><div class="kpi-label">Reservas de Anúncio</div><div class="kpi-value" id="conv-ads" style="color:#16a34a">—</div><div class="kpi-sub" id="conv-ads-sub"></div></div>
-                    <div class="kpi-card"><div class="kpi-label">Custo por Reserva</div><div class="kpi-value" id="conv-cpr">—</div><div class="kpi-sub">gasto ÷ reservas de anúncio</div></div>
-                    <div class="kpi-card"><div class="kpi-label">Conversa → Reserva</div><div class="kpi-value" id="conv-rate">—</div><div class="kpi-sub" id="conv-rate-sub">do total de conversas</div></div>
-                    <div class="kpi-card"><div class="kpi-label">Reservas Marcadas</div><div class="kpi-value" id="conv-marked">—</div><div class="kpi-sub" id="conv-marked-sub"></div></div>
-                </div>
-                <p id="conv-note" style="font-size:11px;color:#aaa;margin-top:10px;line-height:1.5"></p>
             </div>
         </div>
 
@@ -902,7 +915,12 @@
                 clicks: idx('Link clicks','Cliques no link','Cliques (todos)','Clicks'),
                 ends: idx('Ends','Termina em','Data de término','Término'),
                 week: idx('Week','Day','Date','Semana','Dia','Data'),
+                qRank: idx('Quality ranking','Classificação de qualidade'),
+                eRank: idx('Engagement rate ranking','Classificação da taxa de engajamento'),
+                cRank: idx('Conversion rate ranking','Classificação da taxa de conversão'),
+                lpv: idx('Landing page views','Visualizações da página de destino'),
             };
+            const rk = v => { const s=String(v||'').trim().toLowerCase(); if(!s||s==='-'||s==='—'||s.includes('uncategor')||s.includes('não categor')||s.includes('nao categor')) return ''; if(s.includes('above')||s.includes('acima')) return 'acima'; if(s.includes('below')||s.includes('abaixo')) return 'abaixo'; if(s.includes('average')||s.includes('média')||s.includes('media')) return 'media'; return ''; };
             // número locale-aware: 1.234,56 (BR) e 1,234.56 / 1234.56 (US) → float correto
             const num = v => { let s=String(v??'').trim().replace(/[^\d.,\-]/g,''); if(!s) return 0;
                 const hasC=s.includes(','), hasD=s.includes('.');
@@ -919,6 +937,8 @@
                 ends: (r[C.ends]||'').trim().match(/^\d{4}-\d{2}-\d{2}$/) ? r[C.ends].trim() : '',
                 pStart: (r[C.start]||'').trim(), pEnd: (r[C.end]||'').trim(),
                 bucket: C.week>=0 ? (r[C.week]||'').trim() : '',
+                lpv: Math.round(num(r[C.lpv])),
+                qRank: rk(r[C.qRank]), eRank: rk(r[C.eRank]), cRank: rk(r[C.cRank]),
             }));
             const keyOf = d => d.bucket || (d.pStart && d.pEnd ? `${d.pStart}→${d.pEnd}` : '');
             const buckets = [...new Set(data.map(keyOf).filter(Boolean))];
@@ -932,6 +952,8 @@
                     costPerConv: b.conversations>0?+(b.spent/b.conversations).toFixed(2):0,
                     reach:b.reach, impressions:b.impressions, linkClicks:b.linkClicks,
                     ctr: b.impressions>0?+(b.linkClicks/b.impressions*100).toFixed(3):0,
+                    cpm: b.impressions>0?+(b.spent/b.impressions*1000).toFixed(2):0,
+                    freq: b.reach>0?+(b.impressions/b.reach).toFixed(2):0,
                 })).sort((a,b)=>(a.periodEnd||a.label).localeCompare(b.periodEnd||b.label));
             }
             const isTimeSeries = buckets.length > 1;
@@ -940,17 +962,22 @@
                 const status = STATUS[d.delivery] || 'encerrada';
                 if (status==='inativa' || (d.spent===0 && d.results===0)) { inactiveCount++; return; }
                 const key = isTimeSeries ? d.name : `${d.name}@@${i}`;
-                const c = (groups[key] ||= {name:d.name,status,spent:0,conversations:0,reach:0,impressions:0,linkClicks:0,ends:''});
+                const c = (groups[key] ||= {name:d.name,status,spent:0,conversations:0,reach:0,impressions:0,linkClicks:0,lpv:0,ends:'',qRank:'',eRank:'',cRank:''});
                 c.spent+=d.spent; c.conversations+=d.results; c.reach=Math.max(c.reach,d.reach);
-                c.impressions+=d.impressions; c.linkClicks+=d.clicks;
+                c.impressions+=d.impressions; c.linkClicks+=d.clicks; c.lpv+=d.lpv;
                 if (d.ends>c.ends) c.ends=d.ends;
+                if (d.qRank) c.qRank=d.qRank; if (d.eRank) c.eRank=d.eRank; if (d.cRank) c.cRank=d.cRank; // mais recente vence
                 if (status==='ativa') c.status='ativa';
             });
             const campaigns = Object.values(groups).map(c => ({
                 name:c.name, status:c.status, spent:+c.spent.toFixed(2), conversations:Math.round(c.conversations),
                 costPerConv: c.conversations>0?+(c.spent/c.conversations).toFixed(2):0,
-                reach:c.reach, impressions:c.impressions, linkClicks:c.linkClicks,
-                ctr: c.impressions>0?+(c.linkClicks/c.impressions*100).toFixed(3):0, ends:c.ends,
+                reach:c.reach, impressions:c.impressions, linkClicks:c.linkClicks, lpv:c.lpv,
+                ctr: c.impressions>0?+(c.linkClicks/c.impressions*100).toFixed(3):0,
+                cpm: c.impressions>0?+(c.spent/c.impressions*1000).toFixed(2):0,
+                cpc: c.linkClicks>0?+(c.spent/c.linkClicks).toFixed(2):0,
+                freq: c.reach>0?+(c.impressions/c.reach).toFixed(2):0,
+                qRank:c.qRank, eRank:c.eRank, cRank:c.cRank, ends:c.ends,
             }));
             const sum = (arr,k) => arr.reduce((s,x)=>s+(x[k]||0),0);
             const spent=+sum(campaigns,'spent').toFixed(2), conversations=sum(campaigns,'conversations');
@@ -961,8 +988,13 @@
                 periodStart: allStarts[0]||'', periodEnd: allEnds[allEnds.length-1]||'',
                 source: 'Meta Ads Manager — boosts do Instagram (conta fora do Business)',
                 currency:'BRL', manual:true,
-                totals: { spent, conversations, costPerConversation: conversations?+(spent/conversations).toFixed(2):0,
-                    reach:sum(campaigns,'reach'), impressions:sum(campaigns,'impressions'), linkClicks:sum(campaigns,'linkClicks') },
+                totals: (() => { const reach=sum(campaigns,'reach'), impressions=sum(campaigns,'impressions'), linkClicks=sum(campaigns,'linkClicks'), lpv=sum(campaigns,'lpv');
+                    return { spent, conversations, costPerConversation: conversations?+(spent/conversations).toFixed(2):0,
+                    reach, impressions, linkClicks, lpv,
+                    ctr: impressions?+(linkClicks/impressions*100).toFixed(3):0,
+                    cpm: impressions?+(spent/impressions*1000).toFixed(2):0,
+                    cpc: linkClicks?+(spent/linkClicks).toFixed(2):0,
+                    freq: reach?+(impressions/reach).toFixed(2):0 }; })(),
                 evolution, inactiveCount, campaigns,
             };
         }
@@ -979,89 +1011,114 @@
                 const evoTxt = snap.evolution.length ? `${snap.evolution.length} pontos no tempo ✓` : 'sem evolução (exporte com breakdown semanal pra preencher os gráficos)';
                 ok(`Salvo ✓ — ${fmtDateBR(snap.periodStart)} → ${fmtDateBR(snap.periodEnd)} · ${snap.campaigns.length} campanhas · ${evoTxt}`);
                 await loadAdsSnapshot();
+                if (window.__reloadConversao) window.__reloadConversao();
             } catch (e) { er('Falha: ' + (e?.message || e)); console.error(e); }
         });
+        let _adsLast = null;
+        const BM_KEY = 'javari_ads_bench';
+        function adsBench() {
+            const saved = JSON.parse(localStorage.getItem(BM_KEY) || '{}');
+            const g = (id, def) => { const v = parseFloat($(id)?.value); return isNaN(v) ? (saved[id] ?? def) : v; };
+            return { ctr: g('bm-ctr', 1.0), cpc: g('bm-cpc', NaN), freq: g('bm-freq', 3) };
+        }
+        function adsVerdict(c, bm, avgCpc) {
+            if (c.status !== 'ativa') return { txt: '—', bg: '#f3f4f6', fg: '#9ca3af' };
+            // SINAL PRINCIPAL: custo/conversa vs meta (se definida) ou média da conta — pesa 2.
+            const target = (!isNaN(bm.cpc) && bm.cpc > 0) ? bm.cpc : (avgCpc || 0);
+            let neg = 0, pos = 0, costBad = false;
+            if (target > 0 && c.costPerConv > 0) {
+                if (c.costPerConv > target * 1.3) { neg += 2; costBad = true; }
+                else if (c.costPerConv > target * 1.15) neg += 1;
+                else if (c.costPerConv <= target * 0.85) pos += 2;
+                else if (c.costPerConv <= target) pos += 1;
+            }
+            // MODIFICADORES (diagnósticos secundários)
+            if (c.cRank === 'abaixo') neg++; if (c.cRank === 'acima') pos++;
+            if (c.eRank === 'abaixo') neg++; if (c.eRank === 'acima') pos++;
+            if (bm.freq && c.freq >= bm.freq) neg++;
+            if (bm.ctr && c.ctr < bm.ctr * 0.4) neg++;
+            if ((neg >= 3 && pos === 0) || (costBad && neg >= 3)) return { txt: 'matar', bg: '#fee2e2', fg: '#b91c1c' };
+            if (pos >= 2 && neg <= 1) return { txt: 'escalar', bg: '#dcfce7', fg: '#16a34a' };
+            if (neg > pos) return { txt: 'revisar', bg: '#fef3c7', fg: '#b45309' };
+            return { txt: 'manter', bg: '#e5e7eb', fg: '#555' };
+        }
+        const adsShort = n => (n || '').replace(/^Instagram post:\s*/i, '').replace(/^Post do Instagram:\s*/i, '');
+        function adsSeloHTML(v) { // selo de ranking do Meta
+            const m = { acima: ['#dcfce7', '#16a34a', '▲'], media: ['#f3f4f6', '#6b7280', '='], abaixo: ['#fee2e2', '#b91c1c', '▼'] }[v];
+            if (!m) return '<span style="color:#d1d5db">·</span>';
+            return `<span style="background:${m[0]};color:${m[1]};border-radius:4px;padding:1px 5px;font-size:10px;font-weight:700">${m[2]}</span>`;
+        }
         function renderAdsSnapshot(a) {
+            _adsLast = a;
             const t = a.totals || {};
             $('ads-spent').textContent = fmtBRLFull(t.spent);
-            $('ads-conv').textContent = (t.conversations || 0).toLocaleString('pt-BR');
             $('ads-cpc').textContent = fmtBRLFull(t.costPerConversation);
-            $('ads-reach').textContent = (t.reach || 0).toLocaleString('pt-BR');
-            $('ads-impr').textContent = (t.impressions || 0).toLocaleString('pt-BR') + ' impressões';
             $('ads-period').textContent = fmtDateBR(a.periodStart) + ' → ' + fmtDateBR(a.periodEnd);
-            $('ads-snapshot-label').textContent = 'Foto de ' + fmtDateBR(a.snapshotDate) + '.';
-
+            $('ads-snapshot-label').textContent = 'Foto de ' + fmtDateBR(a.snapshotDate) + (a.uploadedBy ? ' · enviado por você' : '') + '.';
+            // encerramentos
             const today = fmt(new Date());
-            const ativas = (a.campaigns || []).filter(c => c.status === 'ativa' && c.ends && c.ends >= today)
-                                              .sort((x, y) => x.ends.localeCompare(y.ends));
-            if (ativas.length === 0) {
-                $('ads-ends').innerHTML = '<p class="empty">Nenhuma campanha ativa com término futuro.</p>';
-            } else {
-                $('ads-ends').innerHTML = ativas.map(c => {
-                    const dias = Math.round((new Date(c.ends + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
-                    const urg = dias <= 3 ? '#ef4444' : (dias <= 7 ? '#f59e0b' : '#10b981');
-                    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;gap:10px">
-                        <span style="font-size:13px;color:#444">${c.name}</span>
-                        <span style="font-size:12px;font-weight:600;color:${urg};white-space:nowrap">${fmtDateBR(c.ends)} · ${dias === 0 ? 'hoje' : dias + 'd'}</span>
-                    </div>`;
-                }).join('');
-            }
-
-            const rows = [...(a.campaigns || [])].sort((x, y) => (x.costPerConv || 9999) - (y.costPerConv || 9999));
-            const cpcs = rows.map(c => c.costPerConv || 0).filter(v => v > 0);
-            const best = Math.min(...cpcs), worst = Math.max(...cpcs);
-            $('ads-table').innerHTML = `<table class="fin-table" id="tbl-ads"><thead><tr><th>Campanha</th><th>Status</th><th class="amount">Investido</th><th class="amount">Conversas</th><th class="amount">Custo/conv</th><th class="amount">Alcance</th><th>CTR</th><th>Término</th></tr></thead><tbody>${
-                rows.map(c => {
-                    const stMap = { ativa: ['#dcfce7', '#16a34a'], pausada: ['#fef3c7', '#b45309'], encerrada: ['#e5e7eb', '#666'] };
-                    const [bg, fg] = stMap[c.status] || stMap.encerrada;
-                    const badge = `<span class="status-badge" style="background:${bg};color:${fg}">${c.status}</span>`;
-                    const cpcColor = c.costPerConv === best ? '#16a34a' : (c.costPerConv === worst ? '#ef4444' : '#444');
-                    return `<tr><td>${c.name}</td><td>${badge}</td><td class="amount">${fmtBRLFull(c.spent)}</td><td class="amount">${c.conversations || 0}</td><td class="amount" style="color:${cpcColor};font-weight:700">${fmtBRLFull(c.costPerConv)}</td><td class="amount">${(c.reach || 0).toLocaleString('pt-BR')}</td><td>${(c.ctr || 0).toFixed(2)}%</td><td>${fmtDateBR(c.ends)}</td></tr>`;
-                }).join('')
-            }</tbody></table>${a.inactiveCount ? `<p style="font-size:11px;color:#aaa;margin-top:8px">+ ${a.inactiveCount} campanha sem entrega (R$ 0) omitida.</p>` : ''}`;
+            const ativas = (a.campaigns || []).filter(c => c.status === 'ativa' && c.ends && c.ends >= today).sort((x, y) => x.ends.localeCompare(y.ends));
+            $('ads-ends').innerHTML = ativas.length === 0 ? '<p class="empty">Nenhuma campanha ativa com término futuro.</p>' : ativas.map(c => {
+                const dias = Math.round((new Date(c.ends + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+                const urg = dias <= 3 ? '#ef4444' : (dias <= 7 ? '#f59e0b' : '#10b981');
+                return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;gap:10px"><span style="font-size:13px;color:#444">${esc(adsShort(c.name))}</span><span style="font-size:12px;font-weight:600;color:${urg};white-space:nowrap">${fmtDateBR(c.ends)} · ${dias === 0 ? 'hoje' : dias + 'd'}</span></div>`;
+            }).join('');
+            renderAdsCreatives(a);
+            renderAdsTrend(a);
+        }
+        function renderAdsCreatives(a) {
+            const bm = adsBench();
+            const t = a.totals || {};
+            // sub do custo/conversa vs meta (no card herói)
+            const cpcBm = $('ads-cpc-bm');
+            if (cpcBm) { if (!isNaN(bm.cpc) && bm.cpc > 0) { const okc = t.costPerConversation <= bm.cpc; cpcBm.textContent = `meta R$${bm.cpc} · ${okc ? 'dentro' : 'acima'}`; cpcBm.style.color = okc ? '#16a34a' : '#ef4444'; } else { cpcBm.textContent = 'defina a meta abaixo'; cpcBm.style.color = '#aaa'; } }
+            const rows = [...(a.campaigns || [])].sort((x, y) => { if ((x.status === 'ativa') !== (y.status === 'ativa')) return x.status === 'ativa' ? -1 : 1; return (x.costPerConv || 9999) - (y.costPerConv || 9999); });
+            const stMap = { ativa: ['#dcfce7', '#16a34a'], pausada: ['#fef3c7', '#b45309'], encerrada: ['#e5e7eb', '#666'], inativa: ['#e5e7eb', '#666'] };
+            const ctrCol = v => v >= bm.ctr ? '#16a34a' : (v < bm.ctr * 0.5 ? '#ef4444' : '#b45309');
+            const freqCol = v => v >= bm.freq ? '#ef4444' : (v < 2 ? '#16a34a' : '#b45309');
+            const cpcCol = v => (!isNaN(bm.cpc) && bm.cpc > 0) ? (v <= bm.cpc ? '#16a34a' : (v > bm.cpc * 1.3 ? '#ef4444' : '#b45309')) : '#444';
+            $('ads-table').innerHTML = `<table class="fin-table" id="tbl-ads"><thead><tr><th>Criativo</th><th>Status</th><th>Veredito</th><th class="amount">Investido</th><th class="amount">Conversas</th><th class="amount">Custo/conv</th><th>CTR</th><th class="amount">CPM</th><th class="amount">Freq</th><th title="Qualidade / Engajamento / Conversão (ranking do Meta vs concorrência)">Q E C</th><th>Término</th></tr></thead><tbody>${rows.map(c => {
+                // fallback de schema antigo: deriva métricas que não estavam no snapshot
+                c.cpm = c.cpm || (c.impressions ? +(c.spent / c.impressions * 1000).toFixed(2) : 0);
+                c.freq = c.freq || (c.reach ? +(c.impressions / c.reach).toFixed(2) : 0);
+                const [bg, fg] = stMap[c.status] || stMap.encerrada;
+                const v = adsVerdict(c, bm, t.costPerConversation);
+                return `<tr><td>${esc(adsShort(c.name))}</td><td><span class="status-badge" style="background:${bg};color:${fg}">${c.status}</span></td><td><span class="status-badge" style="background:${v.bg};color:${v.fg};font-weight:700">${v.txt}</span></td><td class="amount">${fmtBRLFull(c.spent)}</td><td class="amount">${c.conversations || 0}</td><td class="amount" style="color:${cpcCol(c.costPerConv)};font-weight:700">${fmtBRLFull(c.costPerConv)}</td><td style="color:${ctrCol(c.ctr)};font-weight:600">${(c.ctr || 0).toFixed(2)}%</td><td class="amount">${fmtBRLFull(c.cpm)}</td><td class="amount" style="color:${freqCol(c.freq)};font-weight:600">${(c.freq || 0).toFixed(2)}</td><td style="white-space:nowrap">${adsSeloHTML(c.qRank)} ${adsSeloHTML(c.eRank)} ${adsSeloHTML(c.cRank)}</td><td>${fmtDateBR(c.ends)}</td></tr>`;
+            }).join('')}</tbody></table>${a.inactiveCount ? `<p style="font-size:11px;color:#aaa;margin-top:8px">+ ${a.inactiveCount} criativo(s) sem entrega (R$ 0) omitido(s).</p>` : ''}`;
             makeSortable($('tbl-ads'));
-            renderAdsInsights(a);
-            renderAdsCampaignCharts(a);
+            const leg = $('ads-table-legend');
+            if (leg) leg.innerHTML = `<b>Selos (ranking do Meta vs concorrência):</b> ${adsSeloHTML('acima')} acima da média · ${adsSeloHTML('media')} na média · ${adsSeloHTML('abaixo')} abaixo (sinal de revisar/trocar). <b>Veredito</b> combina os 3 selos + frequência + custo/conversa + CTR contra suas metas. Ordenável: clique no cabeçalho.`;
         }
-        let _evoCharts = [];
-        function renderAdsCampaignCharts(a) {
-            const cs = (a.campaigns || []).filter(c => c.conversations > 0).sort((x, y) => x.costPerConv - y.costPerConv);
-            _evoCharts.forEach(c => { try { c.destroy(); } catch (e) {} }); _evoCharts = [];
-            if (!cs.length || !window.Chart) return;
-            const short = n => n.replace(/^Instagram post:\s*/i, '').replace(/^Post do Instagram:\s*/i, '').slice(0, 24);
-            const labels = cs.map(c => short(c.name));
-            const cpcs = cs.map(c => c.costPerConv), best = Math.min(...cpcs), worst = Math.max(...cpcs);
-            const colorFor = v => v === best ? '#16a34a' : (v === worst ? '#ef4444' : '#f59e0b');
-            const base = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } } };
-            const mk = (id, data, colors) => { const el = $(id); if (el) _evoCharts.push(new Chart(el, { type: 'bar', data: { labels, datasets: [{ data, backgroundColor: colors }] }, options: base })); };
-            mk('cmp-cpc', cpcs, cpcs.map(colorFor));
-            mk('cmp-spend', cs.map(c => c.spent), '#4f1964');
+        let _trendCharts = [];
+        function renderAdsTrend(a) {
+            _trendCharts.forEach(c => { try { c.destroy(); } catch (e) {} }); _trendCharts = [];
+            const evo = a.evolution || [];
+            const empty = $('ads-trend-empty');
+            if (evo.length < 2 || !window.Chart) { if (empty) empty.style.display = 'block'; ['trend-cpc', 'trend-spend', 'trend-freq'].forEach(id => { const e = $(id); if (e) { const cx = e.getContext('2d'); cx && cx.clearRect(0, 0, e.width, e.height); } }); return; }
+            if (empty) empty.style.display = 'none';
+            const labels = evo.map(p => fmtShort(p.periodEnd || p.label));
+            const bm = adsBench();
+            const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { font: { size: 9 } } } } };
+            const line = (id, data, color, fill) => { const el = $(id); if (el) _trendCharts.push(new Chart(el, { type: 'line', data: { labels, datasets: [{ data, borderColor: color, backgroundColor: fill || 'transparent', tension: .3, pointRadius: 3, fill: !!fill }] }, options: base })); };
+            line('trend-cpc', evo.map(p => p.costPerConv), '#2563eb');
+            line('trend-freq', evo.map(p => p.freq || 0), '#f59e0b');
+            // investido (barra) × conversas (linha) em 2 eixos
+            const el = $('trend-spend');
+            if (el) _trendCharts.push(new Chart(el, { type: 'bar', data: { labels, datasets: [
+                { type: 'bar', label: 'Investido', data: evo.map(p => p.spent), backgroundColor: '#c4b5fd', yAxisID: 'y', borderRadius: 4 },
+                { type: 'line', label: 'Conversas', data: evo.map(p => p.conversations), borderColor: '#25D366', tension: .3, pointRadius: 3, yAxisID: 'y2' }
+            ] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { font: { size: 9 }, boxWidth: 10 } } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, position: 'left', ticks: { font: { size: 8 } } }, y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 8 } } } } } }));
         }
-        function renderAdsInsights(a) {
-            const cs = (a.campaigns || []).filter(c => c.conversations > 0);
-            const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
-            if (!cs.length) return;
-            const short = n => n.replace(/^Instagram post:\s*/i, '').replace(/^Post do Instagram:\s*/i, '').slice(0, 34);
-            const byBest = [...cs].sort((x, y) => x.costPerConv - y.costPerConv);
-            const r = [...cs].sort((x, y) => y.reach - x.reach)[0], ct = [...cs].sort((x, y) => y.ctr - x.ctr)[0];
-            const b = byBest[0], w = byBest[byBest.length - 1];
-            set('ins-best', short(b.name)); set('ins-best-sub', fmtBRLFull(b.costPerConv) + '/conversa · ' + b.conversations + ' conv');
-            set('ins-worst', short(w.name)); set('ins-worst-sub', fmtBRLFull(w.costPerConv) + '/conversa · ' + w.conversations + ' conv');
-            set('ins-reach', short(r.name)); set('ins-reach-sub', (r.reach || 0).toLocaleString('pt-BR') + ' pessoas');
-            set('ins-ctr', short(ct.name)); set('ins-ctr-sub', (ct.ctr || 0).toFixed(2) + '% de cliques');
-            const temas = [['Aniversário', /anivers|convite|cabe em um|planejando/i], ['Copa / Jogo', /copa|jogo|quintal mais charmoso/i], ['Indique a amiga', /amiga|manda p/i]];
-            const acc = {}; for (const c of cs) for (const [nome, re] of temas) if (re.test(c.name)) { (acc[nome] ||= { spent: 0, conv: 0 }); acc[nome].spent += c.spent; acc[nome].conv += c.conversations; break; }
-            const temaRows = Object.entries(acc).sort((x, y) => (x[1].spent / Math.max(x[1].conv, 1)) - (y[1].spent / Math.max(y[1].conv, 1)));
-            const tdiv = $('ins-temas');
-            if (tdiv) tdiv.innerHTML = temaRows.length ? '<div class="kpi-label" style="margin-bottom:6px">Por tema (mais barato → mais caro por conversa)</div>' + temaRows.map(([nome, v]) => { const cpc = v.spent / Math.max(v.conv, 1); return `<div style="display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f4f4f4"><span>${nome}</span><span style="white-space:nowrap"><b>${fmtBRLFull(cpc)}</b>/conv · ${fmtBRLFull(v.spent)} · ${v.conv} conv</span></div>`; }).join('') : '';
-            const media = a.totals?.costPerConversation || 0, bl = [];
-            bl.push(`Mais eficiente: <b>${short(b.name)}</b> a ${fmtBRLFull(b.costPerConv)}/conversa — ${(w.costPerConv / Math.max(b.costPerConv, .01)).toFixed(1)}× mais barata que a pior.`);
-            if (w.costPerConv > media * 1.5) bl.push(`<b>${short(w.name)}</b> a ${fmtBRLFull(w.costPerConv)}/conversa (${(w.costPerConv / Math.max(media, .01)).toFixed(1)}× a média) — vale pausar ou trocar criativo/público.`);
-            if (temaRows.length > 1) bl.push(`Tema que converte mais barato: <b>${temaRows[0][0]}</b> — priorize verba nele.`);
-            const ativas = cs.filter(c => c.status === 'ativa');
-            if (ativas.length) bl.push(`${ativas.length} campanha(s) ativa(s), somando ${fmtBRLFull(ativas.reduce((s, c) => s + c.spent, 0))} no período.`);
-            const ul = $('ins-bullets'); if (ul) ul.innerHTML = bl.map(t => `<li>${t}</li>`).join('');
+        // benchmarks editáveis → recolore a tabela e o herói
+        function initAdsBench() {
+            const saved = JSON.parse(localStorage.getItem(BM_KEY) || '{}');
+            [['bm-ctr', 1.0], ['bm-cpc', ''], ['bm-freq', 3]].forEach(([id, def]) => { const el = $(id); if (el && el.value === '') el.value = saved[id] ?? def; });
+            ['bm-ctr', 'bm-cpc', 'bm-freq'].forEach(id => { const el = $(id); if (el) el.addEventListener('input', () => {
+                const cur = JSON.parse(localStorage.getItem(BM_KEY) || '{}'); cur[id] = el.value === '' ? null : parseFloat(el.value); localStorage.setItem(BM_KEY, JSON.stringify(cur));
+                if (_adsLast) renderAdsCreatives(_adsLast);
+            }); });
         }
+        initAdsBench();
         loadAdsSnapshot();
 
         // ── Format helpers ──
@@ -2163,39 +2220,95 @@
                 const user = await new Promise(res => { const un = onAuthStateChanged(getAuth(appConv), u => { un(); res(u); }); });
                 if (!user) return;
                 const db = getFirestore(appConv);
-                const [snap, chat, ads] = await Promise.all([
+                const [snap, chat, ads, fat] = await Promise.all([
                     getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/reservas')),
                     getDocs(collection(db, 'artifacts/central-de-reservas-jsp/public/data/wa_atendimento')),
                     (async () => { // Firestore (upload self-service) tem prioridade; JSON estático é fallback
                         try { const s = await getDoc(doc(db, 'artifacts/central-de-reservas-jsp/public/data/financeiro/ads_snapshot')); if (s.exists()) return s.data(); } catch (e) {}
                         return fetch('/data/ads-snapshot.json?v=' + Date.now()).then(r => r.json()).catch(() => null);
-                    })()
+                    })(),
+                    fetch('/data/faturamento.json?v=' + Date.now()).then(r => r.json()).catch(() => null)
                 ]);
-                let total = 0, ad = 0, none = 0;
-                snap.forEach(d => {
-                    total++;
-                    const o = (d.data().Origem || '');
-                    if (o === 'anuncio') ad++;
-                    else if (!o) none++;
-                });
-                // conversas REAIS do chat vindas de anúncio (vincula com a atividade do bot, não com o snapshot estático)
-                let convAnuncio = 0, convTotal = 0;
-                chat.forEach(d => { convTotal++; if ((d.data().Origem || '') === 'anuncio') convAnuncio++; });
-                const spent = ads?.totals?.spent || 0;
+                const tot = ads?.totals || {};
+                const spent = tot.spent || 0;
+                // fallback de schema antigo: deriva métricas de mídia que não estavam no snapshot
+                tot.cpm = tot.cpm || (tot.impressions ? +(spent / tot.impressions * 1000).toFixed(2) : 0);
+                tot.cpc = tot.cpc || (tot.linkClicks ? +(spent / tot.linkClicks).toFixed(2) : 0);
+                tot.freq = tot.freq || (tot.reach ? +(tot.impressions / tot.reach).toFixed(2) : 0);
+                const pStart = ads?.periodStart || '', pEnd = ads?.periodEnd || '';
                 const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-                set('conv-ads', ad);
-                set('conv-ads-sub', total ? `${(ad / total * 100).toFixed(0)}% das ${total} reservas` : 'sem reservas ainda');
-                set('conv-cpr', ad > 0 ? brl(spent / ad) : '—');
-                // taxa = reservas de anúncio ÷ conversas de anúncio REAIS (chat ao vivo)
-                set('conv-rate', (ad > 0 && convAnuncio) ? `${(ad / convAnuncio * 100).toFixed(1)}%` : '—');
-                set('conv-rate-sub', convAnuncio ? `de ${convAnuncio} conversas de anúncio (chat ao vivo)` : 'sem conversas de anúncio ainda');
-                set('conv-marked', total - none);
-                set('conv-marked-sub', `${none} sem marcar de ${total}`);
-                const note = document.getElementById('conv-note');
-                if (note) note.textContent = convAnuncio === 0
-                    ? 'Conversão = reservas de anúncio ÷ conversas de anúncio (estas vêm do chat ao vivo, quando o lead chega clicando no anúncio). Marque "Veio de anúncio?" nas reservas do painel pra contar as manuais também. O custo por reserva usa o gasto do snapshot do Ads (' + brl(spent) + ').'
-                    : 'Conversão liga o chat ao vivo (' + convAnuncio + ' conversas de anúncio) às reservas de anúncio. O custo por reserva usa o gasto do snapshot do Ads (' + brl(spent) + ', 09/05–07/06) — fica 100% preciso quando o gasto sincronizar por período (a conta do Instagram não libera por API).';
-                // ── Evolução dos resultados de anúncio por semana (chat ao vivo, com timestamp) ──
+                const setc = (id, v, c) => { const el = document.getElementById(id); if (el) { el.textContent = v; if (c) el.style.color = c; } };
+                const BR = s => { const p = String(s || '').split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : '—'; };
+                const fmtN = n => (n || 0).toLocaleString('pt-BR');
+
+                // ── reservas: total, marcadas como anúncio (todas) e do período do investimento ──
+                let total = 0, none = 0, adAll = 0, peopleAll = 0, adIn = 0, peopleIn = 0;
+                snap.forEach(d => {
+                    const o = d.data(); total++;
+                    const orig = (o.Origem || '');
+                    if (!orig) none++;
+                    if (orig === 'anuncio') {
+                        const p = parseInt(o['Quantidade de Pessoas']) || 0;
+                        adAll++; peopleAll += p;
+                        const cd = String(o.CriadoEm || '').slice(0, 10);
+                        if (cd && pStart && cd >= pStart) { adIn++; peopleIn += p; } // do início do investimento em diante
+                    }
+                });
+                // conversas de anúncio reais do chat
+                let convAnuncio = 0;
+                chat.forEach(d => { if ((d.data().Origem || '') === 'anuncio') convAnuncio++; });
+
+                // ── ticket médio POR COMANDA do período do anúncio (cai pro acumulado se o período não sincronizou) ──
+                let fSum = 0, vSum = 0;
+                (fat || []).forEach(x => { if (x.date && pStart && pEnd && x.date >= pStart && x.date <= pEnd) { fSum += x.faturamento || 0; vSum += x.qtdVendas || 0; } });
+                let ticket = vSum > 0 ? fSum / vSum : 0, ticketScope = `${BR(pStart)}–${BR(pEnd)}`;
+                if (!ticket) { let af = 0, av = 0; (fat || []).forEach(x => { af += x.faturamento || 0; av += x.qtdVendas || 0; }); ticket = av > 0 ? af / av : 0; ticketScope = 'acumulado (período ainda sem faturamento sincronizado)'; }
+
+                // ── receita atribuída: comanda ≈ 2 pessoas → receita = (pessoas ÷ 2) × ticket/comanda ──
+                const receita = (peopleIn / 2) * ticket;
+                const roas = spent > 0 ? receita / spent : 0;
+                const cac = adIn > 0 ? spent / adIn : 0;
+
+                // A. Herói (dinheiro) — bloco 1 cuida de Investido/Custo-conversa; aqui o lado negócio
+                setc('ads-receita', adIn ? brl(receita) : '—', '#16a34a');
+                set('ads-receita-sub', adIn ? `${peopleIn} pessoas ÷ 2 × ${brl(ticket)}/comanda` : 'marque a origem das reservas');
+                setc('ads-roas', roas ? roas.toFixed(2) + '×' : '—', roas >= 1 ? '#16a34a' : (roas ? '#ef4444' : '#9ca3af'));
+                set('ads-roas-sub', roas ? (roas >= 1 ? `cada R$1 virou ${brl(receita / Math.max(spent, .01)).replace('R$ ', 'R$')}` : 'abaixo de 1 = recebe menos que gasta') : 'retorno por R$1');
+                setc('ads-cac', adIn ? brl(cac) : '—');
+                set('ads-cac-sub', adIn ? `${adIn} reservas de anúncio (desde ${BR(pStart)})` : 'sem reservas marcadas no período');
+                const mnote = document.getElementById('ads-money-note');
+                if (mnote) mnote.innerHTML = `<b>Como leio a receita:</b> reservas marcadas como anúncio criadas desde ${BR(pStart)} (${adIn} reservas · ${peopleIn} pessoas) × ticket médio do faturamento (${brl(ticket)}/comanda, ${ticketScope}), assumindo ~2 pessoas por comanda. É uma <b>estimativa</b> — o que a deixa precisa é marcar "Veio de anúncio?" em toda reserva. O gasto vem do CSV do Ads (${brl(spent)}, ${BR(pStart)}–${BR(pEnd)}).`;
+
+                // B. Funil
+                const maxV = tot.impressions || 1;
+                const stages = [
+                    { k: 'Impressões', v: tot.impressions || 0, sub: `alcance ${fmtN(tot.reach)} · freq ${(tot.freq || 0).toFixed(2)} · CPM ${brl(tot.cpm)}` },
+                    { k: 'Cliques no link', v: tot.linkClicks || 0, pct: tot.impressions ? (tot.linkClicks / tot.impressions * 100) : null, pctLbl: 'CTR', sub: `CPC ${brl(tot.cpc)}` },
+                    { k: 'Conversas no WhatsApp (Meta)', v: tot.conversations || 0, pct: tot.linkClicks ? (tot.conversations / tot.linkClicks * 100) : null, pctLbl: 'clique→conversa', sub: `${brl(tot.costPerConversation)}/conversa` },
+                    { k: 'Reservas de anúncio', v: adIn, pct: tot.conversations ? (adIn / tot.conversations * 100) : null, pctLbl: 'conversa→reserva', sub: adIn ? `${brl(cac)}/reserva` : 'marque a origem' },
+                    { k: 'Pessoas (lugares)', v: peopleIn, mult: adIn ? (peopleIn / adIn) : null, sub: adIn ? `${(peopleIn / adIn).toFixed(1)} por reserva` : '' },
+                    { k: 'Receita estimada', v: receita, money: true, sub: `ROAS ${roas ? roas.toFixed(2) + '×' : '—'} · ticket ${brl(ticket)}/comanda` },
+                ];
+                const fEl = document.getElementById('ads-funnel');
+                if (fEl) fEl.innerHTML = stages.map(s => {
+                    const w = s.money ? 100 : Math.max(4, (s.v / maxV) * 100);
+                    const val = s.money ? brl(s.v) : fmtN(s.v);
+                    const meta = s.pct != null ? `<b style="color:#444">${s.pct.toFixed(1)}%</b> <span style="color:#aaa">${s.pctLbl}</span>` : (s.mult != null ? `<span style="color:#888">×${s.mult.toFixed(1)}</span>` : '');
+                    return `<div><div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:3px"><span style="font-weight:600;color:#444">${s.k}</span><span style="text-align:right">${meta}${s.sub ? ` <span style="color:#bbb">· ${s.sub}</span>` : ''}</span></div><div style="background:#f1f1f4;border-radius:6px;height:26px;position:relative;overflow:hidden"><div style="background:${s.money ? '#16a34a' : '#c4b5fd'};height:100%;width:${w}%;border-radius:6px;transition:width .3s"></div><span style="position:absolute;left:10px;top:0;line-height:26px;font-size:12.5px;font-weight:700;color:#222">${val}</span></div></div>`;
+                }).join('');
+
+                // E. Meta × Sistema (reconciliação)
+                setc('recon-meta', fmtN(tot.conversations || 0), '#25D366');
+                set('recon-bot', fmtN(convAnuncio));
+                set('recon-bot-sub', 'threads marcados anúncio (todo o histórico)');
+                setc('recon-resv', fmtN(adAll), '#16a34a');
+                set('recon-resv-sub', `${peopleAll} pessoas · ${total ? (adAll / total * 100).toFixed(0) : 0}% das ${total} reservas`);
+                set('recon-unmarked', fmtN(none));
+                set('recon-unmarked-sub', `de ${total} — marque pra melhorar a atribuição`);
+                const rnote = document.getElementById('recon-note');
+                if (rnote) rnote.innerHTML = `As três medem coisas diferentes: <b>Meta</b> conta conversas iniciadas (janela 7 dias após o clique, pode inflar); <b>chat</b> conta os threads que o bot marcou como anúncio; <b>reservas</b> é o que de fato virou mesa. O gap entre elas é normal — quanto mais reservas você marcar com origem, mais precisos ficam o ROAS e o CAC acima.`;
+
+                // C. Evolução por semana (chat ao vivo)
                 const wkMon = s => { const x = new Date(s); if (isNaN(x)) return null; const day = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - day); return x.toISOString().slice(0, 10); };
                 const wkConv = {}, wkResv = {};
                 chat.forEach(d => { const o = d.data(); if ((o.Origem || '') === 'anuncio') { const w = wkMon(o.PrimeiroContato || o.updatedAt); if (w) wkConv[w] = (wkConv[w] || 0) + 1; } });
@@ -2203,6 +2316,7 @@
                 renderEvoLive(wkConv, wkResv);
             } catch (e) { console.warn('Conversão anúncio→reserva: falha ao carregar', e?.message); }
         }
+        window.__reloadConversao = loadConversao;
         let _evoLiveCharts = [];
         function renderEvoLive(wkConv, wkResv) {
             const weeks = [...new Set([...Object.keys(wkConv), ...Object.keys(wkResv)])].sort();

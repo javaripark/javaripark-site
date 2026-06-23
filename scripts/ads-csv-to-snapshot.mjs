@@ -33,13 +33,20 @@ const rows = parseCSV(raw).filter(r => r.some(c => c.trim() !== ''));
 const head = rows[0].map(h => h.trim());
 const idx = (...names) => { for (const n of names) { const i = head.findIndex(h => h.toLowerCase() === n.toLowerCase()); if (i >= 0) return i; } return -1; };
 const C = {
-  start: idx('Reporting starts'), end: idx('Reporting ends'), name: idx('Campaign name'),
-  delivery: idx('Campaign delivery'), results: idx('Results'), reach: idx('Reach'),
-  spent: idx('Amount spent (BRL)', 'Amount spent'), impressions: idx('Impressions'),
-  clicks: idx('Link clicks'), ctr: idx('CTR (link click-through rate)'), ends: idx('Ends'),
-  freq: idx('Frequency'), week: idx('Week', 'Day', 'Date'),
+  start: idx('Reporting starts', 'Início dos relatórios'), end: idx('Reporting ends', 'Término dos relatórios'),
+  name: idx('Campaign name', 'Nome da campanha', 'Ad name', 'Nome do anúncio', 'Ad set name'),
+  delivery: idx('Campaign delivery', 'Veiculação da campanha', 'Ad delivery', 'Delivery', 'Status'),
+  results: idx('Results', 'Resultados'), reach: idx('Reach', 'Alcance'),
+  spent: idx('Amount spent (BRL)', 'Amount spent', 'Valor usado (BRL)'), impressions: idx('Impressions', 'Impressões'),
+  clicks: idx('Link clicks', 'Cliques no link'), ctr: idx('CTR (link click-through rate)'), ends: idx('Ends', 'Termina em'),
+  freq: idx('Frequency', 'Frequência'), week: idx('Week', 'Day', 'Date', 'Semana', 'Dia', 'Data'),
+  qRank: idx('Quality ranking', 'Classificação de qualidade'),
+  eRank: idx('Engagement rate ranking', 'Classificação da taxa de engajamento'),
+  cRank: idx('Conversion rate ranking', 'Classificação da taxa de conversão'),
+  lpv: idx('Landing page views', 'Visualizações da página de destino'),
 };
-const num = v => { const n = parseFloat(String(v || '').replace(/[^\d.\-]/g, '')); return isNaN(n) ? 0 : n; };
+const num = v => { let s = String(v || '').trim().replace(/[^\d.,\-]/g, ''); if (!s) return 0; const hasC = s.includes(','), hasD = s.includes('.'); if (hasC && hasD) { if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.'); else s = s.replace(/,/g, ''); } else if (hasC) s = s.replace(',', '.'); const n = parseFloat(s); return isNaN(n) ? 0 : n; };
+const rk = v => { const s = String(v || '').trim().toLowerCase(); if (!s || s === '-' || s === '—' || s.includes('uncategor') || s.includes('categor')) return ''; if (s.includes('above') || s.includes('acima')) return 'acima'; if (s.includes('below') || s.includes('abaixo')) return 'abaixo'; if (s.includes('average') || s.includes('média') || s.includes('media')) return 'media'; return ''; };
 const STATUS = { active: 'ativa', paused: 'pausada', completed: 'encerrada', recently_completed: 'encerrada', inactive: 'inativa' };
 const data = rows.slice(1).map(r => ({
   name: (r[C.name] || '').trim().replace(/\.\.\.$/, '…'),
@@ -49,6 +56,7 @@ const data = rows.slice(1).map(r => ({
   ends: (r[C.ends] || '').trim().match(/^\d{4}-\d{2}-\d{2}$/) ? r[C.ends].trim() : '',
   pStart: (r[C.start] || '').trim(), pEnd: (r[C.end] || '').trim(),
   bucket: C.week >= 0 ? (r[C.week] || '').trim() : '',
+  lpv: Math.round(num(r[C.lpv])), qRank: rk(r[C.qRank]), eRank: rk(r[C.eRank]), cRank: rk(r[C.cRank]),
 }));
 
 // ---- série temporal (evolution): por bucket de período ----
@@ -66,6 +74,8 @@ if (buckets.length > 1) {
     costPerConv: b.conversations > 0 ? +(b.spent / b.conversations).toFixed(2) : 0,
     reach: b.reach, impressions: b.impressions, linkClicks: b.linkClicks,
     ctr: b.impressions > 0 ? +(b.linkClicks / b.impressions * 100).toFixed(3) : 0,
+    cpm: b.impressions > 0 ? +(b.spent / b.impressions * 1000).toFixed(2) : 0,
+    freq: b.reach > 0 ? +(b.impressions / b.reach).toFixed(2) : 0,
   })).sort((a, b) => (a.periodEnd || a.label).localeCompare(b.periodEnd || b.label));
 }
 
@@ -79,18 +89,22 @@ data.forEach((d, i) => {
   const status = STATUS[d.delivery] || 'encerrada';
   if (status === 'inativa' || (d.spent === 0 && d.results === 0)) { inactiveCount++; return; }
   const key = isTimeSeries ? d.name : `${d.name}@@${i}`; // agregado: cada linha é única
-  const c = (groups[key] ||= { name: d.name, status, spent: 0, conversations: 0, reach: 0, impressions: 0, linkClicks: 0, ends: '' });
+  const c = (groups[key] ||= { name: d.name, status, spent: 0, conversations: 0, reach: 0, impressions: 0, linkClicks: 0, lpv: 0, ends: '', qRank: '', eRank: '', cRank: '' });
   c.spent += d.spent; c.conversations += d.results; c.reach = Math.max(c.reach, d.reach);
-  c.impressions += d.impressions; c.linkClicks += d.clicks;
+  c.impressions += d.impressions; c.linkClicks += d.clicks; c.lpv += d.lpv;
   if (d.ends > c.ends) c.ends = d.ends;
+  if (d.qRank) c.qRank = d.qRank; if (d.eRank) c.eRank = d.eRank; if (d.cRank) c.cRank = d.cRank;
   if (status === 'ativa') c.status = 'ativa';
 });
 const campaigns = Object.values(groups).map(c => ({
   name: c.name, status: c.status, spent: +c.spent.toFixed(2), conversations: Math.round(c.conversations),
   costPerConv: c.conversations > 0 ? +(c.spent / c.conversations).toFixed(2) : 0,
-  reach: c.reach, impressions: c.impressions, linkClicks: c.linkClicks,
+  reach: c.reach, impressions: c.impressions, linkClicks: c.linkClicks, lpv: c.lpv,
   ctr: c.impressions > 0 ? +(c.linkClicks / c.impressions * 100).toFixed(3) : 0,
-  ends: c.ends,
+  cpm: c.impressions > 0 ? +(c.spent / c.impressions * 1000).toFixed(2) : 0,
+  cpc: c.linkClicks > 0 ? +(c.spent / c.linkClicks).toFixed(2) : 0,
+  freq: c.reach > 0 ? +(c.impressions / c.reach).toFixed(2) : 0,
+  qRank: c.qRank, eRank: c.eRank, cRank: c.cRank, ends: c.ends,
 }));
 
 const sum = (arr, k) => arr.reduce((s, x) => s + (x[k] || 0), 0);
@@ -102,10 +116,13 @@ const snap = {
   periodStart: allStarts[0] || '', periodEnd: allEnds[allEnds.length - 1] || '',
   source: 'Meta Ads Manager — boosts do Instagram (conta fora do Business)',
   currency: 'BRL', manual: true,
-  totals: {
-    spent, conversations, costPerConversation: conversations ? +(spent / conversations).toFixed(2) : 0,
-    reach: sum(campaigns, 'reach'), impressions: sum(campaigns, 'impressions'), linkClicks: sum(campaigns, 'linkClicks'),
-  },
+  totals: (() => { const reach = sum(campaigns, 'reach'), impressions = sum(campaigns, 'impressions'), linkClicks = sum(campaigns, 'linkClicks'), lpv = sum(campaigns, 'lpv');
+    return { spent, conversations, costPerConversation: conversations ? +(spent / conversations).toFixed(2) : 0,
+    reach, impressions, linkClicks, lpv,
+    ctr: impressions ? +(linkClicks / impressions * 100).toFixed(3) : 0,
+    cpm: impressions ? +(spent / impressions * 1000).toFixed(2) : 0,
+    cpc: linkClicks ? +(spent / linkClicks).toFixed(2) : 0,
+    freq: reach ? +(impressions / reach).toFixed(2) : 0 }; })(),
   evolution, inactiveCount, campaigns,
 };
 
