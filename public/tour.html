@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#000000" />
+  <title>Conheça a casa — Mapa dos setores · Javari StrEat Park</title>
+  <meta name="description" content="Explore o Javari por dentro: toque num setor e veja onde fica, a vibe de cada cantinho e reserve o seu lugar." />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://javaripark.com.br/tour" />
+  <meta property="og:title" content="Conheça a casa — Javari StrEat Park" />
+  <meta property="og:description" content="Toque num setor e veja onde fica, a vibe de cada lugar e reserve o seu." />
+  <meta property="og:image" content="https://javaripark.com.br/assets/images/quintal/quintal-hero.webp" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:site_name" content="Javari StrEat Park" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&family=Sedgwick+Ave&display=swap" rel="stylesheet" /></noscript>
+
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .tour-wrap { max-width: 980px; margin: 0 auto; padding: clamp(90px,12vh,130px) 18px 60px; }
+    .tour-head { text-align: center; margin-bottom: 26px; }
+    .tour-head h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(34px, 9vw, 60px); letter-spacing: 1px; color: var(--text-dark); line-height: .95; margin: 0 0 10px; }
+    .tour-head p { color: var(--text-muted); font-size: 15px; max-width: 540px; margin: 0 auto; line-height: 1.5; }
+    .tour-hint { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; background: rgba(79,25,100,.07); color: var(--violet); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; }
+    .tour-grid { display: grid; grid-template-columns: 1fr; gap: 22px; }
+    @media (min-width: 880px) { .tour-grid { grid-template-columns: minmax(0,1.05fr) minmax(0,.95fr); align-items: start; gap: 30px; } }
+
+    /* Mapa */
+    .tour-map { position: relative; width: 100%; padding-top: 121.875%; background: var(--cream-light); border-radius: 16px; box-shadow: 0 10px 34px rgba(0,0,0,.10); overflow: hidden; }
+    .tour-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .tour-sector { position: absolute; display: flex; align-items: center; justify-content: center; border-radius: 9px; cursor: pointer; font-family: 'Poppins', sans-serif; font-weight: 700; color: var(--violet); background: rgba(79,25,100,.12); border: 1.5px solid rgba(79,25,100,.45); transition: background .18s, transform .12s, box-shadow .18s; -webkit-tap-highlight-color: transparent; }
+    .tour-sector:hover { background: rgba(79,25,100,.22); }
+    .tour-sector:focus-visible { outline: 3px solid var(--violet-soft); outline-offset: 2px; }
+    .tour-sector.active { background: var(--violet); color: #fff; border-color: var(--violet); transform: scale(1.06); box-shadow: 0 6px 18px rgba(79,25,100,.45); z-index: 5; }
+    .tour-sector .num { font-size: clamp(13px, 3.4vw, 20px); pointer-events: none; }
+    .tour-sector.bus { font-size: clamp(11px, 2.6vw, 14px); writing-mode: vertical-rl; text-orientation: mixed; letter-spacing: 1px; }
+
+    /* Painel inline (sem modal) */
+    .tour-panel { background: #fff; border: 1px solid var(--cream-dim); border-radius: 16px; box-shadow: 0 10px 34px rgba(0,0,0,.07); padding: 22px; min-height: 200px; }
+    .tour-panel.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); }
+    .tour-panel.empty svg { opacity: .35; margin-bottom: 10px; }
+    .tp-tag { display: inline-block; background: rgba(79,25,100,.08); color: var(--violet); font-weight: 700; font-size: 12px; letter-spacing: .5px; border-radius: 999px; padding: 4px 12px; }
+    .tp-title { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 1px; color: var(--text-dark); line-height: 1; margin: 12px 0 4px; }
+    .tp-cap { color: var(--violet); font-weight: 600; font-size: 14px; }
+    .tp-desc { color: var(--text-dark); font-size: 15.5px; line-height: 1.5; margin: 14px 0 4px; }
+    .tp-near { color: var(--text-muted); font-size: 13px; margin: 2px 0 16px; }
+    .tp-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .tp-fotos img { width: 100%; height: 96px; object-fit: cover; border-radius: 10px; display: block; }
+    .tp-fotos-label { font-size: 11px; color: var(--text-muted); margin: 0 0 16px; }
+    .tour-panel .btn { width: 100%; justify-content: center; }
+    .tour-legend { margin-top: 22px; font-size: 12.5px; color: var(--text-muted); text-align: center; line-height: 1.7; }
+    .tour-soon { margin-top: 30px; text-align: center; background: linear-gradient(180deg, rgba(79,25,100,.04), transparent); border: 1px dashed rgba(79,25,100,.2); border-radius: 16px; padding: 22px; }
+    .tour-soon h3 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; color: var(--violet); margin: 0 0 6px; }
+    .tour-soon p { color: var(--text-muted); font-size: 14px; margin: 0; max-width: 460px; margin-inline: auto; line-height: 1.5; }
+  </style>
+</head>
+<body class="page-tour">
+
+  <header class="site-header scrolled" id="header">
+    <a href="/" class="brand" aria-label="Javari StrEat Park">
+      <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--white" width="200" height="108" />
+      <img src="assets/images/logo-horizontal-black.webp" alt="Javari StrEat Park" class="brand-logo brand-logo--black" width="200" height="108" />
+    </a>
+    <nav class="site-nav" aria-label="Navegação principal">
+      <a href="/">Início</a>
+      <a href="/#cardapio">Cardápio</a>
+      <a href="/#agenda">Agenda</a>
+      <a href="/#localizacao">Onde estamos</a>
+      <a href="/tour" aria-current="page">A Casa</a>
+      <a href="/regras">Regras</a>
+    </nav>
+  </header>
+
+  <main class="tour-wrap">
+    <div class="tour-head">
+      <h1>Conheça a casa por dentro</h1>
+      <p>Muita gente pergunta "onde fica meu setor?". Aqui você vê: toque num lugar no mapa pra descobrir onde ele fica, a vibe dele, e já reservar.</p>
+      <span class="tour-hint">👆 Toque num setor no mapa</span>
+    </div>
+
+    <div class="tour-grid">
+      <div class="tour-map" id="tour-map" role="group" aria-label="Mapa dos setores do Javari">
+        <svg viewBox="0 0 640 780" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="2" width="636" height="776" rx="16" fill="#FAF7F0" stroke="rgba(0,0,0,0.08)" stroke-width="1"/>
+          <rect x="12" y="12" width="250" height="110" rx="10" fill="rgba(80,170,120,0.06)" stroke="rgba(80,170,120,0.2)" stroke-width="1"/>
+          <text x="137" y="58" text-anchor="middle" fill="rgba(0,0,0,.32)" font-family="Poppins,sans-serif" font-size="13" letter-spacing="1">ÁREA KIDS</text>
+          <text x="137" y="76" text-anchor="middle" fill="rgba(0,0,0,0.25)" font-family="Poppins,sans-serif" font-size="9">Playground</text>
+          <rect x="272" y="12" width="356" height="110" rx="10" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+          <text x="450" y="62" text-anchor="middle" fill="rgba(0,0,0,.3)" font-family="Poppins,sans-serif" font-size="13" letter-spacing="1">COZINHA</text>
+          <rect x="12" y="185" width="100" height="32" rx="8" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+          <text x="62" y="206" text-anchor="middle" fill="rgba(0,0,0,0.35)" font-family="Poppins,sans-serif" font-size="8">Fumódromo</text>
+          <rect x="12" y="235" width="100" height="160" rx="10" fill="rgba(79,25,100,0.08)" stroke="rgba(79,25,100,0.2)" stroke-width="1"/>
+          <text x="62" y="308" text-anchor="middle" fill="rgba(79,25,100,.6)" font-family="Poppins,sans-serif" font-size="14" font-weight="bold" letter-spacing="1">PALCO</text>
+          <text x="62" y="328" text-anchor="middle" fill="rgba(0,0,0,0.3)" font-family="Poppins,sans-serif" font-size="9">Música ao vivo</text>
+          <rect x="12" y="415" width="100" height="32" rx="8" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+          <text x="62" y="436" text-anchor="middle" fill="rgba(0,0,0,0.35)" font-family="Poppins,sans-serif" font-size="8">Fumódromo</text>
+          <rect x="12" y="465" width="100" height="90" rx="10" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+          <text x="62" y="510" text-anchor="middle" fill="rgba(0,0,0,0.35)" font-family="Poppins,sans-serif" font-size="11" letter-spacing="1">WC MASC.</text>
+          <rect x="122" y="135" width="346" height="460" rx="12" fill="rgba(79,25,100,0.02)" stroke="rgba(79,25,100,0.1)" stroke-width="1.5" stroke-dasharray="6 3"/>
+          <text x="295" y="155" text-anchor="middle" fill="rgba(79,25,100,0.3)" font-family="Poppins,sans-serif" font-size="9" letter-spacing="2">QUINTAL</text>
+          <rect x="12" y="620" width="92" height="105" rx="10" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+          <text x="58" y="675" text-anchor="middle" fill="rgba(0,0,0,0.35)" font-family="Poppins,sans-serif" font-size="11" letter-spacing="1">WC FEM.</text>
+          <rect x="114" y="620" width="78" height="105" rx="10" fill="rgba(180,140,40,0.05)" stroke="rgba(180,140,40,0.15)" stroke-width="1"/>
+          <text x="153" y="675" text-anchor="middle" fill="rgba(0,0,0,.35)" font-family="Poppins,sans-serif" font-size="11" letter-spacing="1">CAIXA</text>
+          <rect x="202" y="620" width="156" height="105" rx="10" fill="rgba(0,0,0,0.02)" stroke="rgba(0,0,0,0.08)" stroke-width="1.5"/>
+          <text x="280" y="665" text-anchor="middle" fill="rgba(0,0,0,.35)" font-family="Poppins,sans-serif" font-size="13" letter-spacing="1">ENTRADA</text>
+          <text x="280" y="683" text-anchor="middle" fill="rgba(0,0,0,0.25)" font-family="Poppins,sans-serif" font-size="9">Saída</text>
+          <rect x="368" y="620" width="100" height="105" rx="10" fill="rgba(79,25,100,0.03)" stroke="rgba(79,25,100,0.1)" stroke-width="1"/>
+          <text x="418" y="667" text-anchor="middle" fill="rgba(0,0,0,.35)" font-family="Poppins,sans-serif" font-size="10" letter-spacing="1">BEER</text>
+          <text x="418" y="683" text-anchor="middle" fill="rgba(0,0,0,.35)" font-family="Poppins,sans-serif" font-size="10" letter-spacing="1">PONG</text>
+          <rect x="478" y="620" width="150" height="105" rx="10" fill="rgba(180,140,40,0.06)" stroke="rgba(180,140,40,0.18)" stroke-width="1.5"/>
+          <text x="553" y="678" text-anchor="middle" fill="rgba(0,0,0,.4)" font-family="Poppins,sans-serif" font-size="15" letter-spacing="1">BAR</text>
+          <text x="320" y="762" text-anchor="middle" fill="rgba(0,0,0,0.22)" font-family="Poppins,sans-serif" font-size="9" letter-spacing="2">↓ RUA JAVARI ↓</text>
+        </svg>
+        <!-- setores clicáveis (posições % idênticas ao mapa do admin) -->
+        <button class="tour-sector" data-s="9" style="top:21.8%;left:22.7%;width:13.8%;height:7.1%"><span class="num">9</span></button>
+        <button class="tour-sector" data-s="8" style="top:21.8%;left:59.1%;width:13.8%;height:7.1%"><span class="num">8</span></button>
+        <button class="tour-sector" data-s="7" style="top:30.8%;left:59.1%;width:13.8%;height:7.1%"><span class="num">7</span></button>
+        <button class="tour-sector" data-s="6" style="top:39.7%;left:59.1%;width:13.8%;height:7.1%"><span class="num">6</span></button>
+        <button class="tour-sector" data-s="5" style="top:48.7%;left:59.1%;width:13.8%;height:7.1%"><span class="num">5</span></button>
+        <button class="tour-sector" data-s="4" style="top:48.7%;left:22.7%;width:13.8%;height:7.1%"><span class="num">4</span></button>
+        <button class="tour-sector" data-s="3" style="top:57.7%;left:59.1%;width:13.8%;height:7.1%"><span class="num">3</span></button>
+        <button class="tour-sector" data-s="2" style="top:66.7%;left:22.7%;width:13.8%;height:7.1%"><span class="num">2</span></button>
+        <button class="tour-sector" data-s="1" style="top:66.7%;left:59.1%;width:13.8%;height:7.1%"><span class="num">1</span></button>
+        <button class="tour-sector bus" data-s="bus-lounge" style="top:17.3%;left:75.5%;width:21%;height:59%"><span class="num">BUS LOUNGE</span></button>
+      </div>
+
+      <div class="tour-panel empty" id="tour-panel">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21s-7-5.5-7-11a7 7 0 1 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <p>Toque num setor no mapa pra ver onde ele fica, a vibe e reservar.</p>
+      </div>
+    </div>
+
+    <p class="tour-legend">No mapa: <strong>palco</strong>, <strong>bar</strong>, <strong>área kids</strong>, <strong>banheiros</strong>, <strong>entrada</strong> e o <strong>Bus Lounge</strong> — pra você se localizar. Todo setor acomoda <strong>até 20 sentados</strong>; o Bus Lounge é pra grupos de 10 a 40.</p>
+
+    <div class="tour-soon">
+      <h3>Em breve: passeio 360°</h3>
+      <p>Estamos preparando um tour pra você caminhar pela casa de verdade, como no Google Street View — olhando 360° e passando de um cantinho a outro.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer" id="contato">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="assets/images/logo-horizontal-white.webp" alt="Javari StrEat Park" class="footer-logo" width="200" height="108" loading="lazy" />
+        <p class="footer-tagline">SÓ VEM!</p>
+      </div>
+      <div class="footer-block">
+        <h3>Endereço</h3>
+        <p>Rua Javari, 112<br>Mooca · São Paulo</p>
+        <a class="link-underline" href="/#localizacao">Ver no mapa</a>
+      </div>
+      <div class="footer-block">
+        <h3>Contato</h3>
+        <ul class="footer-links">
+          <li><a href="https://wa.me/551120811544" target="_blank" rel="noopener">WhatsApp · (11) 2081-1544</a></li>
+          <li><a href="https://instagram.com/javaripark" target="_blank" rel="noopener">Instagram · @javaripark</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <span>© <span id="year"></span> Javari StrEat Park</span>
+      <span class="footer-spacer">·</span>
+      <span>SÓ VEM!</span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    // Dados FIÉIS à collection `setores` (caracteristica + capacidade). Estático porque as
+    // regras do Firestore só liberam leitura pro admin — atualizar aqui se a caracteristica mudar.
+    const Q = 'assets/images/quintal/', B = 'assets/images/bus-lounge/';
+    const SET = {
+      '1': { cap: 'até 20 sentados', desc: 'Perto do bar, longe do palco — tem sofás. Pra quem quer papo e conforto sem o som batendo de frente.', perto: 'Perto do: bar' },
+      '2': { cap: 'até 20 sentados', desc: 'Cantinho prático: perto dos banheiros e da área de fumantes.', perto: 'Perto de: banheiros · fumódromo' },
+      '3': { cap: 'até 20 sentados', desc: 'Perto do bar e do Bus Lounge — central, no fluxo da casa.', perto: 'Perto do: bar · Bus Lounge' },
+      '4': { cap: 'até 20 sentados', desc: 'Lateral do palco, ao lado da área de fumantes. Perto da música, mas não de frente.', perto: 'Perto do: palco (lateral) · fumódromo' },
+      '5': { cap: 'até 20 sentados', desc: 'De frente para o palco. Pra quem vem pela música ao vivo.', perto: 'Perto do: palco (de frente)' },
+      '6': { cap: 'até 20 sentados', desc: 'De frente para o palco. Vista cheia do show.', perto: 'Perto do: palco (de frente)' },
+      '7': { cap: 'até 20 sentados', desc: 'De frente para o palco, mais ao fundo do quintal.', perto: 'Perto do: palco (de frente)' },
+      '8': { cap: 'até 20 sentados', desc: 'Perto da área kids — ótimo pra quem vem com a criançada.', perto: 'Perto da: área kids' },
+      '9': { cap: 'até 20 sentados', desc: 'Perto da área kids, do lado oposto ao palco. Mais tranquilo pra famílias.', perto: 'Perto da: área kids' },
+      'bus-lounge': { cap: 'grupos de 10 a 40 pessoas', desc: 'Um ônibus de verdade transformado em lounge coberto — a estrela das fotos. Perfeito pra grupos grandes e comemorações.', perto: 'Área coberta · ao lado do bar', fotos: [B + 'bus-01.webp', B + 'bus-03.webp'], label: 'Bus Lounge', tema: 'Fotos do Bus Lounge' }
+    };
+    // fotos de área do quintal (variadas por setor só pra não repetir igual)
+    const QF = ['quintal-01.webp', 'quintal-04.webp', 'quintal-bora.webp', 'quintal-06.webp', 'quintal-happyhour.webp', 'quintal-oasis.webp', 'quintal-02.webp', 'quintal-03.webp', 'quintal-05.webp'];
+    const panel = document.getElementById('tour-panel');
+    const sectors = [...document.querySelectorAll('.tour-sector')];
+    function abrir(id, el) {
+      const s = SET[id]; if (!s) return;
+      sectors.forEach(b => b.classList.toggle('active', b === el));
+      const label = s.label || ('Setor ' + id);
+      const isBus = id === 'bus-lounge';
+      const i = isBus ? 0 : (parseInt(id) - 1);
+      const fotos = s.fotos || [Q + QF[i % QF.length], Q + QF[(i + 4) % QF.length]];
+      const temaFotos = s.tema || 'Fotos do quintal (área do setor)';
+      const waMsg = encodeURIComponent('Oi! Queria reservar o ' + label + ' 😊');
+      panel.className = 'tour-panel';
+      panel.innerHTML =
+        '<span class="tp-tag">' + (isBus ? 'GRUPOS' : 'SETOR ' + id) + '</span>' +
+        '<div class="tp-title">' + label + '</div>' +
+        '<div class="tp-cap">' + s.cap + '</div>' +
+        '<p class="tp-desc">' + s.desc + '</p>' +
+        '<p class="tp-near">📍 ' + s.perto + '</p>' +
+        '<div class="tp-fotos">' + fotos.map(f => '<img src="' + f + '" alt="' + label + '" loading="lazy">').join('') + '</div>' +
+        '<p class="tp-fotos-label">' + temaFotos + ' · em breve, fotos e tour 360° deste setor.</p>' +
+        '<a class="btn btn-primary" href="https://wa.me/551120811544?text=' + waMsg + '" target="_blank" rel="noopener">Reservar o ' + label + '</a>';
+      if (window.matchMedia('(max-width: 879px)').matches) panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    sectors.forEach(b => b.addEventListener('click', () => abrir(b.dataset.s, b)));
+  </script>
+</body>
+</html>
