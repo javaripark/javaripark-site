@@ -1418,6 +1418,39 @@ button, input, textarea { font: inherit; }
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+.copa-score {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffd700;
+  letter-spacing: 2px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.copa-score i { font-style: normal; color: rgba(255,255,255,.45); font-size: 17px; margin: 0 3px; }
+.copa-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+.copa-status.fim { background: rgba(255,255,255,.12); color: rgba(255,255,255,.55); }
+.copa-status.breve { background: rgba(255,215,0,.16); color: #ffd700; }
+.copa-status.tbd { background: rgba(255,255,255,.08); color: rgba(255,255,255,.5); }
+.copa-flag-tbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 20px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.5);
+  font-weight: 700;
+  font-size: 13px;
+}
 .copa-match-info {
   display: flex;
   flex-direction: column;
