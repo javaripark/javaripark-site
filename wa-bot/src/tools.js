@@ -50,7 +50,13 @@ const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h',
 // Exceções por data (ex: jogo do Brasil na Copa) — manter alinhado com EXCECOES_DIA do prompt.js
 const TOLERANCIA_EXCECAO = {
   '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)',
+  '2026-06-29': 'até 13h30 (dia de jogo do Brasil — entrada R$10 fixa)',
 };
+// Datas normalmente FECHADAS (seg/ter) que ABREM por evento especial confirmado pelo René —
+// nestas o bot reserva normal (sem o aviso de seg/ter). Manter alinhado com o prompt.js.
+const ABERTO_EXCECAO = { '2026-06-29': true };
+// Hora de abertura por DATA (sobrepõe ABERTURA por dia da semana) — usado no cutoff same-day.
+const ABERTURA_EXCECAO = { '2026-06-29': 12 };
 const tolerancia = (data, dow) => TOLERANCIA_EXCECAO[data] || TOLERANCIA[dow] || 'a combinar com a equipe (dia de evento especial)';
 // seg/ter: sistema permite (eventos especiais/corporativo), mas o bot deve tratar como exceção
 const AVISO_SEG_TER = 'esta data cai em SEGUNDA ou TERÇA: casa FECHADA ao público. EXPLIQUE isso ao cliente em linguagem simples (ex: "o dia X cai numa terça e a casa fecha ao público seg/ter") e ofereça quarta a domingo; se for grupo grande/evento querendo um dia fechado, é evento especial → chamar_humano DEPOIS de explicar. NUNCA registre por conta própria';
@@ -150,7 +156,7 @@ const horaSP = () => new Date(new Date().toLocaleString('en-US', { timeZone: 'Am
 const ABERTURA = { 3: 18, 4: 18, 5: 18, 6: 14, 0: 12 };
 function reservaHojeEncerrada(data, dow) {
   if (data !== hojeISO()) return null;
-  const abre = ABERTURA[dow];
+  const abre = ABERTURA_EXCECAO[data] || ABERTURA[dow];
   if (!abre) return null; // seg/ter: evento especial, sem regra de cutoff
   if (horaSP() >= abre - 2) return `reservas para hoje encerraram (aceitamos até 2h antes da abertura, ou seja, até ${abre - 2}h); ofereça outro dia`;
   return null;
@@ -175,7 +181,7 @@ async function consultarDisponibilidade({ data }) {
   const out = { aberto: true, diaSemana: DIAS[dow], setoresLivres: livres, overflowLivres, busLivre, toleranciaChegada: tolerancia(data, dow) };
   const cutoff = reservaHojeEncerrada(data, dow);
   if (cutoff) out.avisoHoje = cutoff;
-  if (dow === 1 || dow === 2) out.atencao = AVISO_SEG_TER;
+  if ((dow === 1 || dow === 2) && !ABERTO_EXCECAO[data]) out.atencao = AVISO_SEG_TER;
   if (!livres.length) {
     out.lotado = livres.length === 0 && overflowLivres.length === 0;
     out.dica = livres.length === 0
