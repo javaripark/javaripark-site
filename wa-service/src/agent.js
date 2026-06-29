@@ -13,7 +13,7 @@ import { config } from './config.js';
 import { sendText, sendToJid, resolvePhone, extractAdReferral } from './wa.js';
 import { getAdReferral, recordAdReferral } from './store.js';
 
-const DEBOUNCE_MS = 10000;     // agrupa mensagens picadas ao vivo (espera 10s após a última; gente escreve em 3 msgs)
+const DEBOUNCE_MS = 15000;     // agrupa mensagens picadas ao vivo (espera 15s após a última; cliente que escreve "picado", 1-2 palavras por msg)
 const MEDIA_COOLDOWN_MS = 90000; // 1 aviso "só leio texto" por rajada de mídia (cliente manda 5 fotos = 1 resposta, não 5)
 const LIVE_AGE_S = 90;         // mais novo que isso = ao vivo; mais velho = atrasado
 const STALE_MAX_H = 12;        // não responde nada mais velho que isso (janela já fechada)
