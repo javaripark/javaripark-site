@@ -101,7 +101,7 @@ COPA DO MUNDO 2026 — transmitimos os jogos do Brasil! ⚽🇧🇷
 - Estrutura: telão de 4 metros, narração original do jogo no sistema de som da casa, TVs auxiliares e Bus Lounge com TV exclusiva. Use isso pra vender mesa pros jogos!
 - TELÃO / "dá pra ver bem?" / "a imagem fica boa de dia?" / "não vai ter reflexo/claridade no jogo à tarde?" — responda SÓ se o cliente perguntar sobre o telão/imagem (NUNCA puxe o assunto sozinho): tranquilize com confiança — pra jogo à tarde a casa instala lonas atrás do telão pra escurecer o ambiente, garantindo a melhor imagem e definição possíveis. Já fizemos isso na Copa passada e deu certo. (Não cite isso se ninguém perguntar.)
 - 24/6 (quarta) Brasil x Escócia — o jogo é às 19h e tem samba/pagode após o apito final. Casa abre normal (18h–0h). ⚠ EXCEÇÕES do dia: entrada R$10 fixa a noite toda e chegada de reserva até 18h30.
-- 5/7 (DOMINGO) Brasil nas OITAVAS de final da Copa — SIM, transmitimos o jogo do Brasil! Adversário ainda a definir. Tem samba/pagode ao vivo ANTES do jogo (pré-jogo). É domingo normal de funcionamento (12h–22h): entrada R$10 (grátis pra quem chega entre 12h e 12h30) e chegada de reserva até 14h, como todo domingo. Reserve normalmente.
+- 5/7 (DOMINGO) Brasil x NORUEGA — oitavas de final da Copa. SIM, transmitimos o jogo do Brasil contra a Noruega! Tem samba/pagode ao vivo ANTES do jogo (pré-jogo). É domingo normal de funcionamento (12h–22h): entrada R$10 (grátis pra quem chega entre 12h e 12h30) e chegada de reserva até 14h, como todo domingo. Reserve normalmente. ⚠ Se o cliente citar "Noruega" ou perguntar do jogo de domingo, é ESTE jogo — responda VOCÊ com naturalidade e reserve; NUNCA chame humano por causa disso.
 - Fase eliminatória (jogos do Brasil a confirmar): oitavas 4–7/7, quartas 9–12/7, semi 14–15/7, final 19/7. Pra datas além das listadas, use consultar_agenda ou chamar_humano.
 - Ao citar a programação de um dia de jogo, copie EXATAMENTE a ordem listada acima (antes/depois do jogo) — não invente.
 
@@ -143,7 +143,7 @@ NUNCA: afirmar que uma ação aconteceu sem o ok:true da ferramenta; prometer ex
 // Dias com exceção (jogo do Brasil) ganham um aviso no topo do bloco.
 export const EXCECOES_DIA = {
   '2026-06-24': '⚽ *Atenção — dia de jogo do Brasil (24/6):* entrada R$10 fixa a noite toda e chegada de reservas até *18h30*. Jogo às 19h e samba/pagode após o apito final.',
-  '2026-07-05': '⚽ *Atenção — Brasil nas oitavas da Copa (domingo, 5/7):* transmitimos o jogo do Brasil (adversário a definir), com samba/pagode ao vivo no pré-jogo. Entrada *R$10* (grátis pra quem chega entre 12h e 12h30) e chegada de reservas até *14h*, como todo domingo.',
+  '2026-07-05': '⚽ *Atenção — Brasil x Noruega nas oitavas da Copa (domingo, 5/7):* transmitimos o jogo, com samba/pagode ao vivo no pré-jogo. Entrada *R$10* (grátis pra quem chega entre 12h e 12h30) e chegada de reservas até *14h*, como todo domingo.',
 };
 
 const POS_RESERVA_TOPO = `📋 Todas as regras da casa (entrada, menores, bolo, pagamento, pets): https://javaripark.com.br/regras — vale a leitura pra não ter surpresa na chegada.
