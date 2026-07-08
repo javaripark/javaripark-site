@@ -120,9 +120,10 @@ async function processEvents(body) {
         conv.msgsCliente = (conv.msgsCliente || 0) + lote.texts.length;
 
         const t0 = Date.now();
-        const { reply, usage, handoff, reservou, negociou } = await atender(conv, textoFinal);
-        // funil: lead → negociacao → ganho (nunca regride)
-        if (reservou) { conv.etapa = 'ganho'; conv.reservouEm = agora; }
+        const { reply, usage, handoff, reservou, cancelou, negociou } = await atender(conv, textoFinal);
+        // funil: lead → negociacao → ganho; cancelou → sai de "ganho"
+        if (cancelou) { conv.etapa = 'cancelado'; conv.reservouEm = ''; }
+        else if (reservou) { conv.etapa = 'ganho'; conv.reservouEm = agora; }
         else if (negociou && conv.etapa !== 'ganho') conv.etapa = 'negociacao';
         await saveConv(conv);
         await gravarUso(telefone, usage);

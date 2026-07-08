@@ -52,6 +52,7 @@ export async function atender(conv, textoCliente) {
   let handoff = false;
   let acted = false;        // alguma ferramenta de estado retornou ok:true neste turno
   let registrouData = null; // data da reserva criada neste turno → anexa bloco pós-reserva
+  let cancelou = false;     // cancelar_reserva rodou ok:true → conversa deixa de ser "ganho"
   let corrected = false;    // rodada corretiva já usada
   let cobrouDispo = false;  // rodada corretiva de disponibilidade já usada
   const toolsUsadas = [];   // pro funil: negociação = mexeu em ferramenta de reserva
@@ -75,7 +76,7 @@ export async function atender(conv, textoCliente) {
     conv.messages.push({ role: 'assistant', content: reply });
     if (handoff) conv.status = 'humano';
     const negociou = toolsUsadas.some(n => ['consultar_disponibilidade', 'registrar_reserva', 'buscar_reservas', 'alterar_reserva', 'cancelar_reserva'].includes(n));
-    return { reply, usage, handoff, reservou: !!registrouData, negociou };
+    return { reply, usage, handoff, reservou: !!registrouData, cancelou, negociou };
   };
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
@@ -148,6 +149,7 @@ export async function atender(conv, textoCliente) {
       if (result?.ok === true && ['registrar_reserva', 'alterar_reserva', 'cancelar_reserva'].includes(block.name)) {
         acted = true;
         if (block.name === 'registrar_reserva') registrouData = block.input?.data || '';
+        if (block.name === 'cancelar_reserva') cancelou = true;
       }
       toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: JSON.stringify(result) });
     }

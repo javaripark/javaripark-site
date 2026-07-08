@@ -162,9 +162,9 @@ async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid })
     if (conv.messages.length < 4 && (ad.title || ad.body)) conv.adInfo = `${ad.title || ''}${ad.body ? ' — ' + ad.body : ''}`.slice(0, 300);
   }
 
-  let reply, usage, handoff, reservou, negociou;
+  let reply, usage, handoff, reservou, cancelou, negociou;
   try {
-    ({ reply, usage, handoff, reservou, negociou } = await atender(conv, textoFinal));
+    ({ reply, usage, handoff, reservou, cancelou, negociou } = await atender(conv, textoFinal));
   } catch (e) {
     // IA instável (ex: 529 Overloaded da Anthropic, mesmo após retries) — NUNCA deixar o
     // cliente no silêncio sem ninguém saber. Persiste a msg, marca cooldown e AVISA o admin.
@@ -177,7 +177,8 @@ async function processar(telefone, nome, textoFinal, { recovery, ts, replyJid })
     return;
   }
   if (handoff) conv.adminPingEm = agora; // alerta inicial conta pro cooldown do re-ping
-  if (reservou) { conv.etapa = 'ganho'; conv.reservouEm = agora; }
+  if (cancelou) { conv.etapa = 'cancelado'; conv.reservouEm = ''; } // cancelou → deixa de contar como ganho
+  else if (reservou) { conv.etapa = 'ganho'; conv.reservouEm = agora; }
   else if (negociou && conv.etapa !== 'ganho') conv.etapa = 'negociacao';
   await saveConv(conv);
   await gravarUso(telefone, usage);
