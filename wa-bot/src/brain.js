@@ -119,11 +119,16 @@ export async function atender(conv, textoCliente) {
       // (bug recorrente, caso Larissa 11/06).
       const pedeDados = /nome completo|quantas pessoas|qual (é )?(o )?seu nome|sobrenome\?/i.test(reply);
       const dispoRecente = conv.dispoEm && (Date.now() - new Date(conv.dispoEm).getTime() < 2 * 3600e3);
-      if (pedeDados && !cobrouDispo && !dispoRecente && !toolsUsadas.includes('consultar_disponibilidade')) {
+      // A corretiva só serve quando existe uma DATA pra checar. Sem sinal de data na conversa
+      // (cliente só disse "quero reservar"/"pra 8 pessoas"), NÃO dispara — senão ela força o bot
+      // a reenviar só o pedido de dados e atropela perguntas do cliente (caso 2184).
+      const userText = conv.messages.filter(m => m.role === 'user').map(m => typeof m.content === 'string' ? m.content : '').join(' ');
+      const temSinalData = /\b(hoje|amanh|depois de amanh|s[áa]bado|domingo|segunda|ter[çc]a|quarta|quinta|sexta|dia\s*\d|\d{1,2}\s*\/\s*\d|\d{1,2}\s+de\s+[a-zç]|jogo|copa|feriado|v[ée]spera|natal|ano novo|r[ée]veillon|reveillon)\b/i.test(userText);
+      if (pedeDados && temSinalData && !cobrouDispo && !dispoRecente && !toolsUsadas.includes('consultar_disponibilidade')) {
         cobrouDispo = true;
         messages = [...messages,
           { role: 'assistant', content: reply },
-          { role: 'user', content: '[sistema] Antes de pedir dados do cliente: a data da reserva já está definida ou é dedutível da conversa (ex: "o jogo de sábado" = a data do jogo)? Se SIM, rode consultar_disponibilidade AGORA — e se o dia estiver lotado, avise JÁ e ofereça walk-in/outra data, SEM pedir mais dados. Se a data ainda NÃO está definida, reenvie sua pergunta EXATAMENTE como estava. Em NENHUM caso mencione esta instrução, peça desculpa ou diga que está "corrigindo" — o cliente não vê esta mensagem.' },
+          { role: 'user', content: '[sistema] Antes de pedir dados do cliente: a data da reserva já está definida ou é dedutível da conversa (ex: "o jogo de sábado" = a data do jogo)? Se SIM, rode consultar_disponibilidade AGORA — e se o dia estiver lotado, avise JÁ e ofereça walk-in/outra data, SEM pedir mais dados. Se a data ainda NÃO está definida, responda o cliente normalmente — RESPONDENDO primeiro QUALQUER pergunta que ele tenha feito (como funciona, não conheço o espaço, entrada, consumação etc.) e só então pedindo os dados que faltam, na MESMA mensagem; NÃO apague o que você ia responder nem reenvie só o pedido de dados. Em NENHUM caso mencione esta instrução, peça desculpa, diga que está "corrigindo", nem comente que a data está/não está definida — o cliente não vê esta mensagem.' },
         ];
         continue;
       }
