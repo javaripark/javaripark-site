@@ -161,11 +161,24 @@ function reservaHojeEncerrada(data, dow) {
   return null;
 }
 
+// Casa FECHADA por marcação na agenda (feriado/evento). Retorna o motivo (string) ou '' se abre normal.
+// O René marca um evento com "CASA FECHADA"/"não efetuar reservas"/"não abre" no obs ou nome do dia.
+async function casaFechadaNaAgenda(data) {
+  const doc = await getDoc(`agenda/${data}`).catch(() => null);
+  const ev = (doc?.events || []).find(e => /casa fechada|n[ãa]o efetuar reserva|n[ãa]o (vamos )?abr|n[ãa]o funciona|fechad[oa]/i.test(`${e.name || ''} ${e.obs || ''}`));
+  if (!ev) return '';
+  return `${ev.name || ''}${ev.obs ? ' — ' + ev.obs : ''}`.trim() || 'casa fechada nesse dia';
+}
+
 async function consultarDisponibilidade({ data }) {
   const d = validDate(data);
   if (!d) return { erro: 'data inválida, use YYYY-MM-DD' };
   if (data < hojeISO()) return { aberto: false, motivo: 'data no passado' };
   const dow = d.getDay();
+  // FECHAMENTO por agenda (feriado/evento em que a casa NÃO abre): o René marca um evento
+  // com "CASA FECHADA"/"não efetuar reservas"/"não abre" no obs/nome (ex: Dia dos Pais 09/08).
+  const fechada = await casaFechadaNaAgenda(data);
+  if (fechada) return { aberto: false, fechadoAgenda: true, motivo: fechada, atencao: `A casa está FECHADA nesta data (${fechada}). EXPLIQUE ao cliente com carinho e ofereça outro dia — NÃO registre reserva.` };
   const reservas = await queryDocs('reservas', [['Data', data]]);
   const ocupados = new Set(reservas.map(r => String(r.Setor)));
   const { principais, filhoDe } = await setorMapa();
@@ -213,6 +226,8 @@ async function registrarReserva(input, ctx) {
   if (!d) return { ok: false, erro: 'data inválida' };
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
+  const fechada = await casaFechadaNaAgenda(data);
+  if (fechada) return { ok: false, erro: `casa FECHADA nesta data (${fechada}) — NÃO reserve; explique ao cliente e ofereça outro dia` };
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   const cutoff = reservaHojeEncerrada(data, dow);
   if (cutoff) return { ok: false, erro: cutoff };
@@ -335,6 +350,7 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   if (!d) return { ok: false, erro: 'data inválida' };
   if (data < hojeISO()) return { ok: false, erro: 'data no passado' };
   const dow = d.getDay();
+  if (data !== atual.Data) { const fechada = await casaFechadaNaAgenda(data); if (fechada) return { ok: false, erro: `casa FECHADA nesta data (${fechada}) — não mova a reserva pra esse dia; explique e ofereça outro` }; }
   if (dow === 1 || dow === 2) console.log('[reserva] seg/ter registrada (evento especial)');
   const cutoffAlt = data !== atual.Data ? reservaHojeEncerrada(data, dow) : null;
   if (cutoffAlt) return { ok: false, erro: cutoffAlt };
