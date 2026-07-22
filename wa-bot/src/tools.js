@@ -47,10 +47,8 @@ function phoneKey(v) {
 }
 const samePhone = (a, b) => { const k = phoneKey(a); return !!k && k === phoneKey(b); };
 const TOLERANCIA = { 3: 'até 20h', 4: 'até 20h', 5: 'até 20h', 6: 'até 16h', 0: 'até 14h' };
-// Exceções por data (ex: jogo do Brasil na Copa) — manter alinhado com EXCECOES_DIA do prompt.js
-const TOLERANCIA_EXCECAO = {
-  '2026-06-24': 'até 18h30 (dia de jogo do Brasil — entrada R$10 fixa)',
-};
+// Exceções por data (ex: jogo do Brasil/evento especial) — manter alinhado com EXCECOES_DIA do prompt.js. (sem datas no momento)
+const TOLERANCIA_EXCECAO = {};
 // Datas normalmente FECHADAS (seg/ter) que ABREM por evento especial confirmado pelo René —
 // nestas o bot reserva normal (sem o aviso de seg/ter). Manter alinhado com o prompt.js. (sem datas no momento)
 const ABERTO_EXCECAO = {};
@@ -150,14 +148,16 @@ const hojeISO = () => {
   return `${sp.getFullYear()}-${String(sp.getMonth() + 1).padStart(2, '0')}-${String(sp.getDate()).padStart(2, '0')}`;
 };
 const horaSP = () => new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getHours();
+// hora decimal (com minutos) pro cutoff de 30 min antes da abertura
+const horaSPdec = () => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })); return d.getHours() + d.getMinutes() / 60; };
 
-// Reserva pro próprio dia: só até 2h antes da casa abrir (regra do René)
+// Reserva pro próprio dia: só até 30 min antes da casa abrir (regra do René, jul/2026)
 const ABERTURA = { 3: 18, 4: 18, 5: 18, 6: 14, 0: 12 };
 function reservaHojeEncerrada(data, dow) {
   if (data !== hojeISO()) return null;
   const abre = ABERTURA_EXCECAO[data] || ABERTURA[dow];
   if (!abre) return null; // seg/ter: evento especial, sem regra de cutoff
-  if (horaSP() >= abre - 2) return `reservas para hoje encerraram (aceitamos até 2h antes da abertura, ou seja, até ${abre - 2}h); ofereça outro dia`;
+  if (horaSPdec() >= abre - 0.5) return `reservas para hoje encerraram (aceitamos até 30 min antes da abertura, ou seja, até ${abre - 1}h30); ofereça outro dia`;
   return null;
 }
 
