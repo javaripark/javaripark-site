@@ -238,7 +238,7 @@ async function registrarReserva(input, ctx) {
   if (!validos.has(setorStr)) return { ok: false, erro: 'setor inválido (1-9, filhos 1B-9B ou "Bus Lounge")' };
   if (!nome?.trim() || !sobrenome?.trim()) return { ok: false, erro: 'nome e sobrenome obrigatórios' };
   const n = parseInt(pessoas, 10);
-  if (isBus && (n < 10 || n > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
+  if (isBus && n < 10) return { ok: false, erro: 'Bus Lounge é a partir de 10 pessoas — grupo menor, ofereça uma mesa no quintal' };
   // Sem limite de negócio pra grupo grande (garante-se 20 sentados, resto a equipe acomoda).
   // O teto 500 é só guarda técnica contra typo/abuso.
   if (!n || n < 1 || n > 500) return { ok: false, erro: 'quantidade de pessoas inválida' };
@@ -358,7 +358,7 @@ async function alterarReserva({ reservaId, novaData, novasPessoas, novoSetor, no
   if (setor === 'Extras') return { ok: false, erro: 'Extras é manual da equipe — use chamar_humano' };
   const busAlvo = setor === 'Bus Lounge';
   if (!validos.has(setor)) return { ok: false, erro: 'setor inválido (1-9, filhos 1B-9B ou "Bus Lounge")' };
-  if (busAlvo && (pessoas < 10 || pessoas > 40)) return { ok: false, erro: 'Bus Lounge é para 10 a 40 pessoas' };
+  if (busAlvo && pessoas < 10) return { ok: false, erro: 'Bus Lounge é a partir de 10 pessoas — grupo menor, ofereça uma mesa no quintal' };
   if (!pessoas || pessoas < 1 || pessoas > 500) return { ok: false, erro: 'quantidade de pessoas inválida' };
   // Filho só vale como overflow quando o pai está ocupado nessa data (ignora a própria reserva)
   if (ehFilho(setor)) {
