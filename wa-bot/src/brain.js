@@ -3,7 +3,7 @@
 // Guardas: bloco pós-reserva anexado pelo código; detector de "anunciou
 // ação sem executar ferramenta" com 1 rodada corretiva.
 import Anthropic from '@anthropic-ai/sdk';
-import { cfg, PRICING } from './config.js';
+import { cfg, PRICING, pricingFor } from './config.js';
 import { SYSTEM_KB, posReserva, dynamicContext } from './prompt.js';
 import { toolDefs, runTool } from './tools.js';
 
@@ -15,12 +15,15 @@ const MAX_TOOL_ROUNDS = 6;
 // Anúncio de ação de estado (criar/alterar/cancelar) na resposta final
 const CLAIM_RE = /reserva\s+(tá\s+|está\s+)?(confirmada|feita|registrada|alterada|cancelada|trocada|atualizada|remarcada)|\b(alterei|cancelei|registrei|troquei|remarquei|atualizei)\b|pronto[,!]?\s*(tudo\s+)?(cancelad|alterad|confirmad|registrad)|\b(cancelada|alterada|remarcada)\s*[!.]/i;
 
-export function custoUSD(u) {
+// custoUSD(usage, [model]) — sem model usa o PRICING do modelo em uso (turnos novos);
+// com model (ex: recálculo histórico) usa o preço daquele modelo específico.
+export function custoUSD(u, model) {
+  const p = model ? pricingFor(model) : PRICING;
   return (
-    (u.input_tokens || 0) * PRICING.input +
-    (u.output_tokens || 0) * PRICING.output +
-    (u.cache_creation_input_tokens || 0) * PRICING.cacheWrite +
-    (u.cache_read_input_tokens || 0) * PRICING.cacheRead
+    (u.input_tokens || 0) * p.input +
+    (u.output_tokens || 0) * p.output +
+    (u.cache_creation_input_tokens || 0) * p.cacheWrite +
+    (u.cache_read_input_tokens || 0) * p.cacheRead
   ) / 1e6;
 }
 
