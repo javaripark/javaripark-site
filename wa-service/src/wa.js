@@ -139,14 +139,21 @@ export async function startWA() {
         state.connected = true;
         state.qrDataUrl = null;
         state.me = sock.user?.id?.split(':')[0] || null;
+        state.reconnectAttempts = 0;
         console.log(`✅ Conectado como ${state.me}`);
       }
       if (connection === 'close') {
         state.connected = false;
         const code = lastDisconnect?.error?.output?.statusCode;
         const loggedOut = code === DisconnectReason.loggedOut;
-        console.log(`⚠  Conexão fechada (code ${code}).${loggedOut ? ' Deslogado — precisa re-parear.' : ' Reconectando...'}`);
-        if (!loggedOut) setTimeout(() => startWA().catch(e => console.error('Erro reconnect:', e)), 3000);
+        if (loggedOut) { console.log('⚠  Conexão fechada — DESLOGADO (precisa re-parear via QR em /qr).'); return; }
+        // Backoff exponencial: NÃO martelar o WhatsApp (reconnect a cada 3s agrava throttle/405).
+        // 405 = "connection failure"/soft-block → começa mais alto. Teto de 5 min.
+        state.reconnectAttempts = (state.reconnectAttempts || 0) + 1;
+        const base = code === 405 ? 20000 : 3000;
+        const delay = Math.min(base * Math.pow(1.6, Math.min(state.reconnectAttempts - 1, 12)), 5 * 60000);
+        console.log(`⚠  Conexão fechada (code ${code}). Reconectando em ${Math.round(delay / 1000)}s (tentativa ${state.reconnectAttempts})...`);
+        setTimeout(() => startWA().catch(e => console.error('Erro reconnect:', e)), delay);
       }
     });
 
