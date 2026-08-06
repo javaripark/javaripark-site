@@ -124,9 +124,11 @@
 
       let priceHTML;
       if (hasPrice) {
-        priceHTML = '<span class="item-price">' + item.priceFormatted + '</span>';
+        // O cardapio.json é regenerado pelo sync do Consumer POS todo dia e traz
+        // só {name, price} — por isso formatamos aqui, sem depender de priceFormatted.
+        priceHTML = '<span class="item-price">' + formatBRL(item.price) + '</span>';
       } else {
-        priceHTML = '<span class="item-price-variable">' + (item.priceFormatted || 'Consultar') + '</span>';
+        priceHTML = '<span class="item-price-variable">Consultar</span>';
       }
 
       let descHTML = '';
