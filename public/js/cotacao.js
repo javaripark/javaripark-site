@@ -271,12 +271,31 @@
     window.addEventListener('resize', updateArrows);
   }
 
+  // Espelha o cardápio PÚBLICO do menudino (javaripark.menudino.com), que é a curadoria
+  // oficial da casa. O cardapio.json é o dump CRU do Consumer POS (350 itens, inclui coisas
+  // internas: BRINDES de R$0,01, PORTARIA, SERVIÇO...). O POS alimenta o menudino, então os
+  // PREÇOS já batem — só precisamos esconder o que o menudino esconde e usar a mesma ordem.
+  const ORDEM_MENUDINO = ['CERVEJAS', 'DRINKS PRONTOS', 'CAIPIRINHA', 'GIN', 'DRINKS CLÁSSICOS',
+    'DOSES E GARRAFAS', 'CACHAÇAS', 'VINHOS E ESPUMANTES', 'NÃO ALCOÓLICOS', 'PORÇÕES',
+    'BAGUETES', 'SOBREMESAS', 'FEIJOADA'];
+  // Categorias operacionais/internas que o menudino NÃO exibe (e não cabem num pacote pré-pago).
+  const OCULTAR = new Set(['BRINDES', 'COMPLEMENTO', 'FESTA JUNINA', 'OUTROS', 'PORTARIA', 'SERVIÇO', 'SERVICO']);
+  const normCat = s => (s || '').trim().toUpperCase();
+
   fetch('data/cardapio.json')
     .then(r => r.json())
     .then(data => {
-      menu = (data.categories || []).filter(c =>
-        c.items.some(i => i.price !== null && i.price > 0)
-      );
+      menu = (data.categories || [])
+        .filter(c => !OCULTAR.has(normCat(c.category)))
+        // Derruba itens < R$1 (SKUs de brinde/cortesia perdidos em categorias boas).
+        .map(c => ({ ...c, items: c.items.filter(i => i.price != null && i.price >= 1) }))
+        .filter(c => c.items.length > 0)
+        // Ordem do menudino; categoria nova que ainda não mapeamos vai pro fim (não some).
+        .sort((a, b) => {
+          const ia = ORDEM_MENUDINO.indexOf(normCat(a.category));
+          const ib = ORDEM_MENUDINO.indexOf(normCat(b.category));
+          return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+        });
       if (menu.length === 0) {
         $grid.innerHTML = '<div class="items-loading">Cardápio indisponível no momento.</div>';
         return;
