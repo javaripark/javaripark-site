@@ -2,7 +2,8 @@
   'use strict';
 
   const WHATSAPP_NUMBER = '551120811544';
-  const DISCOUNT = 0.05;
+  const DISCOUNT = 0.05;   // desconto do pacote, sobre o subtotal dos itens
+  const SERVICE = 0.10;    // serviço, sobre o valor JÁ com desconto (base = subtotal - desconto)
 
   let menu = [];
   let cart = {};
@@ -15,13 +16,13 @@
   const $empty = document.getElementById('itemsEmpty');
   const $bar = document.getElementById('cotacaoBar');
   const $barItems = document.getElementById('barItemCount');
-  const $barOriginal = document.getElementById('barOriginal');
   const $barFinal = document.getElementById('barFinal');
   const $barCTA = document.getElementById('barCTA');
   const $modal = document.getElementById('reviewModal');
   const $modalList = document.getElementById('modalList');
   const $modalSubtotal = document.getElementById('modalSubtotal');
   const $modalDiscountVal = document.getElementById('modalDiscountVal');
+  const $modalServiceVal = document.getElementById('modalServiceVal');
   const $modalFinal = document.getElementById('modalFinal');
   const $modalSend = document.getElementById('modalSend');
   const $modalClose = document.getElementById('modalClose');
@@ -52,15 +53,23 @@
     return sum;
   }
 
-  function updateBar() {
-    const count = totalItems();
+  // Cálculo canônico do pacote: desconto de 5% sobre o subtotal, e serviço de 10%
+  // sobre o valor JÁ com desconto. Fonte única pra barra, modal e mensagem do WhatsApp.
+  function calcTotais() {
     const sub = subtotal();
     const discountVal = sub * DISCOUNT;
-    const final_ = sub - discountVal;
+    const afterDiscount = sub - discountVal;
+    const serviceVal = afterDiscount * SERVICE;
+    const total = afterDiscount + serviceVal;
+    return { sub, discountVal, serviceVal, total };
+  }
+
+  function updateBar() {
+    const count = totalItems();
+    const { total } = calcTotais();
 
     $barItems.textContent = count + (count === 1 ? ' item' : ' itens');
-    $barOriginal.textContent = formatBRL(sub);
-    $barFinal.textContent = formatBRL(final_);
+    $barFinal.textContent = formatBRL(total);
 
     if (count > 0) {
       $bar.classList.remove('hidden');
@@ -186,12 +195,15 @@
     }
 
     const discountVal = sub * DISCOUNT;
-    const final_ = sub - discountVal;
+    const afterDiscount = sub - discountVal;
+    const serviceVal = afterDiscount * SERVICE;
+    const total = afterDiscount + serviceVal;
 
     lines.push('');
     lines.push('Subtotal: ' + formatBRL(sub));
     lines.push('Desconto pacote (5%): -' + formatBRL(discountVal));
-    lines.push('*Total estimado: ' + formatBRL(final_) + '*');
+    lines.push('Serviço (10%): +' + formatBRL(serviceVal));
+    lines.push('*Total estimado: ' + formatBRL(total) + '*');
     lines.push('');
     lines.push('Gostaria de fechar esse pacote ou negociar condições melhores!');
 
@@ -223,12 +235,12 @@
       $modalList.appendChild(row);
     });
 
-    const discountVal = sub * DISCOUNT;
-    const final_ = sub - discountVal;
+    const { discountVal, serviceVal, total } = calcTotais();
 
     $modalSubtotal.textContent = formatBRL(sub);
     $modalDiscountVal.textContent = '- ' + formatBRL(discountVal);
-    $modalFinal.textContent = formatBRL(final_);
+    $modalServiceVal.textContent = '+ ' + formatBRL(serviceVal);
+    $modalFinal.textContent = formatBRL(total);
 
     const msg = buildWhatsAppMessage();
     $modalSend.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
