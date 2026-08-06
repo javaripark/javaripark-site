@@ -159,6 +159,10 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Enviar pelo WhatsApp
         </a>
+        <button class="btn btn-dark cotacao-modal-pdf" id="modalPdf" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Cotação em PDF
+        </button>
       </div>
     </div>
 
@@ -216,6 +220,97 @@
         toggle.closest('.nav-dropdown').classList.toggle('open');
       });
     });
+  </script>
+
+  <!-- ===== Gerar Cotação em PDF (reusa o modelo/regras da proposta de evento) ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    const fbCfg = { apiKey:"AIzaSyBPsAFkMBXtmlv6UvavXGdD86nWz9b__18", authDomain:"central-de-reservas-jsp.firebaseapp.com", projectId:"central-de-reservas-jsp", storageBucket:"central-de-reservas-jsp.firebasestorage.app", appId:"1:574859111927:web:83df67ed1865a59c0392f2" };
+    const db = getFirestore(initializeApp(fbCfg));
+
+    // Fallback das regras (seed). A fonte-verdade é o Firestore eventos_config/main,
+    // editável no admin (Eventos → Ajustes) — o mesmo texto que sai na proposta de evento.
+    const CFG_DEFAULT = { nome:'Javari Streat Park', endereco:'Rua Javari, 112 - Mooca (SP)', telefone:'(11) 2081-1544', site:'www.javaripark.com.br', instagram:'@javaripark', pagamento:'60% até 15 dias antes da realização do evento (pix)\n40% até 1 dia antes do evento (pix)\nNota fiscal incluída', condicoes:'- Valores aplicados para 175 pessoas mediante entrega de lista de convidados;\n- A casa não trabalha com hora extra, portanto, o horário de fechamento da casa deve ser cumprido integralmente;\n- Consumo extra será cobrado individualmente, a partir dos valores praticados no cardápio;\n- Não é permitida a entrada de bebida e comida de nenhuma espécie;', revistaIntro:'O Javari Streat Park conta com uma equipe de segurança que está autorizada a realizar revistas nos clientes no momento da entrada. O intuito da ação é garantir o bem-estar de todos e o bom funcionamento da casa. Abaixo, listamos alguns itens que são verificados pela nossa equipe:', autorizados:'Máquina fotográfica\nPatins\nSkate\nBicicleta\nLaptops\nCarrinho de bebê\nItens de higiene pessoal\nUtensílios para cuidados com bebê\nAlimentação para bebês', proibidos:'Malas\nAlimentos diversos\nBebidas alcoólicas ou não\nNarguilé\nSubstâncias ilegais de qualquer espécie\nArmas brancas e de fogo\nObjetos cortantes ou perfurantes, tais como canivetes, tesouras de unhas e demais itens pontiagudos\nBolas esportivas\nInstrumentos musicais\nCapacete', revistaObs:'OBS: para os casos de clientes portando itens proibidos, o Javari Streat Park tem o direito de confiscar os objetos no momento da entrada. A retirada ocorre somente na saída do cliente.' };
+    let CFG = { ...CFG_DEFAULT };
+    getDoc(doc(db, 'artifacts/central-de-reservas-jsp/public/data/eventos_config', 'main'))
+      .then(s => { if (s.exists()) CFG = { ...CFG_DEFAULT, ...s.data() }; })
+      .catch(() => {});
+
+    const brl = v => 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const hojeBR = () => { const n = new Date(); return String(n.getDate()).padStart(2,'0') + '/' + String(n.getMonth()+1).padStart(2,'0') + '/' + n.getFullYear(); };
+    // webp/jpg -> jpeg (recorta cover pra proporção targetAR, sem esticar).
+    // Downscale pra maxW px: a capa entra num PDF que a pessoa baixa/compartilha —
+    // resolução cheia gera 1MB+ à toa; ~900px de largura já cobre o banner de 210mm.
+    function imgJpeg(src, targetAR, maxW=900) { return new Promise(res => { const img = new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ let sw=img.naturalWidth, sh=img.naturalHeight, sx=0, sy=0; if(targetAR){ const ar=sw/sh; if(ar>targetAR){ const nw=sh*targetAR; sx=(sw-nw)/2; sw=nw; } else { const nh=sw/targetAR; sy=(sh-nh)/2; sh=nh; } } let dw=sw, dh=sh; if(dw>maxW){ dh=dh*maxW/dw; dw=maxW; } const cv=document.createElement('canvas'); cv.width=Math.round(dw); cv.height=Math.round(dh); cv.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,cv.width,cv.height); try{ res(cv.toDataURL('image/jpeg',0.72)); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src=src; }); }
+    // Logo -> JPEG com fundo branco (o jsPDF embute PNG como bitmap RGBA cru ~1,4MB;
+    // o logo é preto e a página é branca, então achatar em JPEG não muda o visual).
+    function logoJpeg(src, maxW=360) { return new Promise(res => { const img=new Image(); img.crossOrigin='anonymous'; img.onload=()=>{ let w=img.naturalWidth, h=img.naturalHeight; if(w>maxW){ h=h*maxW/w; w=maxW; } const cv=document.createElement('canvas'); cv.width=Math.round(w); cv.height=Math.round(h); const ctx=cv.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,cv.width,cv.height); ctx.drawImage(img,0,0,cv.width,cv.height); try{ res({ uri:cv.toDataURL('image/jpeg',0.9), ratio: img.naturalHeight/img.naturalWidth }); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src=src; }); }
+
+    async function gerarPdfCotacao() {
+      const pkg = window.cotacaoPacoteAtual ? window.cotacaoPacoteAtual() : null;
+      if (!pkg || !pkg.itens.length) return;
+      if (!window.jspdf || !window.jspdf.jsPDF) { alert('Gerador de PDF ainda carregando, tente de novo em 1s.'); return; }
+      const btn = document.getElementById('modalPdf');
+      btn.disabled = true; const label = btn.innerHTML; btn.innerHTML = 'Gerando…';
+      try {
+        const { jsPDF } = window.jspdf;
+        const d = new jsPDF({ unit:'mm', format:'a4' });
+        const M=18, W=210, CW=W-2*M, PH=297; let y=0;
+        const ensure = h => { if (y+h > PH-M) { d.addPage(); y=M; } };
+        const para = (t,s=10,st='normal',c=[70,70,70]) => { d.setFont('helvetica',st); d.setFontSize(s); d.setTextColor(...c); d.splitTextToSize(String(t||''),CW).forEach(l=>{ ensure(s*0.5+1); d.text(l,M,y); y+=s*0.5+1; }); };
+        const head = t => { y+=7; ensure(11); d.setFillColor(79,25,100); d.rect(M,y-1,2.6,6.5,'F'); d.setTextColor(79,25,100); d.setFont('helvetica','bold'); d.setFontSize(11.5); d.text(String(t).toUpperCase(),M+6,y+3.6); y+=10; };
+        const bullets = t => String(t||'').split('\n').filter(s=>s.trim()).forEach(line=>{ const x=line.replace(/^[-–•]\s*/,''); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(70,70,70); d.splitTextToSize(x,CW-6).forEach((l,i)=>{ ensure(5.6); if(i===0){ d.setTextColor(79,25,100); d.text('•',M,y); d.setTextColor(70,70,70); } d.text(l,M+5,y); y+=5.6; }); y+=1; });
+
+        // capa
+        const hh=64; const hero = await imgJpeg('/assets/images/cotacao-hero.webp', W/hh);
+        if (hero) { try{ d.addImage(hero,'JPEG',0,0,W,hh); }catch(e){} d.setFillColor(26,15,30); d.setGState&&d.setGState(new d.GState({opacity:0.4})); d.rect(0,0,W,hh,'F'); d.setGState&&d.setGState(new d.GState({opacity:1})); y=hh+12; } else y=M;
+        const logo = await logoJpeg('/assets/images/logo-horizontal-black.png');
+        if (logo) { const lw=44; const lh=lw*(logo.ratio||430/800); try{ d.addImage(logo.uri,'JPEG',M,y-6,lw,lh); }catch(e){} y+=lh+2; }
+        d.setFont('helvetica','bold'); d.setFontSize(17); d.setTextColor(25,25,25); ensure(8); d.text('Cotação de Pacote', M, y); y+=5;
+        d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(120,120,120); d.text('Gerado em ' + hojeBR(), M, y); y+=2;
+        d.setDrawColor(225,220,230); d.line(M,y,W-M,y); y+=2;
+
+        // itens
+        head('Itens do pacote');
+        pkg.itens.forEach(i => { ensure(5.6); d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(75,75,75); d.text(`•  ${i.qtd}x ${i.nome}`, M+1, y); d.text(brl(i.total), W-M, y, {align:'right'}); y+=5.6; });
+
+        // valores
+        head('Valores');
+        const linha = (label,val,color=[55,55,55]) => { ensure(6.5); d.setFont('helvetica','normal'); d.setFontSize(10.5); d.setTextColor(...color); d.text(label,M,y); d.text(val,W-M,y,{align:'right'}); y+=6.5; };
+        linha('Subtotal', brl(pkg.sub));
+        linha('Desconto pacote (5%)', '- ' + brl(pkg.discountVal), [79,25,100]);
+        linha('Serviço (10%)', '+ ' + brl(pkg.serviceVal));
+        y+=2; ensure(11); d.setFillColor(245,240,248); d.rect(M,y-5,CW,9,'F'); d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(79,25,100); d.text('Total estimado', M+3, y+1.5); d.text(brl(pkg.total), W-M-3, y+1.5, {align:'right'}); y+=10;
+
+        // regras (todas, do modelo de evento). Só na cotação: NF não é inclusa como no
+        // evento fechado — troca a linha localmente, sem mexer na config compartilhada.
+        const pagamentoCot = String(CFG.pagamento || '').replace(/nota fiscal inclu[ií]da\.?/i, 'Consulte custo para emissão de nota fiscal');
+        head('Forma de pagamento'); para(pagamentoCot);
+        head('Condições gerais'); bullets(CFG.condicoes);
+        head('Revista pessoal'); para(CFG.revistaIntro);
+        y+=2; ensure(6); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(22,163,74); d.text('Itens autorizados', M, y); y+=6; bullets(CFG.autorizados);
+        y+=1; ensure(6); d.setFont('helvetica','bold'); d.setFontSize(10); d.setTextColor(220,38,38); d.text('Itens proibidos', M, y); y+=6; bullets(CFG.proibidos);
+        y+=1; para(CFG.revistaObs, 9.5, 'italic', [120,120,120]);
+
+        // observação final
+        head('Observação');
+        para('Esta é uma cotação padrão, gerada automaticamente pelo site. As regras acima podem ou não se aplicar, dependendo da negociação em andamento com a casa. Valores sujeitos a confirmação.', 9.5, 'italic', [120,120,120]);
+
+        // rodapé
+        y+=7; ensure(24); d.setDrawColor(220,218,224); d.line(M,y,W-M,y); y+=6;
+        d.setFont('helvetica','bold'); d.setFontSize(10.5); d.setTextColor(40,40,40); d.text(CFG.nome||'Javari Streat Park', M, y); y+=5.5;
+        d.setFont('helvetica','normal'); d.setFontSize(9.5); d.setTextColor(100,100,100);
+        [CFG.endereco, 'Tel/WhatsApp: '+CFG.telefone, CFG.site, 'Instagram: '+CFG.instagram].forEach(l=>{ ensure(5); d.text(String(l||''), M, y); y+=5; });
+
+        d.save('Cotacao-Javari.pdf');
+      } finally {
+        btn.disabled = false; btn.innerHTML = label;
+      }
+    }
+
+    document.getElementById('modalPdf').addEventListener('click', gerarPdfCotacao);
   </script>
 </body>
 </html>

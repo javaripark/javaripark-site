@@ -436,6 +436,15 @@
   width: 100%;
   text-decoration: none;
 }
+.cotacao-modal-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+.cotacao-modal-pdf[disabled] { opacity: .6; cursor: default; }
 
 /* ========== Hidden helper ========== */
 .hidden { display: none !important; }

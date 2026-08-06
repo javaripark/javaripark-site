@@ -180,6 +180,25 @@
     });
   }
 
+  // Itens selecionados no formato {nome, qtd, preco, total} — usado pela mensagem e pelo PDF.
+  function itensSelecionados() {
+    const out = [];
+    for (const k in cart) {
+      if (cart[k] <= 0) continue;
+      const [ci, ii] = k.split(':').map(Number);
+      const item = menu[ci]?.items[ii];
+      if (!item || !item.price) continue;
+      out.push({ nome: item.name, qtd: cart[k], preco: item.price, total: item.price * cart[k] });
+    }
+    return out;
+  }
+
+  // Exposto pro gerador de PDF (script module no HTML), que vive fora deste IIFE.
+  window.cotacaoPacoteAtual = function () {
+    const { sub, discountVal, serviceVal, total } = calcTotais();
+    return { itens: itensSelecionados(), count: totalItems(), sub, discountVal, serviceVal, total };
+  };
+
   function buildWhatsAppMessage() {
     const lines = ['*Cotação de Pacote — Javari StrEat Park*', ''];
     let sub = 0;
