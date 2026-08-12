@@ -2,8 +2,9 @@
   'use strict';
 
   const WHATSAPP_NUMBER = '551120811544';
-  const DISCOUNT = 0.05;   // desconto do pacote, sobre o subtotal dos itens
-  const SERVICE = 0.10;    // serviço, sobre o valor JÁ com desconto (base = subtotal - desconto)
+  const DISCOUNT = 0.05;      // desconto do pacote, sobre o subtotal dos itens
+  const DISCOUNT_MIN = 3000;  // desconto SÓ quando o subtotal ULTRAPASSA este valor (R$)
+  const SERVICE = 0.10;       // serviço, sobre o valor JÁ com desconto (base = subtotal - desconto)
 
   let menu = [];
   let cart = {};
@@ -21,6 +22,7 @@
   const $modal = document.getElementById('reviewModal');
   const $modalList = document.getElementById('modalList');
   const $modalSubtotal = document.getElementById('modalSubtotal');
+  const $modalDiscountLabel = document.getElementById('modalDiscountLabel');
   const $modalDiscountVal = document.getElementById('modalDiscountVal');
   const $modalServiceVal = document.getElementById('modalServiceVal');
   const $modalFinal = document.getElementById('modalFinal');
@@ -53,15 +55,17 @@
     return sum;
   }
 
-  // Cálculo canônico do pacote: desconto de 5% sobre o subtotal, e serviço de 10%
-  // sobre o valor JÁ com desconto. Fonte única pra barra, modal e mensagem do WhatsApp.
+  // Cálculo canônico do pacote: desconto de 5% SÓ quando o subtotal ultrapassa DISCOUNT_MIN,
+  // e serviço de 10% sobre o valor JÁ com desconto. Fonte única pra barra, modal, WhatsApp e PDF.
   function calcTotais() {
     const sub = subtotal();
-    const discountVal = sub * DISCOUNT;
+    const discountEligible = sub > DISCOUNT_MIN;
+    const discountVal = discountEligible ? sub * DISCOUNT : 0;
     const afterDiscount = sub - discountVal;
     const serviceVal = afterDiscount * SERVICE;
     const total = afterDiscount + serviceVal;
-    return { sub, discountVal, serviceVal, total };
+    const faltaDesconto = discountEligible ? 0 : (DISCOUNT_MIN - sub);
+    return { sub, discountEligible, discountVal, serviceVal, total, faltaDesconto };
   }
 
   function updateBar() {
@@ -195,8 +199,8 @@
 
   // Exposto pro gerador de PDF (script module no HTML), que vive fora deste IIFE.
   window.cotacaoPacoteAtual = function () {
-    const { sub, discountVal, serviceVal, total } = calcTotais();
-    return { itens: itensSelecionados(), count: totalItems(), sub, discountVal, serviceVal, total };
+    const { sub, discountEligible, discountVal, serviceVal, total } = calcTotais();
+    return { itens: itensSelecionados(), count: totalItems(), sub, discountEligible, discountVal, serviceVal, total };
   };
 
   function buildWhatsAppMessage() {
@@ -213,14 +217,11 @@
       lines.push('• ' + cart[k] + 'x ' + item.name + ' — ' + formatBRL(lineTotal));
     }
 
-    const discountVal = sub * DISCOUNT;
-    const afterDiscount = sub - discountVal;
-    const serviceVal = afterDiscount * SERVICE;
-    const total = afterDiscount + serviceVal;
+    const { discountEligible, discountVal, serviceVal, total } = calcTotais();
 
     lines.push('');
     lines.push('Subtotal: ' + formatBRL(sub));
-    lines.push('Desconto pacote (5%): -' + formatBRL(discountVal));
+    if (discountEligible) lines.push('Desconto pacote (5%): -' + formatBRL(discountVal));
     lines.push('Serviço (10%): +' + formatBRL(serviceVal));
     lines.push('*Total estimado: ' + formatBRL(total) + '*');
     lines.push('');
@@ -254,10 +255,20 @@
       $modalList.appendChild(row);
     });
 
-    const { discountVal, serviceVal, total } = calcTotais();
+    const { discountEligible, discountVal, serviceVal, total, faltaDesconto } = calcTotais();
 
     $modalSubtotal.textContent = formatBRL(sub);
-    $modalDiscountVal.textContent = '- ' + formatBRL(discountVal);
+    // Elegível: linha de desconto real. Senão: nudge incentivando ultrapassar o mínimo.
+    const $discRow = $modalDiscountVal.closest('.modal-total-row');
+    if (discountEligible) {
+      $discRow.classList.remove('modal-discount-locked');
+      $modalDiscountLabel.textContent = 'Desconto pacote (5%)';
+      $modalDiscountVal.textContent = '- ' + formatBRL(discountVal);
+    } else {
+      $discRow.classList.add('modal-discount-locked');
+      $modalDiscountLabel.textContent = 'Adicione ' + formatBRL(faltaDesconto) + ' e ganhe 5% de desconto';
+      $modalDiscountVal.textContent = '';
+    }
     $modalServiceVal.textContent = '+ ' + formatBRL(serviceVal);
     $modalFinal.textContent = formatBRL(total);
 

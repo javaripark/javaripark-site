@@ -414,6 +414,12 @@
   color: var(--violet-glow);
   font-weight: 600;
 }
+/* Abaixo do mínimo pro desconto: linha vira um incentivo discreto (nudge). */
+.modal-discount.modal-discount-locked {
+  font-weight: 500;
+  font-size: 13px;
+  opacity: .9;
+}
 .modal-final {
   font-size: 18px;
   font-weight: 700;

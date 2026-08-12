@@ -142,7 +142,7 @@
             <span id="modalSubtotal">R$ 0,00</span>
           </div>
           <div class="modal-total-row modal-discount">
-            <span>Desconto pacote (5%)</span>
+            <span id="modalDiscountLabel">Desconto pacote (5%)</span>
             <span id="modalDiscountVal">- R$ 0,00</span>
           </div>
           <div class="modal-total-row modal-service">
@@ -280,7 +280,7 @@
         head('Valores');
         const linha = (label,val,color=[55,55,55]) => { ensure(6.5); d.setFont('helvetica','normal'); d.setFontSize(10.5); d.setTextColor(...color); d.text(label,M,y); d.text(val,W-M,y,{align:'right'}); y+=6.5; };
         linha('Subtotal', brl(pkg.sub));
-        linha('Desconto pacote (5%)', '- ' + brl(pkg.discountVal), [79,25,100]);
+        if (pkg.discountEligible) linha('Desconto pacote (5%)', '- ' + brl(pkg.discountVal), [79,25,100]);
         linha('Serviço (10%)', '+ ' + brl(pkg.serviceVal));
         y+=2; ensure(11); d.setFillColor(245,240,248); d.rect(M,y-5,CW,9,'F'); d.setFont('helvetica','bold'); d.setFontSize(14); d.setTextColor(79,25,100); d.text('Total estimado', M+3, y+1.5); d.text(brl(pkg.total), W-M-3, y+1.5, {align:'right'}); y+=10;
 
