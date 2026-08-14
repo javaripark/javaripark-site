@@ -1,5 +1,6 @@
 // Gerenciador da sessão WhatsApp via Baileys.
 // O número emissor é definido por QUEM ESCANEIA O QR — por isso é "configurável".
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pino from 'pino';
@@ -192,6 +193,30 @@ export async function startWA() {
   } finally {
     connecting = false;
   }
+}
+
+// Força um NOVO pareamento: encerra o socket, ARQUIVA a sessão atual (auth.dead-<ts>)
+// e reinicia do zero — o Baileys então emite um QR novo. Usado pelo painel (POST /relink)
+// pra o René reconectar sozinho quando o WhatsApp derruba o aparelho, sem depender de terminal.
+export async function relinkWA() {
+  if (sock) { try { sock.ev.removeAllListeners(); sock.end?.(); } catch {} sock = null; }
+  state.connected = false;
+  state.qrDataUrl = null;
+  state.me = null;
+  state.reconnectAttempts = 0;
+  try {
+    if (fs.existsSync(AUTH_DIR)) {
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      const ts = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+      fs.renameSync(AUTH_DIR, `${AUTH_DIR}.dead-${ts}`);
+      console.log(`🔄 Relink: sessão arquivada em auth.dead-${ts}`);
+    }
+  } catch (e) { console.error('[relink] arquivar auth falhou:', e.message); }
+  try { fs.mkdirSync(AUTH_DIR, { recursive: true }); } catch (e) { console.error('[relink] recriar auth falhou:', e.message); }
+  connecting = false; // garante que o startWA a seguir não seja ignorado
+  await startWA();     // sessão vazia → Baileys emite QR novo
+  return true;
 }
 
 // Resolve o telefone REAL (PN) de uma mensagem, lidando com o LID do WhatsApp.

@@ -1,7 +1,7 @@
 // API REST do serviço de WhatsApp.
 import express from 'express';
 import { config } from './config.js';
-import { startWA, getWaState, getQrDataUrl, setMessageHandler, setHumanTakeoverHandler } from './wa.js';
+import { startWA, relinkWA, getWaState, getQrDataUrl, setMessageHandler, setHumanTakeoverHandler } from './wa.js';
 import { handleIncoming, handleHumanTakeover } from './agent.js';
 import { startQueue, queueStatus } from './queue.js';
 import { enqueue, readLog, addOptOut, getOptOuts, getAdReferral } from './store.js';
@@ -70,6 +70,16 @@ app.get('/qr', (req, res) => {
   const qr = getQrDataUrl();
   if (!qr) return res.json({ qr: null, message: getWaState().connected ? 'já conectado' : 'aguardando geração do QR' });
   res.json({ qr });
+});
+
+// Reconectar: arquiva a sessão atual e gera um QR novo (pra re-parear quando o
+// WhatsApp derruba o aparelho). Mutação sensível → exige o PIN, além do token.
+app.post('/relink', async (req, res) => {
+  if (config.sendPin && req.headers['x-send-pin'] !== config.sendPin) {
+    return res.status(401).json({ error: 'pin_invalido' });
+  }
+  try { await relinkWA(); res.json({ ok: true }); }
+  catch (e) { res.status(500).json({ error: String(e?.message || e) }); }
 });
 
 // Enfileira mensagens: { messages: [{ to, message, nome }] }

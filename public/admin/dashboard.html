@@ -430,6 +430,7 @@
                         <button id="wa-save-btn" class="filter-pill" style="background:#4f1964;color:#fff;border-color:#4f1964">Salvar</button>
                         <button id="wa-test-btn" class="filter-pill">Testar conexão</button>
                         <button id="wa-qr-btn" class="filter-pill">Ver QR (parear número)</button>
+                        <button id="wa-relink-btn" class="filter-pill" style="background:#fffbeb;border-color:#fcd34d;color:#92400e">🔄 Reconectar (novo QR)</button>
                         <span id="wa-status-detail" style="font-size:12px;color:#888"></span>
                     </div>
                     <div id="wa-qr-box" style="display:none;margin-top:12px;text-align:center"></div>
@@ -2129,17 +2130,56 @@
             }
         }
 
-        async function waShowQr() {
-            const { endpoint, token } = waCfg();
+        // QR ao vivo: o QR do WhatsApp roda a cada ~20s. Em vez de um fetch único (que
+        // expira antes de você escanear), poll a cada 8s — sempre mostra o atual e para
+        // sozinho quando conecta.
+        let waQrTimer = null;
+        function waStopQrLoop() { if (waQrTimer) { clearInterval(waQrTimer); waQrTimer = null; } }
+        async function waRenderQrOnce() {
+            const { endpoint } = waCfg();
             const box = $('wa-qr-box');
-            if (!endpoint || !token) { toast('Configure endpoint e token primeiro.'); return; }
-            box.style.display = 'block'; box.innerHTML = 'Carregando QR…';
             try {
                 const r = await fetch(endpoint + '/qr', { headers: waHeaders() });
                 const d = await r.json();
-                if (d.qr) box.innerHTML = `<img src="${d.qr}" style="max-width:240px;border:1px solid #eee;border-radius:8px"><p style="font-size:12px;color:#888;margin-top:6px">WhatsApp → Aparelhos conectados → Conectar aparelho</p>`;
-                else box.innerHTML = `<p style="font-size:13px;color:#888">${d.message || 'Sem QR (já conectado?)'}</p>`;
-            } catch (e) { box.innerHTML = '<p style="font-size:13px;color:#991b1b">Erro ao buscar QR.</p>'; }
+                if (d.qr) {
+                    box.innerHTML = `<img src="${d.qr}" style="max-width:240px;border:1px solid #eee;border-radius:8px"><p style="font-size:12px;color:#888;margin-top:6px">WhatsApp do número emissor → Aparelhos conectados → Conectar aparelho.<br>O QR se atualiza sozinho; escaneie e aguarde a confirmação.</p>`;
+                    return 'qr';
+                }
+                const s = await fetch(endpoint + '/status', { headers: waHeaders() }).then(x => x.json()).catch(() => null);
+                if (s && s.wa && s.wa.connected) { box.innerHTML = `<p style="color:#065f46;font-weight:600;font-size:14px">✓ Bot conectado como ${s.wa.me || ''}</p>`; return 'connected'; }
+                box.innerHTML = `<p style="font-size:13px;color:#888">${d.message || 'Aguardando geração do QR…'}</p>`;
+                return 'waiting';
+            } catch (e) { box.innerHTML = '<p style="font-size:13px;color:#991b1b">Erro ao buscar QR.</p>'; return 'error'; }
+        }
+        function waStartQrLoop() {
+            $('wa-qr-box').style.display = 'block';
+            waStopQrLoop();
+            waRenderQrOnce();
+            waQrTimer = setInterval(async () => {
+                const st = await waRenderQrOnce();
+                if (st === 'connected') { waStopQrLoop(); waCheckStatus(); toast('Bot conectado! 🎉'); }
+            }, 8000);
+        }
+        async function waShowQr() {
+            const { endpoint, token } = waCfg();
+            if (!endpoint || !token) { toast('Configure endpoint e token primeiro.'); return; }
+            waStartQrLoop();
+        }
+        // Reconectar: arquiva a sessão morta no servidor e gera um QR novo (quando o
+        // WhatsApp derruba o aparelho e o bot não volta sozinho). Exige o PIN.
+        async function waRelink() {
+            const { endpoint, token, pin } = waCfg();
+            if (!endpoint || !token) { toast('Configure endpoint e token primeiro.'); return; }
+            if (!pin) { toast('Defina o PIN de envio no ⚙ (necessário para reconectar).'); $('wa-config-card').open = true; $('wa-pin').focus(); return; }
+            const ok = await confirmModal('Reconectar o bot', 'Isso encerra a sessão atual do WhatsApp e gera um QR novo pra re-parear. Use quando o bot cair e não voltar sozinho. Continuar?');
+            if (!ok) return;
+            const box = $('wa-qr-box'); box.style.display = 'block'; box.innerHTML = 'Gerando novo QR…';
+            try {
+                const r = await fetch(endpoint + '/relink', { method: 'POST', headers: waSendHeaders() });
+                const d = await r.json();
+                if (!r.ok) { box.innerHTML = `<p style="font-size:13px;color:#991b1b">Erro: ${d.error === 'pin_invalido' ? 'PIN incorreto (corrija no ⚙).' : (d.error || ('HTTP ' + r.status))}</p>`; return; }
+            } catch (e) { box.innerHTML = `<p style="font-size:13px;color:#991b1b">Falha ao acionar reconexão: ${e.message}</p>`; return; }
+            setTimeout(waStartQrLoop, 1500); // dá tempo do socket subir e emitir o QR
         }
 
         async function waSendBulk(list, templateId) {
@@ -2181,6 +2221,8 @@
             });
             $('wa-test-btn').addEventListener('click', waCheckStatus);
             $('wa-qr-btn').addEventListener('click', waShowQr);
+            $('wa-relink-btn').addEventListener('click', waRelink);
+            $('wa-config-card').addEventListener('toggle', () => { if (!$('wa-config-card').open) waStopQrLoop(); });
             $('aniv-send-all').addEventListener('click', () => {
                 const sel = getSelected('tbl-aniv');
                 if (sel.length === 0) { toast('Marque os contatos que vão receber (caixas à esquerda) ou use "selecionar todos" no topo da tabela.'); return; }
